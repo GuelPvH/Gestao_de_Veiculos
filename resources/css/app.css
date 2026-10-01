@@ -1,0 +1,48 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+:root {
+    --gv-ink: #172b3a;
+    --gv-muted: #536875;
+    --gv-accent: #087f78;
+    --gv-surface: #f4f8fa;
+}
+
+body {
+    min-height: 100vh;
+    background: var(--gv-surface);
+    color: var(--gv-ink);
+}
+
+.brand-mark {
+    display: inline-grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    place-items: center;
+    border-radius: 0.75rem;
+    background: var(--gv-accent);
+    color: #fff;
+    font-weight: 700;
+}
+
+.hero {
+    max-width: 48rem;
+    padding-block: clamp(4rem, 12vh, 8rem);
+}
+
+.hero-label {
+    color: var(--gv-accent);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hero-copy {
+    color: var(--gv-muted);
+}
+
+.status-card {
+    border: 1px solid #dce7eb;
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 1rem 2.5rem rgb(23 43 58 / 5%);
+}
