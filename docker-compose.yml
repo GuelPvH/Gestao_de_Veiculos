@@ -1,0 +1,33 @@
+name: gestao-de-veiculos
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: gestao-de-veiculos:local
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: "http://127.0.0.1:${APP_PORT:-8080}"
+      DB_CONNECTION: sqlite
+      DB_URL: ""
+      DB_DATABASE: ":memory:"
+      CACHE_STORE: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: log
+      LOG_CHANNEL: stderr
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    volumes:
+      - app_storage:/var/www/html/storage
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  app_storage:
