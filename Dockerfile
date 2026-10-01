@@ -41,7 +41,7 @@ COPY artisan ./artisan
 
 RUN composer dump-autoload --no-dev --optimize --no-scripts --no-plugins
 
-FROM node:22-bookworm-slim AS assets
+FROM node:26-bookworm-slim AS assets
 
 WORKDIR /app
 COPY package.json package-lock.json ./
