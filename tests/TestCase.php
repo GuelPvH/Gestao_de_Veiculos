@@ -12,5 +12,7 @@ abstract class TestCase extends BaseTestCase
         if (! config('app.key')) {
             config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
         }
+        $this->app->instance('env', 'testing');
+        config(['app.env' => 'testing']);
     }
 }
