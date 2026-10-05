@@ -1,0 +1,2 @@
+@props(['permissoes'])
+<div class="table-responsive"><table class="table"><thead><tr><th scope="col">Módulo</th><th scope="col">Ação</th><th scope="col">Alcance</th><th scope="col">Delegável</th></tr></thead><tbody>@forelse($permissoes as $permissao)<tr><td>{{ $permissao->modulo_codigo }}</td><td>{{ str_replace('_',' ',$permissao->acao_codigo) }}</td><td>{{ $permissao->alcance }}</td><td>{{ $permissao->delegavel ? 'Sim' : 'Não' }}</td></tr>@empty<tr><td colspan="4">Nenhuma permissão atribuída.</td></tr>@endforelse</tbody></table></div>
