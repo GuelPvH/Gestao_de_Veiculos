@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Middleware\PrivateResponse;
+use App\Http\Middleware\RequireProfile;
+use App\Http\Middleware\ValidateFleetSession;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,9 +16,21 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->trimStrings(except: ['senha', 'senha_atual', 'nova_senha', 'nova_senha_confirmation']);
+        $middleware->alias([
+            'fleet.session' => ValidateFleetSession::class,
+            'fleet.profile' => RequireProfile::class,
+        ]);
+        $middleware->appendToGroup('web', PrivateResponse::class);
+        $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->redirectUsersTo(fn () => route('dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontFlash(['senha', 'senha_atual', 'nova_senha', 'nova_senha_confirmation', 'token', 'password', 'password_confirmation']);
+        $exceptions->dontReport([QueryException::class, PDOException::class]);
+        $exceptions->render(function (QueryException $erro, Request $requisicao) {
+            return response()->view('errors.503', [], 503);
+        });
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

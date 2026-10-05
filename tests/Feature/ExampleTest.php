@@ -12,7 +12,8 @@ class ExampleTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertSee('Gestão de Veículos')
-            ->assertSee('Projeto em construção');
+            ->assertSee('Frota · PF')
+            ->assertSee('Acesse o sistema')
+            ->assertDontSee('Projeto em construção');
     }
 }
