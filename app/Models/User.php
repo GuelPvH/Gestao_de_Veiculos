@@ -2,20 +2,35 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
+/**
+ * @property int $id
+ * @property int $unidade_id
+ * @property string $identificador
+ * @property string $nome
+ * @property string $senha_hash
+ * @property string|null $email
+ * @property string|null $telefone
+ * @property bool $ativo
+ * @property bool $deve_trocar_senha
+ */
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    protected $table = 'usuarios';
+
+    protected $guarded = ['id', 'senha_hash'];
+
+    protected $hidden = ['senha_hash'];
+
+    public const CREATED_AT = 'criado_em';
+
+    public const UPDATED_AT = 'atualizado_em';
+
+    public function getAuthPasswordName(): string
+    {
+        return 'senha_hash';
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -25,8 +40,9 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'ativo' => 'boolean',
+            'deve_trocar_senha' => 'boolean',
+            'senha_alterada_em' => 'immutable_datetime',
         ];
     }
 }

@@ -1,0 +1,6 @@
+<x-forms.field nome="veiculo" rotulo="Veículo (placa)" :valor="$registro->placa ?? ''" :obrigatorio="true" maxlength="120" />
+<x-forms.field nome="combustivel" rotulo="Combustível" tipo="select" :obrigatorio="true" :opcoes="['gasolina'=>'Gasolina','etanol'=>'Etanol','diesel'=>'Diesel','gnv'=>'GNV','eletricidade'=>'Eletricidade','outro'=>'Outro']" data-fuel-type />
+<div class="row"><div class="col-md-6"><x-forms.field nome="quantidade" rotulo="Quantidade" tipo="number" :obrigatorio="true" min="0.001" step="0.001" /></div><div class="col-md-6"><x-forms.field nome="unidade_medida" rotulo="Unidade de medida" tipo="select" :obrigatorio="true" :opcoes="['litro'=>'Litro','m3'=>'Metro cúbico','kwh'=>'Quilowatt-hora']" data-fuel-unit /></div></div>
+<div class="row"><div class="col-md-6"><x-forms.field nome="preco_unitario" rotulo="Preço unitário" tipo="number" :obrigatorio="true" min="0.0001" step="0.0001" /></div><div class="col-md-6"><x-forms.field nome="quilometragem" rotulo="Quilometragem" tipo="number" :obrigatorio="true" min="0" step="0.1" /></div></div>
+<x-forms.field nome="data" rotulo="Data do abastecimento" tipo="date" :obrigatorio="true" />
+<x-forms.field nome="documento" rotulo="Documento fiscal" tipo="file" accept="application/pdf,image/png,image/jpeg" />

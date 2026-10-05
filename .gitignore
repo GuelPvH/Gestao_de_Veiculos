@@ -3,6 +3,16 @@
 .env
 .env.backup
 .env.production
+.env.*
+!.env.example
+!.env.local.example
+*.cnf
+*.dump
+*.backup.sql
+/private
+/artifacts
+/playwright-report
+/test-results
 .phpactor.json
 .phpunit.result.cache
 /.codex
@@ -25,3 +35,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+__pycache__/
+*.pyc

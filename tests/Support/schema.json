@@ -1,0 +1,2803 @@
+{
+  "source_sha256": "b1d6fccbc8b69148da612e9d1f1f20f41c61120798a3937644c99ef2cad151d6",
+  "tables": {
+    "versoes_modelo": {
+      "versao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "instalado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "unidades": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "unidade_superior_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "endereco": {
+        "type": "TEXT",
+        "default": null
+      },
+      "cidade": {
+        "type": "TEXT",
+        "default": null
+      },
+      "uf": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativa": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "configuracao_sistema": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "nome_sistema": {
+        "type": "TEXT",
+        "default": null
+      },
+      "nome_orgao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "sigla_orgao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "fuso_horario": {
+        "type": "TEXT",
+        "default": "'America/Porto_Velho'"
+      },
+      "moeda": {
+        "type": "TEXT",
+        "default": "'BRL'"
+      },
+      "sessao_inatividade_minutos": {
+        "type": "INTEGER",
+        "default": "30"
+      },
+      "limite_sem_comunicacao_minutos": {
+        "type": "INTEGER",
+        "default": "15"
+      },
+      "logo_arquivo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "bootstrap_concluido": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "atualizado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "usuarios": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "unidade_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "identificador": {
+        "type": "TEXT",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "email": {
+        "type": "TEXT",
+        "default": null
+      },
+      "telefone": {
+        "type": "TEXT",
+        "default": null
+      },
+      "senha_hash": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativo": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "deve_trocar_senha": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "senha_alterada_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "versao": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "atualizado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "arquivos": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "enviado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "chave_armazenamento": {
+        "type": "TEXT",
+        "default": null
+      },
+      "nome_original": {
+        "type": "TEXT",
+        "default": null
+      },
+      "tipo_mime": {
+        "type": "TEXT",
+        "default": null
+      },
+      "tamanho_bytes": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "sha256": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao": {
+        "type": "TEXT",
+        "default": "'pendente'"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "preferencias_usuario": {
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tema": {
+        "type": "TEXT",
+        "default": "'dispositivo'"
+      },
+      "itens_por_pagina": {
+        "type": "INTEGER",
+        "default": "10"
+      },
+      "notificacoes_internas": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "atualizado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "motoristas": {
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "numero_cnh": {
+        "type": "TEXT",
+        "default": null
+      },
+      "categoria_cnh": {
+        "type": "TEXT",
+        "default": null
+      },
+      "categorias_autorizadas": {
+        "type": "TEXT",
+        "default": null
+      },
+      "validade_cnh": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativo": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "cnh_arquivo_id": {
+        "type": "INTEGER",
+        "default": null
+      }
+    },
+    "modulos": {
+      "codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ordem": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "ativo": {
+        "type": "INTEGER",
+        "default": "1"
+      }
+    },
+    "acoes": {
+      "codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "modulo_acoes": {
+      "modulo_codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "acao_codigo": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "perfis": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativo": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "perfil_origem_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "criado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "atualizado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "permissoes": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "modulo_codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "acao_codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "alcance": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "perfil_permissoes": {
+      "perfil_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "permissao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "delegavel": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "concedido_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "concedido_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "usuario_perfis": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "perfil_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "unidade_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "vigente_desde": {
+        "type": "TEXT",
+        "default": null
+      },
+      "vigente_ate": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativo": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "concedido_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "revogado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "motivo_revogacao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "sessoes": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "vinculo_ativo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "token_hash": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ultima_atividade_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "expira_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "encerrada_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "motivo_encerramento": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ip": {
+        "type": "TEXT",
+        "default": null
+      },
+      "agente_usuario": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "controle_vinculos": {
+      "vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "perfil_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "unidade_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "vigente_desde": {
+        "type": "TEXT",
+        "default": null
+      },
+      "vigente_ate": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativo_vinculo": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ativo_usuario": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ativo_perfil": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ativo_unidade": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "pode_administrar": {
+        "type": "INTEGER",
+        "default": null
+      }
+    },
+    "recuperacoes_senha": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "token_hash": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "expira_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "usado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "invalidado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "rotas_sistema": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "chave": {
+        "type": "TEXT",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "caminho": {
+        "type": "TEXT",
+        "default": null
+      },
+      "metodo_http": {
+        "type": "TEXT",
+        "default": "'GET'"
+      },
+      "modulo_codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativa": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "visivel_menu": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "implementada": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "protegida": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "ordem": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "criado_por": {
+        "type": "INTEGER",
+        "default": null
+      }
+    },
+    "rota_permissoes": {
+      "rota_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "modulo_codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "acao_codigo": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "auditoria": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ator_usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ator_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "sessao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ator_nome_snapshot": {
+        "type": "TEXT",
+        "default": null
+      },
+      "perfil_nome_snapshot": {
+        "type": "TEXT",
+        "default": null
+      },
+      "perfil_codigo_snapshot": {
+        "type": "TEXT",
+        "default": null
+      },
+      "evento": {
+        "type": "TEXT",
+        "default": null
+      },
+      "entidade": {
+        "type": "TEXT",
+        "default": null
+      },
+      "entidade_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "correlacao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "antes": {
+        "type": "TEXT",
+        "default": null
+      },
+      "depois": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ip": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "categorias_veiculo": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "categoria_cnh_requerida": {
+        "type": "TEXT",
+        "default": "'B'"
+      },
+      "ativa": {
+        "type": "INTEGER",
+        "default": "1"
+      }
+    },
+    "veiculos": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "unidade_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "categoria_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "placa": {
+        "type": "TEXT",
+        "default": null
+      },
+      "renavam": {
+        "type": "TEXT",
+        "default": null
+      },
+      "chassi": {
+        "type": "TEXT",
+        "default": null
+      },
+      "marca": {
+        "type": "TEXT",
+        "default": null
+      },
+      "modelo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ano_fabricacao": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ano_modelo": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "capacidade": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "quilometragem_atual": {
+        "type": "REAL",
+        "default": "0"
+      },
+      "situacao_cadastro": {
+        "type": "TEXT",
+        "default": "'ativo'"
+      },
+      "observacoes": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "versao": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "atualizado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "documentos_veiculo": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "arquivo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "numero": {
+        "type": "TEXT",
+        "default": null
+      },
+      "exercicio": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "emitido_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "vence_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "substitui_documento_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "rastreadores": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "identificador_externo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "provedor": {
+        "type": "TEXT",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": "'gps'"
+      },
+      "modelo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativo": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "veiculo_rastreadores": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "rastreador_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "instalado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "removido_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "instalado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_aberto": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "rastreador_aberto": {
+        "type": "INTEGER",
+        "default": null
+      }
+    },
+    "solicitacoes": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "protocolo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "solicitante_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "unidade_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "revisao_atual_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "situacao": {
+        "type": "TEXT",
+        "default": "'rascunho'"
+      },
+      "versao": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "atualizado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "solicitacao_revisoes": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "solicitacao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "numero": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "finalidade": {
+        "type": "TEXT",
+        "default": null
+      },
+      "origem": {
+        "type": "TEXT",
+        "default": null
+      },
+      "destino": {
+        "type": "TEXT",
+        "default": null
+      },
+      "origem_latitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "origem_longitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "destino_latitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "destino_longitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "saida_prevista": {
+        "type": "TEXT",
+        "default": null
+      },
+      "retorno_previsto": {
+        "type": "TEXT",
+        "default": null
+      },
+      "quantidade_passageiros": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "necessita_motorista": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "motorista_sugerido_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_pretendido_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "trajeto_planejado": {
+        "type": "TEXT",
+        "default": null
+      },
+      "polilinha_planejada": {
+        "type": "TEXT",
+        "default": null
+      },
+      "distancia_prevista_km": {
+        "type": "REAL",
+        "default": null
+      },
+      "observacoes": {
+        "type": "TEXT",
+        "default": null
+      },
+      "etapa_atual": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "criado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "enviado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "solicitacao_paradas": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "revisao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ordem": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "latitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "longitude": {
+        "type": "REAL",
+        "default": null
+      }
+    },
+    "solicitacao_passageiros": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "revisao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "contato": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "solicitacao_eventos": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "solicitacao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "revisao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ator_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao_anterior": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao_nova": {
+        "type": "TEXT",
+        "default": null
+      },
+      "motivo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "veiculo_confirmado_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "motorista_confirmado_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "reservas": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "motorista_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "revisao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "inicio": {
+        "type": "TEXT",
+        "default": null
+      },
+      "fim": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao": {
+        "type": "TEXT",
+        "default": "'ativa'"
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "liberada_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "viagens": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "protocolo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "revisao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "reserva_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "motorista_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "situacao": {
+        "type": "TEXT",
+        "default": "'programada'"
+      },
+      "saida_real": {
+        "type": "TEXT",
+        "default": null
+      },
+      "retorno_real": {
+        "type": "TEXT",
+        "default": null
+      },
+      "quilometragem_saida": {
+        "type": "REAL",
+        "default": null
+      },
+      "quilometragem_retorno": {
+        "type": "REAL",
+        "default": null
+      },
+      "saida_registrada_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "retorno_registrado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "observacao_saida": {
+        "type": "TEXT",
+        "default": null
+      },
+      "observacao_retorno": {
+        "type": "TEXT",
+        "default": null
+      },
+      "versao": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "ocupacoes_agenda": {
+      "reserva_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "motorista_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "viagem_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "em_andamento": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "inicio": {
+        "type": "TEXT",
+        "default": null
+      },
+      "fim": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "checklist_itens": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "obrigatorio": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "ativo": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "ordem": {
+        "type": "INTEGER",
+        "default": "0"
+      }
+    },
+    "viagem_checklists": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "viagem_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "preenchido_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "finalizado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "viagem_checklist_respostas": {
+      "checklist_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "item_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "resultado": {
+        "type": "TEXT",
+        "default": null
+      },
+      "observacao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "descricao_item": {
+        "type": "TEXT",
+        "default": "''"
+      },
+      "obrigatorio_snapshot": {
+        "type": "INTEGER",
+        "default": "1"
+      }
+    },
+    "viagem_ocorrencias": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "viagem_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "registrado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": "'geral'"
+      },
+      "ocorrido_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "latitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "longitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "posicoes_rastreamento": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "instalacao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "viagem_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "identificador_evento": {
+        "type": "TEXT",
+        "default": null
+      },
+      "capturado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "recebido_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "latitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "longitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "velocidade_kmh": {
+        "type": "REAL",
+        "default": null
+      },
+      "precisao_metros": {
+        "type": "REAL",
+        "default": null
+      },
+      "ignicao": {
+        "type": "INTEGER",
+        "default": null
+      }
+    },
+    "posicoes_manuais": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "viagem_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "registrado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "registrado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ocorrido_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "latitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "longitude": {
+        "type": "REAL",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "categorias_despesa": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativa": {
+        "type": "INTEGER",
+        "default": "1"
+      }
+    },
+    "fornecedores": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "cpf_cnpj": {
+        "type": "TEXT",
+        "default": null
+      },
+      "email": {
+        "type": "TEXT",
+        "default": null
+      },
+      "telefone": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativo": {
+        "type": "INTEGER",
+        "default": "1"
+      }
+    },
+    "despesas": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "protocolo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "unidade_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "categoria_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "fornecedor_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "data_despesa": {
+        "type": "TEXT",
+        "default": null
+      },
+      "valor": {
+        "type": "REAL",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "numero_documento": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao": {
+        "type": "TEXT",
+        "default": "'registrada'"
+      },
+      "criado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "versao": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "atualizado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "despesa_eventos": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "despesa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ator_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao_anterior": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao_nova": {
+        "type": "TEXT",
+        "default": null
+      },
+      "motivo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "pagamentos_despesa": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "despesa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "valor": {
+        "type": "REAL",
+        "default": null
+      },
+      "pago_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "comprovante_arquivo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "confirmado_por_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "confirmado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "abastecimentos": {
+      "despesa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "combustivel": {
+        "type": "TEXT",
+        "default": null
+      },
+      "quantidade": {
+        "type": "REAL",
+        "default": null
+      },
+      "unidade_medida": {
+        "type": "TEXT",
+        "default": "'litro'"
+      },
+      "preco_unitario": {
+        "type": "REAL",
+        "default": null
+      },
+      "quilometragem": {
+        "type": "REAL",
+        "default": null
+      },
+      "tanque_completo": {
+        "type": "INTEGER",
+        "default": "0"
+      }
+    },
+    "manutencoes": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "protocolo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "despesa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "reserva_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "fornecedor_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao": {
+        "type": "TEXT",
+        "default": "'planejada'"
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "inicio_previsto": {
+        "type": "TEXT",
+        "default": null
+      },
+      "fim_previsto": {
+        "type": "TEXT",
+        "default": null
+      },
+      "inicio_real": {
+        "type": "TEXT",
+        "default": null
+      },
+      "fim_real": {
+        "type": "TEXT",
+        "default": null
+      },
+      "quilometragem": {
+        "type": "REAL",
+        "default": null
+      },
+      "proxima_revisao_km": {
+        "type": "REAL",
+        "default": null
+      },
+      "proxima_revisao_data": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "manutencao_itens": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "manutencao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "quantidade": {
+        "type": "REAL",
+        "default": "1"
+      },
+      "valor_unitario": {
+        "type": "REAL",
+        "default": null
+      }
+    },
+    "pneus": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "numero_serie": {
+        "type": "TEXT",
+        "default": null
+      },
+      "marca": {
+        "type": "TEXT",
+        "default": null
+      },
+      "modelo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "medida": {
+        "type": "TEXT",
+        "default": null
+      },
+      "adquirido_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "despesa_aquisicao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "situacao": {
+        "type": "TEXT",
+        "default": "'estoque'"
+      },
+      "descartado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "motivo_descarte": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "pneu_instalacoes": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "pneu_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "posicao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "instalado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "removido_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "quilometragem_instalacao": {
+        "type": "REAL",
+        "default": null
+      },
+      "quilometragem_remocao": {
+        "type": "REAL",
+        "default": null
+      },
+      "motivo_remocao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "registrado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "manutencao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "pneu_aberto": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_aberto": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "posicao_aberta": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "multas": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "protocolo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "unidade_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "numero_auto": {
+        "type": "TEXT",
+        "default": null
+      },
+      "orgao_autuador": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ocorrido_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "precisao_ocorrencia": {
+        "type": "TEXT",
+        "default": "'instante'"
+      },
+      "fim_dia_ocorrencia_utc": {
+        "type": "TEXT",
+        "default": null
+      },
+      "data_vencimento": {
+        "type": "TEXT",
+        "default": null
+      },
+      "valor": {
+        "type": "REAL",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao": {
+        "type": "TEXT",
+        "default": "'sem_responsavel'"
+      },
+      "responsabilidade_atual_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "criado_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "versao": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "multa_responsabilidades": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "multa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "viagem_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "motorista_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "responsavel_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "numero": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "confirmado_por_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "confirmado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "justificativa": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "multa_eventos": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "multa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ator_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao_anterior": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao_nova": {
+        "type": "TEXT",
+        "default": null
+      },
+      "motivo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "multa_comprovantes": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "multa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "numero": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "responsabilidade_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "arquivo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "enviado_por_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "valor_declarado": {
+        "type": "REAL",
+        "default": null
+      },
+      "pagamento_declarado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "observacao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "enviado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "multa_conferencias": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "multa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "comprovante_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "conferido_por_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "resultado": {
+        "type": "TEXT",
+        "default": null
+      },
+      "motivo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "valor_confirmado": {
+        "type": "REAL",
+        "default": null
+      },
+      "pagamento_confirmado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "conferido_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "pagamentos_multa": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "multa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "conferencia_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "valor": {
+        "type": "REAL",
+        "default": null
+      },
+      "pago_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "registrado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "categorias_chamado": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "nome": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ativa": {
+        "type": "INTEGER",
+        "default": "1"
+      }
+    },
+    "chamados": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "protocolo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "solicitante_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "unidade_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "perfil_contexto_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "categoria_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "assunto": {
+        "type": "TEXT",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "pagina_contexto": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao": {
+        "type": "TEXT",
+        "default": "'aberto'"
+      },
+      "atribuido_a": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "resolvido_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "versao": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "atualizado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "chamado_mensagens": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "chamado_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "autor_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "mensagem": {
+        "type": "TEXT",
+        "default": null
+      },
+      "interna": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "chamado_eventos": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "chamado_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ator_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao_anterior": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao_nova": {
+        "type": "TEXT",
+        "default": null
+      },
+      "motivo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "notificacao_eventos": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "chave_idempotencia": {
+        "type": "TEXT",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "titulo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "mensagem": {
+        "type": "TEXT",
+        "default": null
+      },
+      "caminho_destino": {
+        "type": "TEXT",
+        "default": null
+      },
+      "solicitacao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "viagem_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "multa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "despesa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "chamado_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "notificacao_destinatarios": {
+      "evento_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "lida_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "oculta_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "versao": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "entregue_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "relatorio_campos": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "modulo_codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "chave": {
+        "type": "TEXT",
+        "default": null
+      },
+      "rotulo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "tipo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "acao_adicional": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ordem": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "ativo": {
+        "type": "INTEGER",
+        "default": "1"
+      }
+    },
+    "exportacoes": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "solicitado_por_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "modulo_codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "formato": {
+        "type": "TEXT",
+        "default": null
+      },
+      "situacao": {
+        "type": "TEXT",
+        "default": "'previa'"
+      },
+      "periodo_inicio": {
+        "type": "TEXT",
+        "default": null
+      },
+      "periodo_fim": {
+        "type": "TEXT",
+        "default": null
+      },
+      "periodo_inicio_utc": {
+        "type": "TEXT",
+        "default": null
+      },
+      "periodo_fim_utc": {
+        "type": "TEXT",
+        "default": null
+      },
+      "fuso_apresentacao": {
+        "type": "TEXT",
+        "default": "'America/Porto_Velho'"
+      },
+      "filtros": {
+        "type": "TEXT",
+        "default": null
+      },
+      "alcance_aplicado": {
+        "type": "TEXT",
+        "default": null
+      },
+      "unidade_aplicada_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "total_registros": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "arquivo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "erro_codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "iniciado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "concluido_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "expira_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "exportacao_campos": {
+      "exportacao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "campo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "modulo_codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "ordem": {
+        "type": "INTEGER",
+        "default": null
+      }
+    },
+    "exportacao_registros": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "exportacao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ordem": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "solicitacao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "viagem_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "veiculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "despesa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "multa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "chamado_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "perfil_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "rota_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "auditoria_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "posicao_rastreamento_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "posicao_manual_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "snapshot": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "anexos": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "arquivo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "revisao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "ocorrencia_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "checklist_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "despesa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "manutencao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "multa_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "chamado_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "mensagem_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "descricao": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    }
+  },
+  "views": {
+    "vw_vinculos_ativos": [
+      "vinculo_id",
+      "usuario_id",
+      "perfil_id",
+      "unidade_id",
+      "vigente_desde",
+      "vigente_ate"
+    ],
+    "vw_permissoes_efetivas": [
+      "vinculo_id",
+      "usuario_id",
+      "perfil_id",
+      "unidade_id",
+      "modulo_codigo",
+      "acao_codigo",
+      "alcance",
+      "delegavel",
+      "nivel_alcance"
+    ],
+    "vw_administradores_permanentes": [
+      "vinculo_id",
+      "usuario_id",
+      "perfil_id"
+    ],
+    "vw_solicitacoes_atuais": [
+      "id",
+      "protocolo",
+      "solicitante_id",
+      "unidade_id",
+      "situacao",
+      "versao",
+      "criado_em",
+      "revisao_id",
+      "numero",
+      "finalidade",
+      "origem",
+      "destino",
+      "saida_prevista",
+      "retorno_previsto",
+      "quantidade_passageiros",
+      "necessita_motorista",
+      "veiculo_pretendido_id",
+      "motorista_sugerido_id",
+      "trajeto_planejado",
+      "distancia_prevista_km",
+      "enviado_em",
+      "solicitante",
+      "unidade"
+    ],
+    "vw_viagens_detalhadas": [
+      "id",
+      "protocolo",
+      "revisao_id",
+      "reserva_id",
+      "veiculo_id",
+      "motorista_id",
+      "situacao",
+      "saida_real",
+      "retorno_real",
+      "quilometragem_saida",
+      "quilometragem_retorno",
+      "saida_registrada_por",
+      "retorno_registrado_por",
+      "observacao_saida",
+      "observacao_retorno",
+      "versao",
+      "criado_em",
+      "solicitacao_id",
+      "solicitante_id",
+      "unidade_id",
+      "saida_prevista",
+      "retorno_previsto",
+      "finalidade",
+      "origem",
+      "destino",
+      "trajeto_planejado",
+      "placa",
+      "veiculo",
+      "motorista",
+      "distancia_real_km"
+    ],
+    "vw_frota": [
+      "id",
+      "unidade_id",
+      "categoria_id",
+      "nome",
+      "placa",
+      "renavam",
+      "chassi",
+      "marca",
+      "modelo",
+      "ano_fabricacao",
+      "ano_modelo",
+      "capacidade",
+      "quilometragem_atual",
+      "situacao_cadastro",
+      "observacoes",
+      "criado_por",
+      "versao",
+      "criado_em",
+      "atualizado_em",
+      "categoria",
+      "unidade",
+      "situacao_operacional"
+    ],
+    "vw_ultima_posicao_rastreador": [
+      "id",
+      "instalacao_id",
+      "veiculo_id",
+      "viagem_id",
+      "identificador_evento",
+      "capturado_em",
+      "recebido_em",
+      "latitude",
+      "longitude",
+      "velocidade_kmh",
+      "precisao_metros",
+      "ignicao"
+    ],
+    "vw_monitoramento": [
+      "veiculo_id",
+      "placa",
+      "nome",
+      "unidade_id",
+      "instalacao_id",
+      "identificador_externo",
+      "provedor",
+      "capturado_em",
+      "recebido_em",
+      "latitude",
+      "longitude",
+      "velocidade_kmh",
+      "situacao_comunicacao"
+    ],
+    "vw_multas_detalhadas": [
+      "id",
+      "protocolo",
+      "veiculo_id",
+      "unidade_id",
+      "numero_auto",
+      "orgao_autuador",
+      "ocorrido_em",
+      "precisao_ocorrencia",
+      "fim_dia_ocorrencia_utc",
+      "data_vencimento",
+      "valor",
+      "descricao",
+      "situacao",
+      "responsabilidade_atual_id",
+      "criado_por",
+      "versao",
+      "criado_em",
+      "responsavel_id",
+      "motorista_id",
+      "viagem_id",
+      "responsavel",
+      "placa",
+      "veiculo",
+      "ultima_versao_comprovante",
+      "valor_quitado",
+      "pago_em"
+    ],
+    "vw_despesas_detalhadas": [
+      "id",
+      "protocolo",
+      "veiculo_id",
+      "unidade_id",
+      "categoria_id",
+      "fornecedor_id",
+      "data_despesa",
+      "valor",
+      "descricao",
+      "numero_documento",
+      "situacao",
+      "criado_por",
+      "versao",
+      "criado_em",
+      "atualizado_em",
+      "placa",
+      "veiculo",
+      "categoria",
+      "fornecedor",
+      "valor_pago",
+      "pago_em"
+    ],
+    "vw_custos_veiculo_mensais": [
+      "veiculo_id",
+      "unidade_id",
+      "mes",
+      "valor_despesas",
+      "quantidade_despesas"
+    ],
+    "vw_notificacoes_usuario": [
+      "usuario_id",
+      "lida_em",
+      "oculta_em",
+      "versao",
+      "entregue_em",
+      "id",
+      "chave_idempotencia",
+      "tipo",
+      "titulo",
+      "mensagem",
+      "caminho_destino",
+      "solicitacao_id",
+      "viagem_id",
+      "multa_id",
+      "despesa_id",
+      "chamado_id",
+      "criado_em"
+    ],
+    "vw_trajetos_observados": [
+      "registro_id",
+      "fonte",
+      "veiculo_id",
+      "viagem_id",
+      "ocorrido_em",
+      "latitude",
+      "longitude",
+      "velocidade_kmh",
+      "descricao"
+    ],
+    "vw_resumo_financeiro_veiculo": [
+      "veiculo_id",
+      "placa",
+      "unidade_id",
+      "despesas_registradas",
+      "despesas_pagas",
+      "multas_registradas",
+      "multas_quitadas",
+      "multas_pendentes"
+    ]
+  }
+}
