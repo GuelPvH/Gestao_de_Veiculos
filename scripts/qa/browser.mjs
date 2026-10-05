@@ -96,7 +96,7 @@ for(const [nome,valor] of [['finalidade','Atividade institucional'],['origem','S
 await pagina.getByRole('button',{name:'Continuar',exact:true}).click();await pagina.locator('[name=necessita_motorista]').selectOption('1');
 await pagina.getByRole('button',{name:'Continuar',exact:true}).click();if(await pagina.locator('[name=veiculo_pretendido_id]').count()) await pagina.locator('[name=veiculo_pretendido_id]').selectOption('1');await pagina.getByRole('button',{name:'Continuar',exact:true}).click();
 await pagina.getByRole('button',{name:'Revisar',exact:true}).click();await pagina.waitForSelector('#operation-review.show');
-interacoes.push({test:'review modal traps focus and confirmation disabled',passed:await pagina.locator('#operation-review').evaluate(no=>no.contains(document.activeElement)) && await pagina.locator('#operation-review').getByRole('button',{name:'Confirmar',exact:true}).isDisabled()});
+interacoes.push({test:'review modal traps focus and confirmation enabled',passed:await pagina.locator('#operation-review').evaluate(no=>no.contains(document.activeElement)) && await pagina.locator('#operation-review').getByRole('button',{name:'Confirmar',exact:true}).isEnabled()});
 await pagina.keyboard.press('Escape');await pagina.waitForSelector('#operation-review.show',{state:'hidden'});
 await pagina.waitForFunction(()=>document.querySelector('[data-review-submit]')===document.activeElement);
 interacoes.push({test:'modal Escape returns focus',passed:await pagina.getByRole('button',{name:'Revisar',exact:true}).evaluate(no=>no===document.activeElement)});
