@@ -62,4 +62,30 @@ return [
         'details' => ['descricao' => ['r.descricao', 'Descrição'], 'inicio_previsto' => ['r.inicio_previsto', 'Início previsto', 'datetime'], 'fim_previsto' => ['r.fim_previsto', 'Fim previsto', 'datetime'], 'quilometragem' => ['r.quilometragem', 'Quilometragem'], 'valor' => ['d.valor', 'Despesa vinculada', 'money', 'ver_valores']],
         'states' => ['planejada', 'em_execucao', 'concluida', 'cancelada'], 'actions' => ['edit' => ['Editar manutenção', 'editar'], 'cancel' => ['Cancelar manutenção', 'cancelar']], 'create' => true,
     ],
+    'users' => [
+        'title' => 'Usuários', 'module' => 'usuarios', 'icon' => 'home', 'url' => 'usuarios', 'table' => 'usuarios', 'owner' => 'r.id', 'unit' => 'r.unidade_id', 'date' => 'r.criado_em',
+        'joins' => [['unidades as u', 'u.id', 'r.unidade_id']],
+        'columns' => ['identificador' => ['r.identificador', 'Identificador'], 'nome' => ['r.nome', 'Nome'], 'unidade' => ['u.nome', 'Unidade'], 'situacao' => ['r.ativo', 'Situação', 'bool']],
+        'details' => ['email' => ['r.email', 'E-mail'], 'telefone' => ['r.telefone', 'Telefone'], 'criado_em' => ['r.criado_em', 'Cadastro', 'datetime']],
+        'states' => ['0', '1'], 'stateLabels' => ['0' => 'Inativo', '1' => 'Ativo'], 'actions' => ['edit' => ['Editar usuário', 'editar'], 'links' => ['Revisar vínculos', 'gerenciar']], 'create' => true,
+    ],
+    'roles' => [
+        'title' => 'Perfis e permissões', 'module' => 'perfis', 'icon' => 'clipboard-list', 'url' => 'perfis', 'table' => 'perfis', 'owner' => 'r.criado_por', 'unit' => null,
+        'columns' => ['codigo' => ['r.codigo', 'Código'], 'nome' => ['r.nome', 'Perfil'], 'situacao' => ['r.ativo', 'Situação', 'bool']],
+        'details' => ['descricao' => ['r.descricao', 'Descrição']],
+        'states' => ['0', '1'], 'stateLabels' => ['0' => 'Inativo', '1' => 'Ativo'], 'actions' => ['edit' => ['Editar perfil', 'editar'], 'duplicate' => ['Duplicar perfil', 'criar']], 'create' => true,
+    ],
+    'technical-routes' => [
+        'title' => 'Rotas técnicas', 'module' => 'rotas', 'icon' => 'route', 'url' => 'rotas', 'table' => 'rotas_sistema', 'owner' => 'r.criado_por', 'unit' => null,
+        'columns' => ['nome' => ['r.nome', 'Nome'], 'caminho' => ['r.caminho', 'Caminho'], 'metodo' => ['r.metodo_http', 'Método'], 'situacao' => ['r.ativa', 'Situação', 'bool']],
+        'details' => ['chave' => ['r.chave', 'Chave'], 'modulo' => ['r.modulo_codigo', 'Módulo'], 'descricao' => ['r.descricao', 'Descrição'], 'implementada' => ['r.implementada', 'Implementação', 'bool'], 'protegida' => ['r.protegida', 'Proteção', 'bool']],
+        'states' => ['0', '1'], 'stateLabels' => ['0' => 'Desativada', '1' => 'Ativa'], 'actions' => ['edit' => ['Editar metadados', 'editar']], 'create' => true,
+    ],
+    'audit' => [
+        'title' => 'Auditoria', 'module' => 'auditoria', 'icon' => 'history', 'url' => 'auditoria', 'table' => 'auditoria', 'owner' => 'r.ator_usuario_id', 'unit' => 'v.unidade_id', 'date' => 'r.criado_em',
+        'joins' => [['usuario_perfis as v', 'v.id', 'r.ator_vinculo_id']],
+        'columns' => ['evento' => ['r.evento', 'Evento'], 'ator' => ['r.ator_nome_snapshot', 'Ator'], 'entidade' => ['r.entidade', 'Entidade'], 'criado_em' => ['r.criado_em', 'Data', 'datetime']],
+        'details' => ['perfil' => ['r.perfil_nome_snapshot', 'Perfil do ator'], 'entidade_id' => ['r.entidade_id', 'Identificador do registro']],
+        'states' => [], 'actions' => [],
+    ],
 ];

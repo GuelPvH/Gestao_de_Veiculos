@@ -12,16 +12,22 @@ class AccessContext
 
     private array $niveis = [];
 
+    private array $delegacoes = [];
+
     public function load(?stdClass $vinculo): void
     {
         $this->vinculo = $vinculo;
         $this->niveis = [];
+        $this->delegacoes = [];
         if (! $vinculo) {
             return;
         }
-        foreach (DB::table('vw_permissoes_efetivas')->where('vinculo_id', $vinculo->vinculo_id)->get(['modulo_codigo', 'acao_codigo', 'nivel_alcance']) as $permissao) {
+        foreach (DB::table('vw_permissoes_efetivas')->where('vinculo_id', $vinculo->vinculo_id)->get(['modulo_codigo', 'acao_codigo', 'nivel_alcance', 'delegavel']) as $permissao) {
             $chave = $permissao->modulo_codigo.'.'.$permissao->acao_codigo;
             $this->niveis[$chave] = max($this->niveis[$chave] ?? 0, (int) $permissao->nivel_alcance);
+            if ($permissao->delegavel) {
+                $this->delegacoes[$chave] = max($this->delegacoes[$chave] ?? 0, (int) $permissao->nivel_alcance);
+            }
         }
     }
 
@@ -33,6 +39,11 @@ class AccessContext
     public function level(string $modulo, string $acao = 'consultar'): int
     {
         return $this->niveis[$modulo.'.'.$acao] ?? 0;
+    }
+
+    public function delegationLevel(string $modulo, string $acao): int
+    {
+        return $this->delegacoes[$modulo.'.'.$acao] ?? 0;
     }
 
     public function can(string $modulo, string $acao = 'consultar', ?int $dono = null, ?int $unidade = null): bool

@@ -5,7 +5,7 @@
     <x-ui.panel titulo="Registros">
         <form method="get" action="{{ route($codigo.'.index') }}" class="filter-grid">
             <x-forms.field nome="q" rotulo="Buscar registros" :valor="$filtros['q'] ?? ''" maxlength="150" />
-            <x-forms.field nome="situacao" rotulo="Situação" tipo="select" :valor="$filtros['situacao'] ?? ''" :opcoes="array_combine($tela['states'] ?? [], array_map(fn($valor) => ucfirst(str_replace('_',' ',$valor)), $tela['states'] ?? [])) ?: []" />
+            <x-forms.field nome="situacao" rotulo="Situação" tipo="select" :valor="$filtros['situacao'] ?? ''" :opcoes="$tela['stateLabels'] ?? array_combine($tela['states'] ?? [], array_map(fn($valor) => ucfirst(str_replace('_',' ',$valor)), $tela['states'] ?? [])) ?: []" />
             <x-forms.field nome="ordem" rotulo="Ordenação" tipo="select" :valor="$filtros['ordem'] ?? 'recentes'" :opcoes="['recentes' => 'Mais recentes', 'antigos' => 'Mais antigos']" />
             <div class="mb-3"><button type="submit" class="btn btn-primary">Filtrar</button><a class="btn btn-link" href="{{ route($codigo.'.index') }}">Limpar</a></div>
         </form>
