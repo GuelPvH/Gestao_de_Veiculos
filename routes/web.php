@@ -57,6 +57,7 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::post('/administracao/perfis/{registro}/duplicate', [AdminController::class, 'duplicateRole'])->whereNumber('registro')->defaults('tela', 'roles')->defaults('area', 'roles')->defaults('operacao', 'duplicate')->name('roles.duplicate');
     Route::post('/administracao/perfis/{registro}/permissoes/conceder', [AdminController::class, 'grantRole'])->whereNumber('registro')->defaults('tela', 'roles')->defaults('area', 'roles')->defaults('operacao', 'grant')->name('roles.grant');
     Route::post('/administracao/perfis/{registro}/permissoes/revogar', [AdminController::class, 'revokeRole'])->whereNumber('registro')->defaults('tela', 'roles')->defaults('area', 'roles')->defaults('operacao', 'revoke')->name('roles.revoke');
+    Route::post('/administracao/rotas/novo', [AdminController::class, 'storeRoute'])->defaults('tela', 'technical-routes')->defaults('area', 'technical-routes')->defaults('operacao', 'store')->name('technical-routes.store');
     Route::post('/administracao/rotas/{registro}/edit', [AdminController::class, 'updateRoute'])->whereNumber('registro')->defaults('tela', 'technical-routes')->defaults('area', 'technical-routes')->defaults('operacao', 'update')->name('technical-routes.update');
     Route::get('/conta', [AccountController::class, 'index'])->name('account.index');
     Route::get('/notificacoes', [NotificationController::class, 'index'])->name('notifications.index');

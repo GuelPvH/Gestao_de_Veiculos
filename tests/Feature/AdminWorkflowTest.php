@@ -94,7 +94,7 @@ class AdminWorkflowTest extends TestCase
                 $this->assertSame('sp_vincular_perfil', $nome);
                 $this->assertSame(10, $dados[0]);
                 $this->assertSame(2, $dados[1]);
-                $this->assertSame(1, $dados[2]);
+                $this->assertSame(4, $dados[2]);
                 $this->assertSame(1, $dados[3]);
 
                 return true;
@@ -115,7 +115,7 @@ class AdminWorkflowTest extends TestCase
 
         // Link profile
         $this->post(route('users.link', 2), [
-            'perfil_id' => 1,
+            'perfil_id' => 4,
             'unidade_id' => 1,
             'vigente_desde' => '2026-10-05T08:00',
             'vigente_ate' => '2026-12-31T18:00',
@@ -249,6 +249,49 @@ class AdminWorkflowTest extends TestCase
             'ordem' => 15,
             'justificativa' => 'Desativação indevida de rota protegida',
         ])->assertSessionHasErrors('ativa');
+    }
+
+    public function test_admin_stores_technical_route(): void
+    {
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->twice()
+            ->withArgs(fn ($nome) => in_array($nome, ['sp_exigir_permissao', 'sp_auditar'], true))
+            ->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+
+        $this->post(route('technical-routes.store'), [
+            'chave' => 'despesas.pneus.index',
+            'modulo_codigo' => 'despesas',
+            'nome' => 'Pneus',
+            'caminho' => '/financeiro/pneus',
+            'metodo_http' => 'GET',
+            'descricao' => 'Consulta de pneus cadastrados',
+            'ativa' => 1,
+            'visivel_menu' => 1,
+            'ordem' => 50,
+        ])->assertRedirect()->assertSessionHas('status');
+
+        $rota = DB::table('rotas_sistema')->where('chave', 'despesas.pneus.index')->first();
+        $this->assertNotNull($rota);
+        $this->assertSame('/financeiro/pneus', $rota->caminho);
+        $this->assertSame('GET', $rota->metodo_http);
+    }
+
+    public function test_route_catalog_rejects_unimplemented_path_or_wrong_module(): void
+    {
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldNotReceive('call');
+        app()->instance(ProcedureRunner::class, $procedimentos);
+        $entrada = [
+            'chave' => 'rota.nova', 'modulo_codigo' => 'despesas', 'nome' => 'Rota nova',
+            'caminho' => '/frota/telemetria/eventos', 'metodo_http' => 'GET',
+            'ativa' => 1, 'visivel_menu' => 1, 'ordem' => 50,
+        ];
+        $this->post(route('technical-routes.store'), $entrada)->assertSessionHasErrors('caminho');
+        $this->post(route('technical-routes.store'), array_replace($entrada, [
+            'caminho' => '/financeiro/pneus', 'modulo_codigo' => 'frota',
+        ]))->assertSessionHasErrors('caminho');
+        $this->assertFalse(DB::table('rotas_sistema')->where('chave', 'rota.nova')->exists());
     }
 
     public function test_non_admin_cannot_execute_admin_actions(): void

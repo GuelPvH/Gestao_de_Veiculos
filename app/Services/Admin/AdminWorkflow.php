@@ -8,6 +8,7 @@ use App\Services\Read\FleetReadRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use stdClass;
@@ -68,10 +69,17 @@ class AdminWorkflow
         $this->visible('users', $id);
         $unidade = (int) $dados['unidade_id'];
         abort_unless($this->acesso->can('usuarios', 'delegar', $id, $unidade), 403);
+        foreach (DB::table('perfil_permissoes as pp')->join('permissoes as p', 'p.id', '=', 'pp.permissao_id')
+            ->where('pp.perfil_id', (int) $dados['perfil_id'])->get(['p.modulo_codigo', 'p.acao_codigo', 'p.alcance']) as $permissao) {
+            $nivel = match ($permissao->alcance) {
+                'proprios' => 1, 'unidade' => 2, default => 3,
+            };
+            abort_unless($this->acesso->delegationLevel($permissao->modulo_codigo, $permissao->acao_codigo) >= $nivel, 403);
+        }
         $inicio = CarbonImmutable::parse($dados['vigente_desde'], config('fleet.timezone'))->utc()->format('Y-m-d H:i:s.u');
         $fim = empty($dados['vigente_ate']) ? null : CarbonImmutable::parse($dados['vigente_ate'], config('fleet.timezone'))->utc()->format('Y-m-d H:i:s.u');
         $retorno = $this->procedimentos->call('sp_vincular_perfil', [
-            $this->linkId(), $id, (int) $dados['perfil_id'], $unidade, $inicio, $fim,
+            $this->linkId(), $id, (int) $dados['perfil_id'], $unidade, $inicio, $fim, trim($dados['justificativa']),
         ]);
 
         return $this->resultId($retorno, 'vinculo_id');
@@ -117,9 +125,14 @@ class AdminWorkflow
                 throw ValidationException::withMessages(['atualizado_em' => 'Este perfil mudou desde que foi aberto. Recarregue antes de salvar.']);
             }
             $this->requirePermission('perfis', 'editar', $perfil->criado_por === null ? null : (int) $perfil->criado_por);
+            $novoInstante = CarbonImmutable::now('UTC');
+            $anterior = CarbonImmutable::parse((string) $perfil->atualizado_em, 'UTC');
+            if ($novoInstante->lessThanOrEqualTo($anterior)) {
+                $novoInstante = $anterior->addMicrosecond();
+            }
             DB::table('perfis')->where('id', $id)->update([
                 'nome' => trim($dados['nome']), 'descricao' => ($dados['descricao'] ?? null) ?: null,
-                'ativo' => (int) $dados['ativo'], 'atualizado_em' => now('UTC'),
+                'ativo' => (int) $dados['ativo'], 'atualizado_em' => $novoInstante->format('Y-m-d H:i:s.u'),
             ]);
             $this->audit('perfil_editado', 'perfis', $id, $dados['justificativa']);
         });
@@ -130,7 +143,7 @@ class AdminWorkflow
         $this->visible('roles', $id);
         abort_unless($this->acesso->can('perfis', 'criar'), 403);
         $retorno = $this->procedimentos->call('sp_duplicar_perfil', [
-            $this->linkId(), $id, $dados['codigo'], trim($dados['nome']),
+            $this->linkId(), $id, $dados['codigo'], trim($dados['nome']), trim($dados['justificativa']),
         ]);
 
         return $this->resultId($retorno, 'perfil_id');
@@ -139,7 +152,7 @@ class AdminWorkflow
     public function grantRole(int $id, array $dados): void
     {
         $perfil = $this->visible('roles', $id);
-        abort_unless($this->acesso->can('perfis', 'delegar', $perfil->__owner === null ? null : (int) $perfil->__owner), 403);
+        abort_unless($this->acesso->can('perfis', 'delegar'), 403);
         $permissao = DB::table('permissoes')->where('id', (int) $dados['permissao_id'])->first(['modulo_codigo', 'acao_codigo', 'alcance']);
         abort_unless($permissao !== null, 404);
         $nivel = match ($permissao->alcance) {
@@ -175,6 +188,37 @@ class AdminWorkflow
         });
     }
 
+    public function storeRoute(array $dados): int
+    {
+        abort_unless($this->acesso->can('rotas', 'criar'), 403);
+        $moduloImplementado = $this->registeredModule(trim($dados['caminho']), $dados['metodo_http']);
+        if ($moduloImplementado === null || $moduloImplementado !== $dados['modulo_codigo']) {
+            throw ValidationException::withMessages(['caminho' => 'Selecione um caminho e método já implementados neste módulo.']);
+        }
+
+        return DB::transaction(function () use ($dados): int {
+            $this->lockAdmin();
+            $this->requirePermission('rotas', 'criar');
+            $id = (int) DB::table('rotas_sistema')->insertGetId([
+                'chave' => trim($dados['chave']),
+                'nome' => trim($dados['nome']),
+                'caminho' => trim($dados['caminho']),
+                'metodo_http' => $dados['metodo_http'],
+                'modulo_codigo' => $dados['modulo_codigo'],
+                'descricao' => ($dados['descricao'] ?? null) ?: null,
+                'ativa' => (int) $dados['ativa'],
+                'visivel_menu' => (int) $dados['visivel_menu'],
+                'implementada' => 1,
+                'protegida' => 0,
+                'ordem' => (int) $dados['ordem'],
+                'criado_por' => (int) $this->acesso->link()->usuario_id,
+            ]);
+            $this->audit('rota_criada', 'rotas_sistema', $id, 'Metadados da rota técnica cadastrados.');
+
+            return $id;
+        });
+    }
+
     public function updateRoute(int $id, array $dados): void
     {
         $this->visible('technical-routes', $id);
@@ -200,6 +244,37 @@ class AdminWorkflow
     private function visible(string $codigo, int $id): stdClass
     {
         return $this->leituras->record($codigo, $id);
+    }
+
+    private function registeredModule(string $caminho, string $metodo): ?string
+    {
+        foreach (Route::getRoutes() as $rota) {
+            if ('/'.ltrim($rota->uri(), '/') !== $caminho || ! in_array($metodo, $rota->methods(), true)) {
+                continue;
+            }
+            $nome = $rota->getName();
+            if (! is_string($nome)) {
+                continue;
+            }
+            $prefixo = explode('.', $nome, 2)[0];
+            $tela = config('screens.'.$prefixo);
+            if (is_array($tela)) {
+                return $tela['module'];
+            }
+
+            return match ($prefixo) {
+                'dashboard' => 'painel',
+                'agenda' => 'frota',
+                'tyres' => 'despesas',
+                'reports' => 'relatorios',
+                'configuration' => 'configuracoes',
+                'notifications' => 'notificacoes',
+                'account' => 'conta',
+                default => null,
+            };
+        }
+
+        return null;
     }
 
     private function linkId(): int

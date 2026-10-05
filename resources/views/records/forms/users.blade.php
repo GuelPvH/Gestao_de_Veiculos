@@ -9,6 +9,7 @@
     <x-forms.field nome="nome" rotulo="Nome completo" :valor="old('nome')" :obrigatorio="true" maxlength="150" />
     <x-forms.field nome="email" rotulo="E-mail" tipo="email" :valor="old('email')" maxlength="254" />
     <x-forms.field nome="senha_temporaria" rotulo="Senha temporária inicial" tipo="password" :obrigatorio="true" nota="Mínimo 12 caracteres, com maiúsculas, minúsculas, números e símbolos." />
+    <x-forms.field nome="senha_temporaria_confirmation" rotulo="Confirmar senha temporária" tipo="password" :obrigatorio="true" />
 @else
     <x-forms.field nome="unidade_id" rotulo="Unidade" tipo="select" :valor="$registro->unidade_id ?? ''" :opcoes="$unidadesDisponiveis ?? []" :obrigatorio="true" />
     <x-forms.field nome="identificador" rotulo="Identificador institucional" :valor="$registro->identificador ?? ''" :obrigatorio="true" maxlength="100" />

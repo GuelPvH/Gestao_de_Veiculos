@@ -71,6 +71,13 @@ class AdminController extends Controller
         return redirect()->route('roles.show', $registro)->with('status', 'Permissão revogada.');
     }
 
+    public function storeRoute(AdminActionRequest $requisicao, AdminWorkflow $fluxo): RedirectResponse
+    {
+        $id = $fluxo->storeRoute($requisicao->validated());
+
+        return redirect()->route('technical-routes.show', $id)->with('status', 'Rota técnica cadastrada.');
+    }
+
     public function updateRoute(AdminActionRequest $requisicao, AdminWorkflow $fluxo, int $registro): RedirectResponse
     {
         $fluxo->updateRoute($registro, $requisicao->validated());
