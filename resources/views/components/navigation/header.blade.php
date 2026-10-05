@@ -1,7 +1,7 @@
 @props(['usuario' => null, 'vinculo' => null])
 <header class="app-header">
     <div class="header-context">
-        <button type="button" class="btn btn-outline-secondary icon-button d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#fleet-menu" aria-controls="fleet-menu" aria-label="Abrir menu">☰</button>
+        <button type="button" class="btn btn-outline-secondary icon-button d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#fleet-menu" aria-controls="fleet-menu" aria-label="Abrir menu"><x-ui.icon nome="menu" /></button>
         <span class="header-unit">{{ $vinculo->unidade_nome ?? 'Frota · PF' }}</span>
     </div>
     <div class="header-actions">

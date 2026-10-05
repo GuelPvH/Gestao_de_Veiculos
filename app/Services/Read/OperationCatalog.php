@@ -22,6 +22,7 @@ class OperationCatalog
             if ($codigo === 'requests') {
                 $valida = match ($acao) {
                     'approve', 'deny', 'adjust' => $situacao === 'aguardando_analise' && (int) $registro->__owner !== (int) $this->acesso->link()->usuario_id,
+                    'revision' => $situacao === 'aprovada',
                     'edit', 'send' => in_array($situacao, ['rascunho', 'ajustes_solicitados'], true),
                     'cancel' => ! in_array($situacao, ['negada', 'cancelada'], true),
                     default => false,
@@ -36,8 +37,8 @@ class OperationCatalog
                 $valida = match ($acao) {
                     'proof' => in_array($situacao, ['aguardando_comprovante', 'contestada'], true),
                     'assign' => $situacao === 'sem_responsavel',
-                    'verify', 'correct', 'settle' => $situacao === 'em_conferencia',
-                    'dispute', 'cancel' => ! in_array($situacao, ['quitada', 'cancelada'], true),
+                    'verify', 'correct', 'settle' => $situacao === 'em_conferencia' && $registro->__sender !== null && (int) $registro->__sender !== (int) $this->acesso->link()->usuario_id && (int) $registro->__owner !== (int) $this->acesso->link()->usuario_id,
+                    'dispute', 'cancel' => ! in_array($situacao, ['quitada', 'cancelada', 'em_conferencia'], true),
                     default => false,
                 };
             } elseif ($codigo === 'expenses') {

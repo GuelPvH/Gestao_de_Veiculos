@@ -2,12 +2,12 @@
     <x-ui.title :titulo="$titulo" subtitulo="Preencha as informações e confira a revisão antes de concluir." />
     <x-ui.panel>
         <form method="post" action="{{ url()->current() }}" data-dirty-form data-review-form="operation-review" novalidate>@csrf
-            @if($codigo === 'requests' && in_array($acao,['create','edit','send'],true))
+            @if($codigo === 'requests' && in_array($acao,['create','edit','send','revision'],true))
                 <ol class="wizard-steps" aria-label="Etapas da solicitação">@foreach(['Viagem','Pessoas','Veículo','Revisão'] as $etapa)<li data-step-label>{{ $loop->iteration }}. {{ $etapa }}</li>@endforeach</ol>
                 <section class="form-stage"><h2 class="h5" tabindex="-1">Dados da viagem</h2>
                     <x-forms.field nome="finalidade" rotulo="Finalidade" tipo="textarea" :valor="$registro->finalidade ?? ''" :obrigatorio="true" maxlength="3000" />
                     <div class="row"><div class="col-md-6"><x-forms.field nome="origem" rotulo="Origem" :valor="$registro->origem ?? ''" :obrigatorio="true" maxlength="255" /></div><div class="col-md-6"><x-forms.field nome="destino" rotulo="Destino" :valor="$registro->destino ?? ''" :obrigatorio="true" maxlength="255" /></div></div>
-                    <div class="row"><div class="col-md-6"><x-forms.field nome="saida_prevista" rotulo="Saída prevista" tipo="datetime-local" :obrigatorio="true" data-date-start /></div><div class="col-md-6"><x-forms.field nome="retorno_previsto" rotulo="Retorno previsto" tipo="datetime-local" :obrigatorio="true" data-date-end /></div></div>
+                    <div class="row"><div class="col-md-6"><x-forms.field nome="saida_prevista" rotulo="Saída prevista" tipo="datetime-local" :valor="$registro && $registro->saida_prevista ? \Carbon\CarbonImmutable::parse($registro->saida_prevista,'UTC')->setTimezone(config('fleet.timezone'))->format('Y-m-d\TH:i') : ''" :obrigatorio="true" data-date-start /></div><div class="col-md-6"><x-forms.field nome="retorno_previsto" rotulo="Retorno previsto" tipo="datetime-local" :valor="$registro && $registro->retorno_previsto ? \Carbon\CarbonImmutable::parse($registro->retorno_previsto,'UTC')->setTimezone(config('fleet.timezone'))->format('Y-m-d\TH:i') : ''" :obrigatorio="true" data-date-end /></div></div>
                     <x-forms.field nome="trajeto_planejado" rotulo="Trajeto planejado" tipo="textarea" :valor="$registro->trajeto ?? ''" maxlength="3000" />
                 </section>
                 <section class="form-stage" hidden><h2 class="h5" tabindex="-1">Passageiros e condutor</h2>
@@ -16,6 +16,8 @@
                     <x-forms.field nome="necessita_motorista" rotulo="Necessita de motorista?" tipo="select" :obrigatorio="true" :opcoes="['1'=>'Sim','0'=>'Não']" />
                 </section>
                 <section class="form-stage" hidden><h2 class="h5" tabindex="-1">Preferências do veículo</h2>
+                    <x-forms.field nome="veiculo_pretendido_id" rotulo="Veículo pretendido" tipo="select" :opcoes="$veiculosDisponiveis ?? []" :obrigatorio="true" nota="A disponibilidade para o período solicitado será conferida na análise." />
+                    @if(empty($veiculosDisponiveis))<x-ui.alert tom="warning">Não há veículo selecionável no alcance do perfil. Consulte o gestor da unidade.</x-ui.alert>@endif
                     <x-forms.field nome="preferencia_veiculo" rotulo="Necessidades do veículo" tipo="textarea" nota="Informe capacidade ou características necessárias. A disponibilidade será conferida na análise." maxlength="2000" />
                     <x-forms.field nome="observacoes" rotulo="Observações" tipo="textarea" maxlength="3000" />
                 </section>

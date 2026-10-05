@@ -7,7 +7,7 @@ return [
         'columns' => ['protocolo' => ['r.protocolo', 'Protocolo'], 'destino' => ['r.destino', 'Destino'], 'saida_prevista' => ['r.saida_prevista', 'Saída prevista', 'datetime'], 'situacao' => ['r.situacao', 'Situação']],
         'details' => ['finalidade' => ['r.finalidade', 'Finalidade'], 'origem' => ['r.origem', 'Origem'], 'retorno_previsto' => ['r.retorno_previsto', 'Retorno previsto', 'datetime'], 'passageiros' => ['r.quantidade_passageiros', 'Passageiros'], 'solicitante' => ['r.solicitante', 'Solicitante'], 'unidade' => ['r.unidade', 'Unidade'], 'trajeto' => ['r.trajeto_planejado', 'Trajeto planejado']],
         'states' => ['rascunho', 'aguardando_analise', 'ajustes_solicitados', 'aprovada', 'negada', 'cancelada'],
-        'actions' => ['edit' => ['Editar solicitação', 'editar'], 'send' => ['Revisar envio', 'enviar'], 'approve' => ['Aprovar solicitação', 'aprovar'], 'deny' => ['Negar solicitação', 'negar'], 'adjust' => ['Solicitar ajustes', 'solicitar_ajustes'], 'cancel' => ['Cancelar solicitação', 'cancelar']],
+        'actions' => ['edit' => ['Editar solicitação', 'editar'], 'send' => ['Revisar envio', 'enviar'], 'revision' => ['Abrir nova revisão', 'editar'], 'approve' => ['Aprovar solicitação', 'aprovar'], 'deny' => ['Negar solicitação', 'negar'], 'adjust' => ['Solicitar ajustes', 'solicitar_ajustes'], 'cancel' => ['Cancelar solicitação', 'cancelar']],
         'create' => true,
     ],
     'trips' => [
