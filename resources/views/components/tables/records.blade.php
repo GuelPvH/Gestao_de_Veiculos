@@ -2,7 +2,7 @@
 @if ($registros->isEmpty())
     <x-ui.empty />
 @else
-    <div class="table-responsive d-none d-md-block">
+    <div class="table-responsive d-none d-md-block" tabindex="0" role="region" aria-label="Registros com rolagem">
         <table class="table align-middle mb-0"><thead><tr>
             @foreach ($colunas as $rotulo)
                 <th scope="col">{{ $rotulo }}</th>

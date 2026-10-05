@@ -35,7 +35,7 @@ class MySqlAuthenticationTest extends TestCase
         if (($conexao['database'] ?? '') !== 'frota_pf_contract_tests' || ! in_array($conexao['host'] ?? '', ['127.0.0.1', 'localhost'], true)) {
             throw new \RuntimeException('Alvo de teste recusado.');
         }
-        config(['database.default' => 'mysql']);
+        config(['database.default' => 'mysql', 'database.connections.mysql.url' => null, 'database.connections.mysql.unix_socket' => '']);
         foreach ($conexao as $chave => $valor) {
             if (in_array($chave, ['host', 'port', 'database', 'username', 'password'], true)) {
                 config(['database.connections.mysql.'.$chave => $valor]);
@@ -106,16 +106,19 @@ class MySqlAuthenticationTest extends TestCase
 
     public function test_revoked_expired_and_future_links_do_not_allow_access(): void
     {
-        DB::table('usuario_perfis')->where('id', $this->vinculoId)->update(['vigente_desde' => now('UTC')->addDay()]);
+        DB::table('usuario_perfis')->where('id', $this->vinculoId)->update(['ativo' => 0]);
+        $perfil = (int) DB::table('perfis')->where('codigo', 'servidor')->value('id');
+        $futuro = DB::table('usuario_perfis')->insertGetId(['usuario_id' => $this->usuarioId, 'perfil_id' => $perfil, 'unidade_id' => 1, 'vigente_desde' => now('UTC')->addDay(), 'concedido_por' => $this->usuarioId]);
         $this->post('/entrar', ['identificador' => $this->identificador, 'senha' => $this->senha])->assertRedirect('/acesso-restrito');
         $this->post('/sair');
-        DB::table('usuario_perfis')->where('id', $this->vinculoId)->update(['vigente_desde' => now('UTC')->subDays(2), 'vigente_ate' => now('UTC')->subDay()]);
+        DB::table('usuario_perfis')->where('id', $futuro)->update(['ativo' => 0]);
+        DB::table('usuario_perfis')->insert(['usuario_id' => $this->usuarioId, 'perfil_id' => $perfil, 'unidade_id' => 1, 'vigente_desde' => now('UTC')->subDays(2), 'vigente_ate' => now('UTC')->subDay(), 'concedido_por' => $this->usuarioId]);
         $this->post('/entrar', ['identificador' => $this->identificador, 'senha' => $this->senha])->assertRedirect('/acesso-restrito');
         $this->post('/sair');
-        DB::table('usuario_perfis')->where('id', $this->vinculoId)->update(['vigente_ate' => null]);
+        $vigente = DB::table('usuario_perfis')->insertGetId(['usuario_id' => $this->usuarioId, 'perfil_id' => $perfil, 'unidade_id' => 1, 'vigente_desde' => now('UTC')->subMinute(), 'concedido_por' => $this->usuarioId]);
         $this->login();
         $sessao = session('fleet_session.id');
-        DB::table('usuario_perfis')->where('id', $this->vinculoId)->update(['ativo' => 0]);
+        DB::table('usuario_perfis')->where('id', $vigente)->update(['ativo' => 0]);
         $this->get('/painel')->assertRedirect('/entrar');
         $this->assertNotNull(DB::table('sessoes')->where('id', $sessao)->value('encerrada_em'));
     }
@@ -158,10 +161,10 @@ class MySqlAuthenticationTest extends TestCase
         $expirado = hash('sha256', random_bytes(32), true);
         DB::table('recuperacoes_senha')->insert(['usuario_id' => $this->usuarioId, 'token_hash' => $expirado, 'criado_em' => now('UTC')->subHour(), 'expira_em' => now('UTC')->subMinute()]);
         try {
-            app(ProcedureRunner::class)->call('sp_consumir_recuperacao',[$expirado, $novo]);
+            app(ProcedureRunner::class)->call('sp_consumir_recuperacao', [$expirado, $novo]);
             $this->fail('Token vencido aceito indevidamente.');
         } catch (\PDOException $erro) {
-            $this->assertSame('45000',$erro->getCode());
+            $this->assertSame('45000', $erro->getCode());
         }
     }
 }

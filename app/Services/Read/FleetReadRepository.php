@@ -99,6 +99,9 @@ class FleetReadRepository
         $tela = $this->definition($codigo);
         $registro = $this->select($codigo, $this->query($codigo))->where($tela['id'] ?? 'r.id', $id)->first();
         abort_unless($registro !== null, 404);
+        if ($codigo === 'fines') {
+            $registro->__sender = DB::table('multa_comprovantes as c')->join('usuario_perfis as v', 'v.id', '=', 'c.enviado_por_vinculo_id')->where('c.multa_id', $id)->orderByDesc('c.numero')->value('v.usuario_id');
+        }
 
         return $registro;
     }

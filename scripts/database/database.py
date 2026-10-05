@@ -216,6 +216,12 @@ def verified(client, path, proof):
     require(record['inventory'] == metadata['inventory'], 'Inventário restaurado não corresponde ao backup.')
     require(client.identity() == metadata['identity'], 'O servidor ou banco alvo mudou.')
     validate_dump(path.read_text(), client.database)
+    # O teste isolado reatribui definers; isso não prova que a conta da origem pode
+    # recriar objetos de outras contas. Recusar esse caso antes de qualquer DROP.
+    definers = re.findall(r'DEFINER\s*=\s*`((?:``|[^`])+)`\s*@\s*`((?:``|[^`])+)`', path.read_text(), re.I)
+    account = metadata['identity'].get('user')
+    require(all(user.replace('``', '`') + '@' + host.replace('``', '`') == account for user, host in definers),
+            'Backup contém definers de outra conta; DBA precisa comprovar restauração com os privilégios da origem antes da limpeza.')
     return path, metadata
 
 
@@ -225,6 +231,17 @@ def verify_schema(client):
     for kind in ('tables', 'views', 'procedures', 'triggers'):
         require(actual[kind] == manifest[kind], 'Inventário canônico divergente: ' + kind)
     require(not actual['functions'] and not actual['events'], 'Objetos legados ainda presentes.')
+    database = quoted(client.database)
+    expected_constraints = sorted((name, 'FOREIGN KEY' if kind == 'FOREIGN KEY' else 'CHECK')
+                                  for name, kind in re.findall(r'CONSTRAINT\s+(\w+)\s+(FOREIGN KEY|CHECK)', CANONICAL.read_text()))
+    constraints = sorted(tuple(row) for row in client.rows(
+        f"SELECT CONSTRAINT_NAME,CONSTRAINT_TYPE FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA={database} AND CONSTRAINT_TYPE IN ('FOREIGN KEY','CHECK')"))
+    require(constraints == expected_constraints, 'Chaves estrangeiras ou checks canônicos divergentes.')
+    primary_tables = sorted(row[0] for row in client.rows(
+        f"SELECT TABLE_NAME FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA={database} AND CONSTRAINT_TYPE='PRIMARY KEY'"))
+    require(primary_tables == manifest['tables'], 'Uma tabela canônica está sem chave primária.')
+    collations = client.rows(f"SELECT TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA={database} AND TABLE_TYPE='BASE TABLE'")
+    require(len(collations) == len(manifest['tables']) and all(row[0] == 'utf8mb4_unicode_ci' for row in collations), 'Collation de tabela canônica divergente.')
     require(client.rows('SELECT nome_sistema,moeda,fuso_horario FROM configuracao_sistema WHERE id=1;')[0][1] == 'BRL', 'Configuração canônica ausente.')
     require(int(client.rows('SELECT COUNT(*) FROM permissoes;')[0][0]) > 0, 'Catálogo de permissões ausente.')
     return {kind: len(actual[kind]) for kind in ('tables', 'views', 'procedures', 'triggers')}
