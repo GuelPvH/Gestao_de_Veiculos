@@ -30,7 +30,7 @@ class RecordController extends Controller
         $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de', 'ordem' => 'nullable|in:recentes,antigos', 'page' => 'nullable|integer|min:1']);
         $paginacao = $this->leituras->page($codigo, $filtros);
 
-        return view('records.index', ['codigo' => $codigo, 'tela' => $tela, 'filtros' => $filtros, 'paginacao' => $paginacao, 'registros' => $this->leituras->rows($codigo, $paginacao->getCollection()), 'podeCriar' => ($tela['create'] ?? false) && $this->acesso->can($tela['module'], 'criar', (int) $this->acesso->link()->usuario_id, (int) $this->acesso->link()->unidade_id)]);
+        return view('records.index', ['codigo' => $codigo, 'tela' => $tela, 'filtros' => $filtros, 'paginacao' => $paginacao, 'registros' => $this->leituras->rows($codigo, $paginacao->getCollection()), 'podeCriar' => $this->canCreate($codigo, $tela)]);
     }
 
     public function show(Request $requisicao, int $registro): View
@@ -66,9 +66,22 @@ class RecordController extends Controller
     {
         $codigo = $this->screen($requisicao);
         $tela = $this->leituras->definition($codigo);
-        abort_unless(($tela['create'] ?? false) && $this->acesso->can($tela['module'], 'criar', (int) $this->acesso->link()->usuario_id, (int) $this->acesso->link()->unidade_id), 403);
+        abort_unless($this->canCreate($codigo, $tela), 403);
 
-        return view('records.form', ['codigo' => $codigo, 'tela' => $tela, 'acao' => 'create', 'titulo' => 'Novo registro · '.$tela['title'], 'registro' => null, 'formAction' => $codigo === 'fines' ? route('fines.store') : null, 'veiculosMulta' => $codigo === 'fines' ? app(FineWorkflow::class)->vehicleOptions() : [], 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix(null) : collect(), 'perfisDisponiveis' => app(AdminReadRepository::class)->assignableRoles(), 'unidadesDisponiveis' => DB::table('unidades')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all(), 'veiculosDisponiveis' => $codigo === 'requests' ? app(ReferenceReadRepository::class)->vehicles() : [], 'categoriasChamado' => $codigo === 'tickets' ? DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all() : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->where('codigo', '<>', 'abastecimento')->pluck('nome', 'id')->all() : []]);
+        return view('records.form', ['codigo' => $codigo, 'tela' => $tela, 'acao' => 'create', 'titulo' => 'Novo registro · '.$tela['title'], 'registro' => null, 'formAction' => $codigo === 'fines' ? route('fines.store') : null, 'veiculosMulta' => $codigo === 'fines' ? app(FineWorkflow::class)->vehicleOptions() : [], 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix(null) : collect(), 'perfisDisponiveis' => app(AdminReadRepository::class)->assignableRoles(), 'unidadesDisponiveis' => DB::table('unidades')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all(), 'modulosDisponiveis' => DB::table('modulos')->where('ativo', 1)->orderBy('ordem')->pluck('nome', 'codigo')->all(), 'veiculosDisponiveis' => $codigo === 'requests' ? app(ReferenceReadRepository::class)->vehicles() : [], 'categoriasChamado' => $codigo === 'tickets' ? DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all() : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->where('codigo', '<>', 'abastecimento')->pluck('nome', 'id')->all() : []]);
+    }
+
+    private function canCreate(string $codigo, array $tela): bool
+    {
+        if (! ($tela['create'] ?? false)) {
+            return false;
+        }
+        if (in_array($codigo, ['roles', 'technical-routes'], true)) {
+            return $this->acesso->can($tela['module'], 'criar');
+        }
+        $vinculo = $this->acesso->link();
+
+        return $vinculo !== null && $this->acesso->can($tela['module'], 'criar', (int) $vinculo->usuario_id, (int) $vinculo->unidade_id);
     }
 
     public function operation(Request $requisicao, int $registro, string $acao): View

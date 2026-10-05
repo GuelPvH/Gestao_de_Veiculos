@@ -33,13 +33,29 @@ class FleetReadRepository
             $consulta->whereNotNull($tela['required']);
         }
 
-        return $this->acesso->scope($consulta, $tela['module'], 'consultar', $tela['owner'], $tela['unit']);
+        return $this->scope($consulta, $codigo, 'consultar');
+    }
+
+    public function scope(Builder $consulta, string $codigo, string $acao): Builder
+    {
+        $tela = $this->definition($codigo);
+        if ($codigo === 'trips' && $this->acesso->level($tela['module'], $acao) === 1) {
+            $vinculo = $this->acesso->link();
+            abort_unless($vinculo !== null, 403);
+
+            return $consulta->where(function (Builder $proprios) use ($vinculo): void {
+                $proprios->where('r.solicitante_id', (int) $vinculo->usuario_id)
+                    ->orWhere('r.motorista_id', (int) $vinculo->usuario_id);
+            });
+        }
+
+        return $this->acesso->scope($consulta, $tela['module'], $acao, $tela['owner'], $tela['unit']);
     }
 
     public function select(string $codigo, Builder $consulta, ?array $campos = null): Builder
     {
         $tela = $this->definition($codigo);
-        $colunas = $tela['columns'] + ($tela['details'] ?? []);
+        $colunas = $tela['columns'] + ($tela['details'] ?? []) + ($campos !== null ? ($tela['reportColumns'] ?? []) : []);
         $consulta->selectRaw(($tela['id'] ?? 'r.id').' as id');
         $consulta->selectRaw(($tela['owner'] ?? 'NULL').' as __owner, '.($tela['unit'] ?? 'NULL').' as __unit');
         foreach ($colunas as $chave => $campo) {
@@ -135,7 +151,7 @@ class FleetReadRepository
     public function rows(string $codigo, Collection $registros, ?array $campos = null): Collection
     {
         $tela = $this->definition($codigo);
-        $colunas = $tela['columns'] + ($tela['details'] ?? []);
+        $colunas = $tela['columns'] + ($tela['details'] ?? []) + ($campos !== null ? ($tela['reportColumns'] ?? []) : []);
 
         return $registros->map(function (stdClass $registro) use ($colunas, $campos): array {
             $valores = [];
