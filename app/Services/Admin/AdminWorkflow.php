@@ -97,6 +97,7 @@ class AdminWorkflow
             $id = (int) DB::table('perfis')->insertGetId([
                 'codigo' => $dados['codigo'], 'nome' => trim($dados['nome']),
                 'descricao' => ($dados['descricao'] ?? null) ?: null, 'criado_por' => (int) $this->acesso->link()->usuario_id,
+                'criado_em' => now('UTC'), 'atualizado_em' => now('UTC'),
             ]);
             $this->audit('perfil_criado', 'perfis', $id, 'Perfil criado sem concessões; delegue cada permissão autorizada.');
 
