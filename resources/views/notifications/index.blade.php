@@ -1,0 +1,4 @@
+<x-layouts.authenticated titulo="Notificações" :breadcrumbs="[['label'=>'Notificações']]">
+    <x-ui.title titulo="Notificações" subtitulo="Atualizações destinadas à sua identidade." />
+    <x-ui.panel titulo="Atualizações">@forelse($registros as $evento)<article class="row-summary"><x-ui.icon nome="bell" /><div><strong>{{ ucfirst(str_replace('_',' ',$evento->tipo)) }}</strong><p class="small text-body-secondary mb-0">{{ $leituras->format($evento->criado_em,'datetime') }} · {{ $evento->lida_em ? 'Lida' : 'Não lida' }}</p></div>@if($evento->link)<a class="btn btn-outline-secondary" href="{{ $evento->link }}">Ver registro</a>@endif</article>@empty<x-ui.empty titulo="Nenhuma notificação" descricao="As atualizações destinadas a você aparecerão aqui." />@endforelse<x-navigation.pagination :paginacao="$paginacao" /></x-ui.panel>
+</x-layouts.authenticated>

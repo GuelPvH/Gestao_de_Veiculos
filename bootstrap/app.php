@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\PrivateResponse;
+use App\Http\Middleware\RequireEnabledRoute;
 use App\Http\Middleware\RequireProfile;
 use App\Http\Middleware\ValidateFleetSession;
 use Illuminate\Database\QueryException;
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'fleet.session' => ValidateFleetSession::class,
             'fleet.profile' => RequireProfile::class,
+            'fleet.enabled' => RequireEnabledRoute::class,
         ]);
         $middleware->appendToGroup('web', PrivateResponse::class);
         $middleware->redirectGuestsTo(fn () => route('login'));
@@ -29,6 +31,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->dontFlash(['senha', 'senha_atual', 'nova_senha', 'nova_senha_confirmation', 'token', 'password', 'password_confirmation']);
         $exceptions->dontReport([QueryException::class, PDOException::class]);
         $exceptions->render(function (QueryException $erro, Request $requisicao) {
+            return response()->view('errors.503', [], 503);
+        });
+        $exceptions->render(function (PDOException $erro, Request $requisicao) {
             return response()->view('errors.503', [], 503);
         });
         $exceptions->shouldRenderJsonWhen(

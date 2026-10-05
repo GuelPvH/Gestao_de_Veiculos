@@ -33,6 +33,14 @@ class RecordController extends Controller
     {
         $codigo = $this->screen($requisicao);
         $dados = $this->leituras->record($codigo, $registro);
+        $mensagens = collect();
+        if ($codigo === 'tickets') {
+            $consulta = DB::table('chamado_mensagens as m')->join('usuario_perfis as v', 'v.id', '=', 'm.autor_vinculo_id')->join('usuarios as u', 'u.id', '=', 'v.usuario_id')->where('m.chamado_id', $registro);
+            if (! $this->acesso->can('chamados', 'atender', (int) $dados->__owner, (int) $dados->__unit)) {
+                $consulta->where('m.interna', 0);
+            }
+            $mensagens = $consulta->orderBy('m.id')->limit(100)->get(['u.nome as autor', 'm.mensagem', 'm.interna', 'm.criado_em']);
+        }
         $trajeto = collect();
         $comprovantes = collect();
         $conferencias = collect();
@@ -45,7 +53,7 @@ class RecordController extends Controller
             $trajeto = DB::table('vw_trajetos_observados')->where('veiculo_id', $registro)->orderByDesc('ocorrido_em')->limit(200)->get(['ocorrido_em', 'fonte', 'latitude', 'longitude']);
         }
 
-        return view('records.show', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->first()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $this->leituras->history($codigo, $registro), 'leituras' => $this->leituras, 'trajeto' => $trajeto, 'vinculos' => $codigo === 'users' ? app(AdminReadRepository::class)->links($registro) : collect(), 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'arquivos' => $this->leituras->attachments($codigo, $registro), 'comprovantes' => $comprovantes, 'conferencias' => $conferencias]);
+        return view('records.show', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->first()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $this->leituras->history($codigo, $registro), 'leituras' => $this->leituras, 'trajeto' => $trajeto, 'mensagens' => $mensagens, 'vinculos' => $codigo === 'users' ? app(AdminReadRepository::class)->links($registro) : collect(), 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'arquivos' => $this->leituras->attachments($codigo, $registro), 'comprovantes' => $comprovantes, 'conferencias' => $conferencias]);
     }
 
     public function create(Request $requisicao): View
@@ -54,7 +62,7 @@ class RecordController extends Controller
         $tela = $this->leituras->definition($codigo);
         abort_unless(($tela['create'] ?? false) && $this->acesso->can($tela['module'], 'criar', (int) $this->acesso->link()->usuario_id, (int) $this->acesso->link()->unidade_id), 403);
 
-        return view('records.form', ['codigo' => $codigo, 'tela' => $tela, 'acao' => 'create', 'titulo' => 'Novo registro · '.$tela['title'], 'registro' => null, 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix(null) : collect(), 'perfisDisponiveis' => app(AdminReadRepository::class)->assignableRoles(), 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->pluck('nome', 'id')->all() : []]);
+        return view('records.form', ['codigo' => $codigo, 'tela' => $tela, 'acao' => 'create', 'titulo' => 'Novo registro · '.$tela['title'], 'registro' => null, 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix(null) : collect(), 'perfisDisponiveis' => app(AdminReadRepository::class)->assignableRoles(), 'categoriasChamado' => $codigo === 'tickets' ? DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all() : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->pluck('nome', 'id')->all() : []]);
     }
 
     public function operation(Request $requisicao, int $registro, string $acao): View
@@ -64,6 +72,6 @@ class RecordController extends Controller
         $permitidas = $this->operacoes->allowed($codigo, $dados);
         abort_unless(isset($permitidas[$acao]), 403);
 
-        return view('records.form', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'acao' => $acao, 'titulo' => $permitidas[$acao], 'registro' => $dados, 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'perfisDisponiveis' => app(AdminReadRepository::class)->assignableRoles(), 'checklist' => $codigo === 'trips' ? DB::table('checklist_itens')->where('ativo', 1)->orderBy('ordem')->get(['id', 'descricao', 'obrigatorio']) : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->pluck('nome', 'id')->all() : []]);
+        return view('records.form', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'acao' => $acao, 'titulo' => $permitidas[$acao], 'registro' => $dados, 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'perfisDisponiveis' => app(AdminReadRepository::class)->assignableRoles(), 'checklist' => $codigo === 'trips' ? DB::table('checklist_itens')->where('ativo', 1)->orderBy('ordem')->get(['id', 'descricao', 'obrigatorio']) : [], 'categoriasChamado' => $codigo === 'tickets' ? DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all() : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->pluck('nome', 'id')->all() : []]);
     }
 }

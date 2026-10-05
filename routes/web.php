@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RecordController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -27,11 +31,18 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/alterar-senha', [PasswordController::class, 'update'])->name('password.update');
     });
 });
-Route::middleware(['auth', 'fleet.session', 'fleet.profile'])->get('/painel', [DashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->get('/painel', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::middleware(['auth', 'fleet.session', 'fleet.profile'])->group(function (): void {
+Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->group(function (): void {
+    foreach (['despesas' => 'financeiro/despesas', 'multas' => 'financeiro/multas', 'usuarios' => 'administracao/usuarios', 'perfis' => 'administracao/perfis', 'rotas' => 'administracao/rotas', 'auditoria' => 'administracao/auditoria', 'configuracao' => 'administracao/configuracoes'] as $origem => $destino) {
+        Route::redirect('/'.$origem, '/'.$destino);
+    }
     Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
-    Route::get('/configuracao', [ConfigurationController::class, 'index'])->name('configuration.index');
+    Route::get('/administracao/configuracoes', [ConfigurationController::class, 'index'])->name('configuration.index');
+    Route::get('/conta', [AccountController::class, 'index'])->name('account.index');
+    Route::get('/notificacoes', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/relatorios', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/apresentacao', [ReviewController::class, 'index'])->name('review.index');
     foreach (config('screens') as $codigo => $tela) {
         Route::get('/'.$tela['url'], [RecordController::class, 'index'])->defaults('tela', $codigo)->name($codigo.'.index');
         if ($tela['create'] ?? false) {
