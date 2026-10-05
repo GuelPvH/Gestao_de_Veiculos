@@ -1,0 +1,1 @@
+<x-layouts.base titulo="Página indisponível"><main id="main-content" class="auth-wrapper" tabindex="-1"><x-ui.logo /><h1 class="mt-4">Página temporariamente desativada</h1><p>Esta área está indisponível. Consulte as outras páginas autorizadas.</p><a class="btn btn-primary" href="{{ route('dashboard') }}">Voltar ao painel</a></main></x-layouts.base>
