@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Str;
-use Pdo\Mysql;
 
 return [
 
@@ -17,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -46,6 +45,7 @@ return [
 
         'mysql' => [
             'driver' => 'mysql',
+            'timezone' => '+00:00',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
@@ -60,7 +60,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                constant(PHP_VERSION_ID >= 80400 ? 'Pdo\\Mysql::ATTR_SSL_CA' : 'PDO::MYSQL_ATTR_SSL_CA') => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
@@ -80,7 +80,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                constant(PHP_VERSION_ID >= 80400 ? 'Pdo\\Mysql::ATTR_SSL_CA' : 'PDO::MYSQL_ATTR_SSL_CA') => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
