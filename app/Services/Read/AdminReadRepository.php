@@ -37,6 +37,6 @@ class AdminReadRepository
         }
         $consulta = DB::table('perfis as r')->where('r.ativo', 1);
 
-        return $this->acesso->scope($consulta, 'perfis', 'consultar', 'r.criado_por', null)->pluck('r.nome','r.id')->all();
+        return $this->acesso->scope($consulta, 'perfis', 'consultar', 'r.criado_por', null)->pluck('r.nome', 'r.id')->all();
     }
 }
