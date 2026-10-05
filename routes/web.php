@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RecordController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function (): void {
@@ -25,3 +26,14 @@ Route::middleware('auth')->group(function (): void {
     });
 });
 Route::middleware(['auth', 'fleet.session', 'fleet.profile'])->get('/painel', [DashboardController::class, 'index'])->name('dashboard');
+
+Route::middleware(['auth', 'fleet.session', 'fleet.profile'])->group(function (): void {
+    foreach (config('screens') as $codigo => $tela) {
+        Route::get('/'.$tela['url'], [RecordController::class, 'index'])->defaults('tela', $codigo)->name($codigo.'.index');
+        if ($tela['create'] ?? false) {
+            Route::get('/'.$tela['url'].'/novo', [RecordController::class, 'create'])->defaults('tela', $codigo)->name($codigo.'.create');
+        }
+        Route::get('/'.$tela['url'].'/{registro}', [RecordController::class, 'show'])->whereNumber('registro')->defaults('tela', $codigo)->name($codigo.'.show');
+        Route::get('/'.$tela['url'].'/{registro}/{acao}', [RecordController::class, 'operation'])->whereNumber('registro')->defaults('tela', $codigo)->name($codigo.'.operation');
+    }
+});
