@@ -24,7 +24,7 @@ return [
         'columns' => ['protocolo' => ['r.protocolo', 'Protocolo'], 'placa' => ['r.placa', 'Placa'], 'valor' => ['r.valor', 'Valor', 'money', 'ver_valores'], 'situacao' => ['r.situacao', 'Situação']],
         'details' => ['descricao' => ['r.descricao', 'Descrição'], 'numero_auto' => ['r.numero_auto', 'Número do auto'], 'orgao' => ['r.orgao_autuador', 'Órgão autuador'], 'ocorrido_em' => ['r.ocorrido_em', 'Ocorrência', 'datetime'], 'data_vencimento' => ['r.data_vencimento', 'Vencimento', 'date'], 'responsavel' => ['r.responsavel', 'Responsável']],
         'states' => ['sem_responsavel', 'aguardando_comprovante', 'em_conferencia', 'quitada', 'contestada', 'cancelada'],
-        'actions' => ['proof' => ['Enviar comprovante', 'enviar_comprovante'], 'dispute' => ['Contestar multa', 'contestar']],
+        'actions' => ['assign' => ['Atribuir responsável', 'atribuir_responsavel'], 'proof' => ['Enviar comprovante', 'enviar_comprovante'], 'verify' => ['Conferir comprovante', 'validar_pagamento'], 'correct' => ['Solicitar correção', 'validar_pagamento'], 'settle' => ['Confirmar quitação', 'validar_pagamento'], 'dispute' => ['Contestar multa', 'contestar'], 'cancel' => ['Cancelar multa', 'cancelar']], 'create' => true,
     ],
     'vehicles' => [
         'title' => 'Frota', 'module' => 'frota', 'icon' => 'car-front', 'url' => 'frota',
@@ -41,5 +41,25 @@ return [
         'details' => ['capturado_em' => ['r.capturado_em', 'Última posição', 'datetime', 'ver_localizacao'], 'latitude' => ['r.latitude', 'Latitude', 'text', 'ver_localizacao'], 'longitude' => ['r.longitude', 'Longitude', 'text', 'ver_localizacao'], 'velocidade' => ['r.velocidade_kmh', 'Velocidade (km/h)', 'text', 'ver_localizacao'], 'provedor' => ['r.provedor', 'Provedor']],
         'states' => ['transmitindo', 'sem_comunicacao', 'sem_rastreador', 'rastreador_inativo'],
         'actions' => [],
+    ],
+    'expenses' => [
+        'title' => 'Despesas', 'module' => 'despesas', 'icon' => 'file-text', 'url' => 'despesas', 'table' => 'vw_despesas_detalhadas', 'owner' => 'r.criado_por', 'unit' => 'r.unidade_id', 'date' => 'r.data_despesa', 'dateOnly' => true,
+        'columns' => ['protocolo' => ['r.protocolo', 'Protocolo'], 'veiculo' => ['r.veiculo', 'Veículo'], 'valor' => ['r.valor', 'Valor', 'money', 'ver_valores'], 'situacao' => ['r.situacao', 'Situação']],
+        'details' => ['data_despesa' => ['r.data_despesa', 'Data da despesa', 'date'], 'categoria' => ['r.categoria', 'Categoria'], 'descricao' => ['r.descricao', 'Descrição'], 'fornecedor' => ['r.fornecedor', 'Fornecedor'], 'numero_documento' => ['r.numero_documento', 'Documento'], 'valor_pago' => ['r.valor_pago', 'Pagamento confirmado', 'money', 'ver_valores'], 'pago_em' => ['r.pago_em', 'Data de pagamento', 'datetime']],
+        'states' => ['registrada', 'em_conferencia', 'aprovada', 'paga', 'cancelada'], 'actions' => ['edit' => ['Editar despesa', 'editar'], 'verify' => ['Conferir despesa', 'validar_pagamento'], 'cancel' => ['Cancelar despesa', 'cancelar']], 'create' => true,
+    ],
+    'fuel' => [
+        'title' => 'Abastecimentos', 'module' => 'despesas', 'icon' => 'car-front', 'url' => 'abastecimentos', 'table' => 'despesas', 'owner' => 'r.criado_por', 'unit' => 'r.unidade_id', 'date' => 'r.data_despesa', 'dateOnly' => true,
+        'joins' => [['abastecimentos as f', 'f.despesa_id', 'r.id'], ['veiculos as v', 'v.id', 'r.veiculo_id']], 'required' => 'f.despesa_id',
+        'columns' => ['protocolo' => ['r.protocolo', 'Protocolo'], 'placa' => ['v.placa', 'Placa'], 'quantidade' => ['f.quantidade', 'Quantidade'], 'valor' => ['r.valor', 'Valor', 'money', 'ver_valores']],
+        'details' => ['combustivel' => ['f.combustivel', 'Combustível'], 'unidade_medida' => ['f.unidade_medida', 'Unidade de medida'], 'preco_unitario' => ['f.preco_unitario', 'Preço unitário', 'money', 'ver_valores'], 'quilometragem' => ['f.quilometragem', 'Quilometragem'], 'data_despesa' => ['r.data_despesa', 'Data', 'date']],
+        'states' => [], 'actions' => ['edit' => ['Editar abastecimento', 'editar']], 'create' => true,
+    ],
+    'maintenance' => [
+        'title' => 'Manutenção', 'module' => 'despesas', 'icon' => 'car-front', 'url' => 'manutencoes', 'table' => 'manutencoes', 'owner' => 'r.criado_por', 'unit' => 'v.unidade_id', 'date' => 'r.inicio_previsto',
+        'joins' => [['veiculos as v', 'v.id', 'r.veiculo_id'], ['despesas as d', 'd.id', 'r.despesa_id']],
+        'columns' => ['protocolo' => ['r.protocolo', 'Protocolo'], 'placa' => ['v.placa', 'Placa'], 'tipo' => ['r.tipo', 'Tipo'], 'situacao' => ['r.situacao', 'Situação']],
+        'details' => ['descricao' => ['r.descricao', 'Descrição'], 'inicio_previsto' => ['r.inicio_previsto', 'Início previsto', 'datetime'], 'fim_previsto' => ['r.fim_previsto', 'Fim previsto', 'datetime'], 'quilometragem' => ['r.quilometragem', 'Quilometragem'], 'valor' => ['d.valor', 'Despesa vinculada', 'money', 'ver_valores']],
+        'states' => ['planejada', 'em_execucao', 'concluida', 'cancelada'], 'actions' => ['edit' => ['Editar manutenção', 'editar'], 'cancel' => ['Cancelar manutenção', 'cancelar']], 'create' => true,
     ],
 ];

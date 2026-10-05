@@ -40,6 +40,10 @@ class OperationCatalog
                     'dispute', 'cancel' => ! in_array($situacao, ['quitada', 'cancelada'], true),
                     default => false,
                 };
+            } elseif ($codigo === 'expenses') {
+                $valida = $acao === 'verify' ? $situacao === 'em_conferencia' : ! in_array($situacao, ['paga', 'cancelada'], true);
+            } elseif ($codigo === 'maintenance') {
+                $valida = ! in_array($situacao, ['concluida', 'cancelada'], true);
             } elseif ($codigo === 'tickets') {
                 $valida = ! in_array($acao, ['respond', 'resolve', 'assign'], true) || $situacao !== 'resolvido';
             }
