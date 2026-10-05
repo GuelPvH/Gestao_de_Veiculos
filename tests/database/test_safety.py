@@ -91,6 +91,20 @@ class SafetyTest(unittest.TestCase):
         self.assertEqual([], calls)
         self.assertFalse(args.marker.exists())
 
+    def test_inventory_uses_manifest_order_independent_of_server_collation(self):
+        options = self.write('client.cnf', '[client]\nuser=test\n')
+        class CollationClient(maintenance.Client):
+            def rows(self, sql):
+                if 'KEY_COLUMN_USAGE' in sql:
+                    return [['0']]
+                if 'TABLE_NAME,ENGINE' in sql:
+                    return []
+                if 'information_schema.TRIGGERS' in sql:
+                    return [['tg_preservar_pneus_bd'], ['tg_preservar_pneu_instalacoes_bd']]
+                return []
+        names = CollationClient(options, 'frota_pf_contract_tests').inventory()['triggers']
+        self.assertEqual(['tg_preservar_pneu_instalacoes_bd', 'tg_preservar_pneus_bd'], names)
+
     def test_matching_object_counts_do_not_approve_a_schema_without_constraints(self):
         manifest = maintenance.canonical()
         inventory = {key: manifest.get(key, []) for key in ['tables', 'views', 'procedures', 'functions', 'triggers', 'events']}
