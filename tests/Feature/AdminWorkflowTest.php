@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Services\Auth\ProcedureRunner;
-use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Mockery;
 use Tests\Support\ReadFixture;
@@ -44,13 +43,14 @@ class AdminWorkflowTest extends TestCase
             'nome' => 'Novo Usuario Silva',
             'email' => 'novo@example.com',
             'senha_temporaria' => 'SenhaSegura123!@#',
+            'senha_temporaria_confirmation' => 'SenhaSegura123!@#',
         ])->assertRedirect(route('users.show', 15))->assertSessionHas('status');
     }
 
     public function test_admin_updates_user_with_concurrency_and_audit(): void
     {
         $procedimentos = Mockery::mock(ProcedureRunner::class);
-        $procedimentos->shouldReceive('call')->twice()
+        $procedimentos->shouldReceive('call')->times(3)
             ->withArgs(fn ($nome) => in_array($nome, ['sp_exigir_permissao', 'sp_auditar'], true))
             ->andReturn([]);
         app()->instance(ProcedureRunner::class, $procedimentos);
@@ -186,7 +186,7 @@ class AdminWorkflowTest extends TestCase
                 $this->assertSame('sp_conceder_permissao', $nome);
                 $this->assertSame(10, $dados[0]);
                 $this->assertSame(1, $dados[1]);
-                $this->assertSame(5, $dados[2]);
+                $this->assertSame(168, $dados[2]);
                 $this->assertSame(1, $dados[3]);
 
                 return true;
@@ -197,23 +197,23 @@ class AdminWorkflowTest extends TestCase
             ->andReturn([]);
         app()->instance(ProcedureRunner::class, $procedimentos);
 
-        $permissao = DB::table('permissoes')->where('id', 5)->first();
+        $permissao = DB::table('permissoes')->where('id', 168)->first();
         $this->assertNotNull($permissao);
 
         // Grant
         $this->post(route('roles.grant', 1), [
-            'permissao_id' => 5,
+            'permissao_id' => 168,
             'delegavel' => 1,
         ])->assertRedirect(route('roles.show', 1))->assertSessionHas('status');
 
         // Revoke
         DB::table('perfil_permissoes')->insertOrIgnore([
             'perfil_id' => 1,
-            'permissao_id' => 5,
+            'permissao_id' => 168,
             'delegavel' => 1,
         ]);
         $this->post(route('roles.revoke', 1), [
-            'permissao_id' => 5,
+            'permissao_id' => 168,
             'confirmar_revogacao' => '1',
         ])->assertRedirect(route('roles.show', 1))->assertSessionHas('status');
     }
@@ -264,6 +264,7 @@ class AdminWorkflowTest extends TestCase
             'nome' => 'Invasor',
             'email' => 'invasor@example.com',
             'senha_temporaria' => 'SenhaInvalida123!@#',
+            'senha_temporaria_confirmation' => 'SenhaInvalida123!@#',
         ])->assertForbidden();
 
         $this->post(route('roles.store'), [
