@@ -25,6 +25,6 @@ class AgendaController extends Controller
             $dias[] = ['rotulo' => $dia->translatedFormat('D, d/m'), 'reservas' => $reservas->filter(fn ($reserva) => CarbonImmutable::parse($reserva->inicio, 'UTC')->lt($dia->addDay()->utc()) && CarbonImmutable::parse($reserva->fim, 'UTC')->gt($dia->utc()))];
         }
 
-        return view('agenda.index', compact('inicio','dias','leituras'));
+        return view('agenda.index', compact('inicio', 'dias', 'leituras'));
     }
 }

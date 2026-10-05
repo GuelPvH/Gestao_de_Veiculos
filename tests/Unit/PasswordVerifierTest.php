@@ -27,6 +27,6 @@ class PasswordVerifierTest extends TestCase
         $senha = 'Senha privada somente em memória 392!';
         $hash = password_hash($senha, PASSWORD_ARGON2ID, ['memory_cost' => 8192, 'time_cost' => 1, 'threads' => 1]);
         $this->assertTrue((new PasswordVerifier)->verify($senha, $hash));
-        $this->assertFalse((new PasswordVerifier)->verify('errada',$hash));
+        $this->assertFalse((new PasswordVerifier)->verify('errada', $hash));
     }
 }
