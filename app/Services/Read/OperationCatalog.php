@@ -22,6 +22,10 @@ class OperationCatalog
                 && ! $this->acesso->can('despesas', 'ver_valores', (int) $registro->__owner, (int) $registro->__unit)) {
                 continue;
             }
+            if ($codigo === 'fines' && $acao === 'edit'
+                && ! $this->acesso->can('multas', 'ver_valores', $registro->__owner !== null ? (int) $registro->__owner : null, (int) $registro->__unit)) {
+                continue;
+            }
             $situacao = $registro->situacao ?? '';
             $valida = true;
             if ($codigo === 'requests') {

@@ -161,8 +161,10 @@ class FineWorkflow
                 $this->invalidState();
             }
             abort_unless($this->acesso->can('multas', 'editar', $multa->responsavel_id !== null ? (int) $multa->responsavel_id : null, (int) $multa->unidade_id), 403);
+            abort_unless($this->acesso->can('multas', 'ver_valores', $multa->responsavel_id !== null ? (int) $multa->responsavel_id : null, (int) $multa->unidade_id), 403);
             $vinculo = (int) $this->acesso->link()->vinculo_id;
             $this->procedimentos->call('sp_exigir_permissao', [$vinculo, 'multas', 'editar', $multa->responsavel_id, (int) $multa->unidade_id]);
+            $this->procedimentos->call('sp_exigir_permissao', [$vinculo, 'multas', 'ver_valores', $multa->responsavel_id, (int) $multa->unidade_id]);
             $this->uniqueAuto($dados['orgao_autuador'] ?? null, $dados['numero_auto'] ?? null, $id);
             $afetados = DB::table('multas')->where('id', $id)->where('versao', $dados['versao'])->update([
                 'numero_auto' => $this->optional($dados['numero_auto'] ?? null),

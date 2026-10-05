@@ -93,6 +93,24 @@ class FineWorkflowTest extends TestCase
         $this->assertSame(3, DB::table('multas')->count());
     }
 
+    public function test_editing_fine_value_requires_value_permission_on_form_and_post(): void
+    {
+        DB::table('vw_multas_detalhadas')->where('id', 1)->update(['situacao' => 'sem_responsavel']);
+        DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'multas')->where('acao_codigo', 'ver_valores')->delete();
+        app(AccessContext::class)->load(app(AccessContext::class)->link());
+
+        $runner = Mockery::mock(ProcedureRunner::class);
+        $runner->shouldNotReceive('call');
+        app()->instance(ProcedureRunner::class, $runner);
+
+        $this->get(route('fines.operation', ['registro' => 1, 'acao' => 'edit']))->assertForbidden();
+        $this->post(route('fines.perform', ['registro' => 1, 'acao' => 'edit']), [
+            'versao' => 1, 'valor' => '1.00', 'descricao' => 'Alteração indevida.',
+            'justificativa' => 'Sem acesso ao valor.',
+        ])->assertForbidden();
+        $this->assertSame('12345.67', (string) DB::table('multas')->where('id', 1)->value('valor'));
+    }
+
     public function test_stale_version_rejects_proof_before_private_file_write(): void
     {
         Storage::fake('local');
