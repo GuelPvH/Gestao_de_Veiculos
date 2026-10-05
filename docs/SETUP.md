@@ -4,7 +4,7 @@ Requisitos: Docker com Compose v2 ou PHP 8.3+ com PDO MySQL, mbstring, intl, XML
 
 ## Configuração privada
 
-Copie `.env.example` para `.env`, proteja com `chmod 600 .env` e preencha a conexão autorizada. Os exemplos não contêm credenciais reais. Para HTTPS, configure `APP_URL`, `SESSION_SECURE_COOKIE=true`, `APP_ENV=production` e `APP_DEBUG=false`. Não exponha o diretório raiz pela web.
+Copie `.env.example` para `.env`, proteja com `chmod 600 .env` e preencha a conexão autorizada. Crie um diretório privado fora do repositório (`mkdir -p ../frota-private; chmod 700 ../frota-private`) ou ajuste `FLEET_PRIVATE_DIR` para outro caminho privado. Essa variável é necessária na interpolação do Compose, mesmo quando o profile tools não está selecionado. Os exemplos não contêm credenciais reais. Para HTTPS, configure `APP_URL`, `SESSION_SECURE_COOKIE=true`, `APP_ENV=production` e `APP_DEBUG=false`. Não exponha o diretório raiz pela web.
 
 Gere a chave apenas quando ausente:
 

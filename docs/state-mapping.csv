@@ -1,0 +1,145 @@
+source_id,source_kind,status,implementation
+login,login,real,login / access.restricted / profiles.index
+login-error,login,real,login / access.restricted / profiles.index
+login-inactive,login,real,login / access.restricted / profiles.index
+profiles,profiles,real,login / access.restricted / profiles.index
+home-caio-servidor,dashboard,adapted,dashboard / navigation.sidebar · vínculo selecionado
+home-servidor,dashboard,adapted,dashboard / navigation.sidebar · vínculo selecionado
+menu-servidor,menu,adapted,dashboard / navigation.sidebar · vínculo selecionado
+reports-servidor,reports,adapted,"reports.index · filtros, campos e prévia autorizada"
+export-servidor,form,adapted,"reports.index · filtros, campos e prévia autorizada"
+preview-servidor,preview,adapted,"reports.index · filtros, campos e prévia autorizada"
+download-servidor,success,replaced,reports.index · exportação final desabilitada
+support-servidor,list,adapted,tickets.index
+ticket-new-servidor,form,review,tickets.create
+ticket-servidor,detail,adapted,tickets.show · situação/conversa
+ticket-reply-servidor,form,review,tickets.operation · respond
+ticket-resolved-servidor,detail,adapted,tickets.show · situação/conversa
+account-servidor,detail,adapted,account.index · aparência
+dark-servidor,detail,adapted,account.index · aparência
+reset-servidor,detail,removed,Estado exclusivo de exemplos ou atalho retirado
+notifications-servidor,notifications,adapted,notifications.index
+help-servidor,detail,removed,Estado exclusivo de exemplos ou atalho retirado
+home-gestor,dashboard,adapted,dashboard / navigation.sidebar · vínculo selecionado
+menu-gestor,menu,adapted,dashboard / navigation.sidebar · vínculo selecionado
+reports-gestor,reports,adapted,"reports.index · filtros, campos e prévia autorizada"
+export-gestor,form,adapted,"reports.index · filtros, campos e prévia autorizada"
+preview-gestor,preview,adapted,"reports.index · filtros, campos e prévia autorizada"
+download-gestor,success,replaced,reports.index · exportação final desabilitada
+support-gestor,list,adapted,tickets.index
+ticket-new-gestor,form,review,tickets.create
+ticket-gestor,detail,adapted,tickets.show · situação/conversa
+ticket-reply-gestor,form,review,tickets.operation · respond
+ticket-resolved-gestor,detail,adapted,tickets.show · situação/conversa
+account-gestor,detail,adapted,account.index · aparência
+dark-gestor,detail,adapted,account.index · aparência
+reset-gestor,detail,removed,Estado exclusivo de exemplos ou atalho retirado
+notifications-gestor,notifications,adapted,notifications.index
+help-gestor,detail,removed,Estado exclusivo de exemplos ou atalho retirado
+home-financeiro,dashboard,adapted,dashboard / navigation.sidebar · vínculo selecionado
+menu-financeiro,menu,adapted,dashboard / navigation.sidebar · vínculo selecionado
+reports-financeiro,reports,adapted,"reports.index · filtros, campos e prévia autorizada"
+export-financeiro,form,adapted,"reports.index · filtros, campos e prévia autorizada"
+preview-financeiro,preview,adapted,"reports.index · filtros, campos e prévia autorizada"
+download-financeiro,success,replaced,reports.index · exportação final desabilitada
+support-financeiro,list,adapted,tickets.index
+ticket-new-financeiro,form,review,tickets.create
+ticket-financeiro,detail,adapted,tickets.show · situação/conversa
+ticket-reply-financeiro,form,review,tickets.operation · respond
+ticket-resolved-financeiro,detail,adapted,tickets.show · situação/conversa
+account-financeiro,detail,adapted,account.index · aparência
+dark-financeiro,detail,adapted,account.index · aparência
+reset-financeiro,detail,removed,Estado exclusivo de exemplos ou atalho retirado
+notifications-financeiro,notifications,adapted,notifications.index
+help-financeiro,detail,removed,Estado exclusivo de exemplos ou atalho retirado
+home-administrador,dashboard,adapted,dashboard / navigation.sidebar · vínculo selecionado
+menu-administrador,menu,adapted,dashboard / navigation.sidebar · vínculo selecionado
+reports-administrador,reports,adapted,"reports.index · filtros, campos e prévia autorizada"
+export-administrador,form,adapted,"reports.index · filtros, campos e prévia autorizada"
+preview-administrador,preview,adapted,"reports.index · filtros, campos e prévia autorizada"
+download-administrador,success,replaced,reports.index · exportação final desabilitada
+support-administrador,list,adapted,tickets.index
+ticket-new-administrador,form,review,tickets.create
+ticket-administrador,detail,adapted,tickets.show · situação/conversa
+ticket-reply-administrador,form,review,tickets.operation · respond
+ticket-resolved-administrador,detail,adapted,tickets.show · situação/conversa
+account-administrador,detail,adapted,account.index · aparência
+dark-administrador,detail,adapted,account.index · aparência
+reset-administrador,detail,removed,Estado exclusivo de exemplos ou atalho retirado
+notifications-administrador,notifications,adapted,notifications.index
+help-administrador,detail,removed,Estado exclusivo de exemplos ou atalho retirado
+requests-servidor,list,read,requests.index · paginação real
+requests-page2-servidor,list,read,requests.index · paginação real
+trips-servidor,list,read,trips.index
+requests-gestor,list,read,requests.index · paginação real
+requests-page2-gestor,list,read,requests.index · paginação real
+trips-gestor,list,read,trips.index
+requests-page3-gestor,list,read,requests.index · paginação real
+request-1,form,review,requests.create · quatro etapas e validação
+request-error-1,form,review,requests.create · quatro etapas e validação
+request-2,form,review,requests.create · quatro etapas e validação
+request-error-2,form,review,requests.create · quatro etapas e validação
+request-3,form,review,requests.create · quatro etapas e validação
+request-error-3,form,review,requests.create · quatro etapas e validação
+request-4,form,review,requests.create · quatro etapas e validação
+request-draft,detail,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+request-sent,detail,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+request-own,detail,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+request-edit-confirm,detail,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+request-review,detail,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+request-adjust,form,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+request-deny,form,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+request-adjusted,detail,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+request-denied,detail,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+request-approved,detail,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+request-revision,detail,adapted,"requests.show / requests.operation · estado, histórico e decisão"
+trip-programmed,detail,adapted,"trips.show / trips.operation · saída, ocorrência e retorno"
+trip-out,form,adapted,"trips.show / trips.operation · saída, ocorrência e retorno"
+trip-running,detail,adapted,"trips.show / trips.operation · saída, ocorrência e retorno"
+trip-occurrence,form,adapted,"trips.show / trips.operation · saída, ocorrência e retorno"
+trip-return,form,adapted,"trips.show / trips.operation · saída, ocorrência e retorno"
+trip-concluded,detail,adapted,"trips.show / trips.operation · saída, ocorrência e retorno"
+trip-gestor,detail,adapted,"trips.show / trips.operation · saída, ocorrência e retorno"
+fleet,list,adapted,vehicles.index / show / create
+vehicle,detail,adapted,vehicles.index / show / create
+vehicle-new,form,adapted,vehicles.index / show / create
+agenda,agenda,read,agenda.index · reservas ativas
+monitoring,map,read,"monitoring.index / show · localização autorizada, sem mapa externo"
+history,map,read,"monitoring.index / show · localização autorizada, sem mapa externo"
+fines-servidor,list,read,fines.index
+fines-financeiro,list,read,fines.index
+expenses,list,adapted,"expenses / fuel / maintenance · lista, detalhe e revisão"
+fuel,list,adapted,"expenses / fuel / maintenance · lista, detalhe e revisão"
+maintenance,list,adapted,"expenses / fuel / maintenance · lista, detalhe e revisão"
+expense-new,form,adapted,"expenses / fuel / maintenance · lista, detalhe e revisão"
+expense,detail,adapted,"expenses / fuel / maintenance · lista, detalhe e revisão"
+fine-new,form,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+fine-unassigned,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+fine-assign,form,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+fine-finance,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+fine-own,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+receipt,form,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+receipt-sent,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+receipts,list,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+fine-review,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+fine-correction,form,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+receipt-correction,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+fine-paid,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+fine-cancel,form,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+fine-cancelled,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+users,list,adapted,users.index / show / create / operation · vínculos
+permissions,list,adapted,roles.index / show / operation · matriz e duplicação visual
+routes,list,adapted,technical-routes.index / show / create
+audit,list,read,audit.index / show · projeção segura
+user,detail,adapted,users.index / show / create / operation · vínculos
+user-new,form,adapted,users.index / show / create / operation · vínculos
+permission,detail,adapted,roles.index / show / operation · matriz e duplicação visual
+permission-new,form,adapted,roles.index / show / operation · matriz e duplicação visual
+permission-duplicate,form,adapted,roles.index / show / operation · matriz e duplicação visual
+permission-inactive,detail,adapted,roles.index / show / operation · matriz e duplicação visual
+route,detail,adapted,technical-routes.index / show / create
+route-new,form,adapted,technical-routes.index / show / create
+audit-detail,detail,read,audit.index / show · projeção segura
+settings,form,review,configuration.index
+denied,detail,real,errors.403
+dirty,detail,interactive,layouts.base · descarte de alterações
