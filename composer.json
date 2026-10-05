@@ -39,8 +39,7 @@
     "scripts": {
         "setup": [
             "composer install",
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
+            "@php scripts/setup/ensure-key.php",
             "npm ci --ignore-scripts",
             "npm run build"
         ],

@@ -11,21 +11,52 @@ services:
       - path: .env
         required: true
     environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
-      APP_URL: "http://127.0.0.1:${APP_PORT:-8080}"
-      DB_CONNECTION: sqlite
+      APP_ENV: "${APP_ENV:-local}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_URL: "${APP_URL:-http://127.0.0.1:8080}"
+      DB_CONNECTION: mysql
       DB_URL: ""
-      DB_DATABASE: ":memory:"
+      DB_HOST: "${DB_HOST:?Configure DB_HOST no arquivo privado}"
+      DB_PORT: "${DB_PORT:-3306}"
+      DB_DATABASE: "${DB_DATABASE:?Configure DB_DATABASE no arquivo privado}"
+      DB_USERNAME: "${DB_USERNAME:?Configure DB_USERNAME no arquivo privado}"
+      DB_PASSWORD: "${DB_PASSWORD:?Configure DB_PASSWORD no arquivo privado}"
       CACHE_STORE: file
       SESSION_DRIVER: file
       QUEUE_CONNECTION: sync
-      MAIL_MAILER: log
+      SESSION_ENCRYPT: "true"
+      MAIL_MAILER: "${MAIL_MAILER:-log}"
       LOG_CHANNEL: stderr
     ports:
       - "127.0.0.1:${APP_PORT:-8080}:8080"
     volumes:
       - app_storage:/var/www/html/storage
+    security_opt:
+      - no-new-privileges:true
+
+  phpmyadmin:
+    image: phpmyadmin:5.2.3-apache
+    profiles: [admin]
+    environment:
+      PMA_HOST: "${DB_HOST:?Configure DB_HOST}"
+      PMA_PORT: "${DB_PORT:-3306}"
+      PMA_ARBITRARY: "0"
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "127.0.0.1:${PMA_PORT_HTTP:-8081}:80"
+    security_opt:
+      - no-new-privileges:true
+
+  db-tools:
+    build:
+      context: .
+      dockerfile: docker/database/Dockerfile
+    profiles: [tools]
+    working_dir: /project
+    entrypoint: [python3, scripts/database/database.py]
+    volumes:
+      - .:/project:ro
+      - "${FLEET_PRIVATE_DIR:?Defina um diretório privado fora do Git}:/private"
     security_opt:
       - no-new-privileges:true
 

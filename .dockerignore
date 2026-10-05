@@ -19,6 +19,10 @@ auth.json
 *.sqlite
 *.sqlite3
 *.sql
+!database/sql/frota_pf_mysql.sql
+private
+artifacts
+*.cnf
 *.dump
 *.log
 tests
