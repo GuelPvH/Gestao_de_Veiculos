@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\DashboardController;
@@ -28,6 +29,7 @@ Route::middleware('auth')->group(function (): void {
 Route::middleware(['auth', 'fleet.session', 'fleet.profile'])->get('/painel', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::middleware(['auth', 'fleet.session', 'fleet.profile'])->group(function (): void {
+    Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
     foreach (config('screens') as $codigo => $tela) {
         Route::get('/'.$tela['url'], [RecordController::class, 'index'])->defaults('tela', $codigo)->name($codigo.'.index');
         if ($tela['create'] ?? false) {

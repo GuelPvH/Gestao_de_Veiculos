@@ -148,4 +148,24 @@ class FleetReadRepository
 
         return DB::table($tabela)->where($coluna, $id)->orderByDesc('id')->limit(40)->get(['tipo', 'criado_em', 'motivo'])->map(fn (stdClass $evento) => ['titulo' => ucfirst(str_replace('_', ' ', $evento->tipo)), 'data' => $this->format($evento->criado_em, 'datetime'), 'descricao' => $evento->motivo ?? ''])->all();
     }
+
+    public function attachments(string $codigo, int $id): array
+    {
+        $contratos = ['fines' => 'multa_id', 'expenses' => 'despesa_id', 'maintenance' => 'manutencao_id', 'tickets' => 'chamado_id'];
+        $dados = $this->record($codigo, $id);
+        $consulta = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id');
+        if ($codigo === 'requests') {
+            $revisao = DB::table('solicitacoes')->where('id', $id)->value('revisao_atual_id');
+            if (! $revisao) {
+                return [];
+            }
+            $consulta->where('a.revisao_id', $revisao);
+        } elseif (isset($contratos[$codigo])) {
+            $consulta->where('a.'.$contratos[$codigo], $id);
+        } else {
+            return [];
+        }
+
+        return $consulta->orderByDesc('a.id')->limit(40)->get(['f.nome_original', 'f.situacao'])->map(fn (stdClass $arquivo) => ['nome' => $arquivo->nome_original, 'situacao' => $arquivo->situacao])->all();
+    }
 }
