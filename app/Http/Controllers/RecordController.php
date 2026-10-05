@@ -32,8 +32,12 @@ class RecordController extends Controller
     {
         $codigo = $this->screen($requisicao);
         $dados = $this->leituras->record($codigo, $registro);
+        $trajeto = collect();
+        if ($codigo === 'monitoring' && $this->acesso->can('rastreamento', 'ver_localizacao', null, (int) $dados->__unit)) {
+            $trajeto = DB::table('vw_trajetos_observados')->where('veiculo_id', $registro)->orderByDesc('ocorrido_em')->limit(200)->get(['ocorrido_em', 'fonte', 'latitude', 'longitude']);
+        }
 
-        return view('records.show', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->first()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $this->leituras->history($codigo, $registro), 'leituras' => $this->leituras]);
+        return view('records.show', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->first()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $this->leituras->history($codigo, $registro), 'leituras' => $this->leituras, 'trajeto' => $trajeto, 'arquivos' => $this->leituras->attachments($codigo, $registro)]);
     }
 
     public function create(Request $requisicao): View

@@ -23,7 +23,7 @@ class RequireProfile
                 $menu[] = ['label' => $tela['title'], 'route' => $codigo.'.index', 'active' => $codigo.'.*', 'icon' => $tela['icon']];
             }
         }
-        foreach (['agenda.index' => ['Agenda de veículos', 'frota', 'calendar-days'], 'monitoring.index' => ['Monitoramento', 'rastreamento', 'map-pinned'], 'reports.index' => ['Relatórios', 'relatorios', 'file-text']] as $rota => $item) {
+        foreach (['agenda.index' => ['Agenda de veículos', 'frota', 'calendar-days'], 'reports.index' => ['Relatórios', 'relatorios', 'file-text']] as $rota => $item) {
             if ($acesso->level($item[1]) > 0 && Route::has($rota)) {
                 $menu[] = ['label' => $item[0], 'route' => $rota, 'active' => $rota, 'icon' => $item[2]];
             }
