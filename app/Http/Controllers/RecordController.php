@@ -138,6 +138,14 @@ class RecordController extends Controller
             $dados->solicitacao_versao = $versoes->solicitacao_versao;
         }
 
+        if ($codigo === 'users') {
+            $dados->versao = DB::table('usuarios')->where('id', $registro)->value('versao') ?? 1;
+        }
+
+        if ($codigo === 'roles') {
+            $dados->atualizado_em = DB::table('perfis')->where('id', $registro)->value('atualizado_em');
+        }
+
         return view('records.form', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'acao' => $acao, 'titulo' => $permitidas[$acao], 'registro' => $dados, 'formAction' => $codigo === 'fines' ? route('fines.perform', ['registro' => $registro, 'acao' => $acao]) : null, 'viagensMulta' => $codigo === 'fines' && $acao === 'assign' ? app(FineWorkflow::class)->tripOptions($registro) : [], 'responsaveisMulta' => $codigo === 'fines' && $acao === 'assign' ? app(FineWorkflow::class)->responsibleOptions($registro) : [], 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'perfisDisponiveis' => app(AdminReadRepository::class)->assignableRoles(), 'unidadesDisponiveis' => DB::table('unidades')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all(), 'checklist' => $codigo === 'trips' ? DB::table('checklist_itens')->where('ativo', 1)->orderBy('ordem')->get(['id', 'descricao', 'obrigatorio']) : [], 'veiculosDisponiveis' => $veiculosDisponiveis, 'motoristasDisponiveis' => $motoristasDisponiveis, 'categoriasChamado' => $codigo === 'tickets' ? DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all() : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->where('codigo', '<>', 'abastecimento')->pluck('nome', 'id')->all() : []]);
     }
 }
