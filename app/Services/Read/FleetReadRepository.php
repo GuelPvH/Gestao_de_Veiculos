@@ -73,11 +73,22 @@ class FleetReadRepository
         if (($filtros['situacao'] ?? '') !== '' && isset($tela['columns']['situacao'])) {
             $consulta->where($tela['columns']['situacao'][0], $filtros['situacao']);
         }
-        foreach (['de' => '>=', 'ate' => '<='] as $chave => $operador) {
-            if (! empty($filtros[$chave]) && ! empty($tela['date'])) {
-                $instante = CarbonImmutable::parse($filtros[$chave], config('fleet.timezone'));
-                $limite = $chave === 'de' ? $instante->startOfDay() : $instante->endOfDay();
-                $consulta->where($tela['date'], $operador, ($tela['dateOnly'] ?? false) ? $filtros[$chave] : $limite->utc());
+        foreach (['de', 'ate'] as $chave) {
+            if (empty($filtros[$chave]) || empty($tela['date'])) {
+                continue;
+            }
+            if ($tela['dateOnly'] ?? false) {
+                $consulta->where($tela['date'], $chave === 'de' ? '>=' : '<=', $filtros[$chave]);
+
+                continue;
+            }
+            $instante = CarbonImmutable::parse($filtros[$chave], config('fleet.timezone'));
+            $limite = ($chave === 'de' ? $instante->startOfDay() : $instante->addDay()->startOfDay())->utc()->format('Y-m-d H:i:s.u');
+            $operador = $chave === 'de' ? '>=' : '<';
+            if ($codigo === 'trips') {
+                $consulta->whereRaw('COALESCE(r.saida_real, r.saida_prevista) '.$operador.' ?', [$limite]);
+            } else {
+                $consulta->where($tela['date'], $operador, $limite);
             }
         }
 
@@ -154,8 +165,12 @@ class FleetReadRepository
 
     public function attachments(string $codigo, int $id): array
     {
-        $contratos = ['fines' => 'multa_id', 'expenses' => 'despesa_id', 'maintenance' => 'manutencao_id', 'tickets' => 'chamado_id'];
+        $contratos = ['fines' => 'multa_id', 'expenses' => 'despesa_id', 'fuel' => 'despesa_id', 'maintenance' => 'manutencao_id', 'tickets' => 'chamado_id'];
         $dados = $this->record($codigo, $id);
+        if (in_array($codigo, ['expenses', 'fuel', 'maintenance'], true)
+            && ! $this->acesso->can('despesas', 'ver_valores', (int) $dados->__owner, (int) $dados->__unit)) {
+            return [];
+        }
         $consulta = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id');
         if ($codigo === 'requests') {
             $revisao = DB::table('solicitacoes')->where('id', $id)->value('revisao_atual_id');
@@ -169,6 +184,6 @@ class FleetReadRepository
             return [];
         }
 
-        return $consulta->orderByDesc('a.id')->limit(40)->get(['f.nome_original', 'f.situacao'])->map(fn (stdClass $arquivo) => ['nome' => $arquivo->nome_original, 'situacao' => $arquivo->situacao])->all();
+        return $consulta->orderByDesc('a.id')->limit(40)->get(['a.id', 'f.nome_original', 'f.situacao'])->map(fn (stdClass $arquivo) => ['nome' => $arquivo->nome_original, 'situacao' => $arquivo->situacao, 'url' => in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) && $arquivo->situacao === 'disponivel' ? route($codigo.'.download', ['registro' => $id, 'anexo' => $arquivo->id]) : null])->all();
     }
 }
