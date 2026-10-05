@@ -101,7 +101,8 @@ class Client:
             'triggers': f"SELECT TRIGGER_NAME FROM information_schema.TRIGGERS WHERE TRIGGER_SCHEMA={database} ORDER BY TRIGGER_NAME",
             'events': f"SELECT EVENT_NAME FROM information_schema.EVENTS WHERE EVENT_SCHEMA={database} ORDER BY EVENT_NAME",
         }.items():
-            objects[kind] = [row[0] for row in self.rows(query)]
+            # A collation do servidor pode ordenar nomes de modo diferente do manifesto.
+            objects[kind] = sorted(row[0] for row in self.rows(query))
         foreign = self.rows(f"SELECT COUNT(*) FROM information_schema.KEY_COLUMN_USAGE WHERE REFERENCED_TABLE_SCHEMA IS NOT NULL AND ((TABLE_SCHEMA={database} AND REFERENCED_TABLE_SCHEMA<>{database}) OR (TABLE_SCHEMA<>{database} AND REFERENCED_TABLE_SCHEMA={database}))")
         require(foreign[0][0] == '0', 'Há dependências entre schemas; manutenção recusada.')
         engines = self.rows(f"SELECT TABLE_NAME,ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA={database} AND TABLE_TYPE='BASE TABLE'")
