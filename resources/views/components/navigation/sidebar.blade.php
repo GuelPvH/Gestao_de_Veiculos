@@ -16,8 +16,8 @@
         </nav>
         <div class="sidebar-footer">
             <a href="{{ route('profiles.index') }}" class="btn btn-outline-secondary w-100">{{ $vinculo->perfil_nome ?? 'Selecionar perfil' }}</a>
-            <a href="{{ route('account.index') }}" class="nav-link mt-2">Conta e aparência</a>
-            <form action="{{ route('logout') }}" method="post">@csrf
+            @if(Route::has('account.index'))<a href="{{ route('account.index') }}" class="nav-link mt-2">Conta e aparência</a>@endif
+            <form action="{{ route('logout') }}" method="post" data-loading-form data-profile-switch>@csrf
                 <button class="btn btn-link w-100" type="submit">Sair</button>
             </form>
         </div>
