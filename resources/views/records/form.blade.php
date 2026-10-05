@@ -2,7 +2,8 @@
     <x-ui.title :titulo="$titulo" subtitulo="Preencha as informações e confira a revisão antes de concluir." />
     <x-ui.panel>
         <form id="operation-form" method="post" action="{{ $formAction ?? ($codigo === 'requests' ? ($registro ? route('requests.perform', ['registro' => $registro->id, 'acao' => $acao]) : route('requests.store')) : ($codigo === 'trips' ? route('trips.perform', ['registro' => $registro->id, 'acao' => $acao]) : (in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) ? ($registro ? route($codigo.'.perform', ['registro' => $registro->id, 'acao' => $acao]) : route($codigo.'.store')) : url()->current()))) }}" @if(in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) || ($codigo === 'fines' && $acao === 'proof')) enctype="multipart/form-data" @endif data-dirty-form data-review-form="operation-review" novalidate>@csrf
-            @if(in_array($codigo, ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines'], true) && $registro)<input type="hidden" name="versao" value="{{ $registro->versao }}">@endif
+            @if(in_array($codigo, ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines', 'users'], true) && $registro)<input type="hidden" name="versao" value="{{ $registro->versao }}">@endif
+            @if($codigo === 'roles' && $registro)<input type="hidden" name="atualizado_em" value="{{ $registro->atualizado_em }}">@endif
             @if($codigo === 'trips' && $acao === 'cancel')<input type="hidden" name="solicitacao_versao" value="{{ $registro->solicitacao_versao }}">@endif
             @if($codigo === 'requests' && in_array($acao,['create','edit'],true))
                 <ol class="wizard-steps" aria-label="Etapas da solicitação">@foreach(['Viagem','Pessoas','Veículo','Revisão'] as $etapa)<li data-step-label>{{ $loop->iteration }}. {{ $etapa }}</li>@endforeach</ol>
@@ -48,10 +49,12 @@
                 <x-forms.field nome="observacao" rotulo="Observações" tipo="textarea" maxlength="2000" />
             @else
                 @includeIf('records.forms.'.$codigo)
-                <x-forms.field nome="justificativa" rotulo="Justificativa" tipo="textarea" :obrigatorio="true" maxlength="3000" />
+                @if($acao !== 'create')
+                    <x-forms.field nome="justificativa" rotulo="Justificativa" tipo="textarea" :obrigatorio="true" maxlength="3000" />
+                @endif
             @endif
             <div class="form-actions"><div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{{ $registro ? route($codigo.'.show',$registro->id) : route($codigo.'.index') }}">Cancelar</a><button type="button" class="btn btn-outline-secondary" data-step-prev hidden>Voltar</button></div><div class="d-flex gap-2"><button type="button" class="btn btn-primary" data-step-next hidden>Continuar</button><button type="submit" class="btn btn-primary" data-review-submit>Revisar</button></div></div>
         </form>
     </x-ui.panel>
-    <x-forms.review :confirmar="in_array($codigo, ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines'], true)" />
+    <x-forms.review :confirmar="in_array($codigo, ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines', 'users', 'roles', 'technical-routes'], true)" />
 </x-layouts.authenticated>
