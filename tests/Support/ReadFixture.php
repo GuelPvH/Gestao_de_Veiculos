@@ -92,6 +92,7 @@ class ReadFixture
                 }
                 if ($codigo === 'tickets') {
                     $dados['situacao'] = 'aberto';
+                    $dados['versao'] = 1;
                 }
                 if ($codigo === 'fuel') {
                     continue;
@@ -104,6 +105,7 @@ class ReadFixture
         }
         for ($id = 1; $id <= 3; $id++) {
             DB::table('veiculos')->insert(['id' => $id, 'unidade_id' => $id === 3 ? 2 : 1, 'placa' => 'ABC1D2'.$id, 'nome' => 'Veículo de teste '.$id, 'criado_por' => $id, 'quilometragem_atual' => 25000]);
+            DB::table('multas')->insert(['id' => $id, 'protocolo' => 'QA-MUL-'.$id, 'veiculo_id' => $id, 'unidade_id' => $id === 3 ? 2 : 1, 'ocorrido_em' => '2026-10-05 12:00:00', 'precisao_ocorrencia' => 'instante', 'valor' => 12345.67, 'descricao' => 'Autuação de teste isolado', 'situacao' => 'sem_responsavel', 'criado_por' => $id, 'versao' => 1]);
             DB::table('despesas')->insert(['id' => $id, 'unidade_id' => $id === 3 ? 2 : 1, 'veiculo_id' => $id, 'protocolo' => 'QA-EXP-'.$id, 'criado_por' => $id, 'valor' => 12345.67, 'data_despesa' => '2026-10-05', 'situacao' => 'em_conferencia']);
             DB::table('abastecimentos')->insert(['despesa_id' => $id, 'veiculo_id' => $id, 'combustivel' => 'gasolina', 'quantidade' => 20, 'unidade_medida' => 'litro', 'preco_unitario' => 6, 'quilometragem' => 25000]);
             DB::table('reservas')->insert(['id' => $id, 'veiculo_id' => $id, 'inicio' => '2026-10-05 12:00:00', 'fim' => '2026-10-05 18:00:00', 'situacao' => 'ativa', 'tipo' => 'viagem']);

@@ -7,6 +7,7 @@ use App\Services\Read\FleetReadRepository;
 use App\Services\Read\OperationCatalog;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\ReadFixture;
+use Tests\Support\TripFixture;
 use Tests\TestCase;
 
 class ReadPagesTest extends TestCase
@@ -14,6 +15,7 @@ class ReadPagesTest extends TestCase
     public function test_all_profile_pages_and_allowed_reviews_render_from_authorized_queries(): void
     {
         ReadFixture::create();
+        TripFixture::seed();
         $exportacao = getenv('FLEET_UI_EXPORT_DIR');
         if (! $exportacao) {
             $this->withoutVite();

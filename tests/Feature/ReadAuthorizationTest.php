@@ -7,6 +7,7 @@ use App\Services\Read\FleetReadRepository;
 use App\Services\Read\OperationCatalog;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\ReadFixture;
+use Tests\Support\TripFixture;
 use Tests\TestCase;
 
 class ReadAuthorizationTest extends TestCase
@@ -16,6 +17,7 @@ class ReadAuthorizationTest extends TestCase
         parent::setUp();
         $this->withoutVite();
         ReadFixture::create();
+        TripFixture::seed();
         ReadFixture::profile(1);
     }
 
@@ -94,7 +96,7 @@ class ReadAuthorizationTest extends TestCase
         DB::table('rotas_sistema')->where('modulo_codigo', 'solicitacoes')->update(['ativa' => 0]);
         $this->get(route('requests.index'))->assertForbidden()->assertSee('Página temporariamente desativada');
         $antes = DB::table('vw_solicitacoes_atuais')->count();
-        $this->post(route('requests.create'), ['destino' => 'Tentativa de escrita'])->assertStatus(405);
+        $this->post(route('requests.store'), ['destino' => 'Tentativa de escrita'])->assertForbidden();
         $this->assertSame($antes, DB::table('vw_solicitacoes_atuais')->count());
     }
 
