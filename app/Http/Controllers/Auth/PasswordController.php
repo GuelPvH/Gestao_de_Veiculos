@@ -53,7 +53,38 @@ class PasswordController extends Controller
 
     private function mailEnabled(): bool
     {
-        return config('fleet.recovery_mail_enabled') && config('mail.default') === 'smtp';
+        if (! config('fleet.recovery_mail_enabled') || config('mail.default') !== 'smtp' || ! $this->recoveryBaseUrl()) {
+            return false;
+        }
+
+        $smtp = config('mail.mailers.smtp');
+        if (! is_array($smtp) || ! empty($smtp['url']) || ! filter_var(config('mail.from.address'), FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        if ($smtp['scheme'] === 'smtps') {
+            return true;
+        }
+
+        // Captura local sem TLS é permitida apenas em desenvolvimento e testes.
+        return $smtp['scheme'] === 'smtp'
+            && in_array(config('app.env'), ['local', 'testing'], true)
+            && in_array($smtp['host'], ['127.0.0.1', 'localhost', '::1'], true);
+    }
+
+    private function recoveryBaseUrl(): ?string
+    {
+        $url = rtrim((string) config('app.url'), '/');
+        $partes = parse_url($url);
+
+        if (! filter_var($url, FILTER_VALIDATE_URL) || ! is_array($partes)
+            || ($partes['scheme'] ?? null) !== 'https' || empty($partes['host'])
+            || isset($partes['user']) || isset($partes['pass'])
+            || isset($partes['query']) || isset($partes['fragment'])) {
+            return null;
+        }
+
+        return $url;
     }
 
     public function sendRecovery(Request $requisicao): RedirectResponse
@@ -71,7 +102,8 @@ class PasswordController extends Controller
             $hash = hash('sha256', $token, true);
             DB::table('recuperacoes_senha')->insert(['usuario_id' => $usuario->id, 'token_hash' => $hash, 'expira_em' => now('UTC')->addMinutes(30)]);
             try {
-                Mail::send('auth.recovery-email', ['url' => route('recovery.reset', ['token' => $token])], function ($mensagem) use ($usuario): void {
+                $url = $this->recoveryBaseUrl().route('recovery.reset', ['token' => $token], false);
+                Mail::send('auth.recovery-email', ['url' => $url], function ($mensagem) use ($usuario): void {
                     $mensagem->to($usuario->email)->subject('Recuperação de acesso · Frota · PF');
                 });
             } catch (Throwable) {
