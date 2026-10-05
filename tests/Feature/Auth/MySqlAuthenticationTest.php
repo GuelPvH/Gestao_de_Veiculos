@@ -147,11 +147,17 @@ class MySqlAuthenticationTest extends TestCase
 
     public function test_recovery_is_single_use_and_rejects_expired_tokens(): void
     {
+        $this->login();
+        $sessao = session('fleet_session.id');
         $token = random_bytes(32);
         $hash = hash('sha256', $token, true);
         DB::table('recuperacoes_senha')->insert(['usuario_id' => $this->usuarioId, 'token_hash' => $hash, 'expira_em' => now('UTC')->addMinutes(5)]);
+        $this->assertSame($hash, DB::table('recuperacoes_senha')->where('usuario_id', $this->usuarioId)->value('token_hash'));
         $novo = password_hash('NovaSenha!'.bin2hex(random_bytes(10)), PASSWORD_BCRYPT, ['cost' => 4]);
         app(ProcedureRunner::class)->call('sp_consumir_recuperacao', [$hash, $novo]);
+        $this->assertSame('troca_senha', DB::table('sessoes')->where('id', $sessao)->value('motivo_encerramento'));
+        $this->assertNotNull(DB::table('sessoes')->where('id', $sessao)->value('encerrada_em'));
+        $this->get('/painel')->assertRedirect('/entrar');
         try {
             app(ProcedureRunner::class)->call('sp_consumir_recuperacao', [$hash, $novo]);
             $this->fail('Token reutilizado indevidamente.');
