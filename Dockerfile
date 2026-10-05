@@ -4,9 +4,9 @@ FROM php:8.5-apache-bookworm AS php-base
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        curl libicu-dev libonig-dev libsqlite3-dev libzip-dev \
-    && docker-php-ext-install -j"$(nproc)" \
-        intl mbstring opcache pdo_mysql pdo_sqlite zip \
+        curl libicu-dev libzip-dev \
+    && docker-php-ext-install -j2 \
+        intl pdo_mysql zip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
