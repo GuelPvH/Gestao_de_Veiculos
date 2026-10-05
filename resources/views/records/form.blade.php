@@ -2,8 +2,8 @@
     <x-ui.title :titulo="$titulo" subtitulo="Preencha as informações e confira a revisão antes de concluir." />
     <x-ui.panel>
         <form id="operation-form" method="post" action="{{ $formAction ?? ($codigo === 'requests' ? ($registro ? route('requests.perform', ['registro' => $registro->id, 'acao' => $acao]) : route('requests.store')) : ($codigo === 'trips' ? route('trips.perform', ['registro' => $registro->id, 'acao' => $acao]) : (in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) ? ($registro ? route($codigo.'.perform', ['registro' => $registro->id, 'acao' => $acao]) : route($codigo.'.store')) : url()->current()))) }}" @if(in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) || ($codigo === 'fines' && $acao === 'proof')) enctype="multipart/form-data" @endif data-dirty-form data-review-form="operation-review" novalidate>@csrf
-            @if(in_array($codigo, ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines', 'users'], true) && $registro)<input type="hidden" name="versao" value="{{ $registro->versao }}">@endif
-            @if($codigo === 'roles' && $registro)<input type="hidden" name="atualizado_em" value="{{ $registro->atualizado_em }}">@endif
+            @if(in_array($codigo, ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines', 'users'], true) && $registro)<input type="hidden" name="versao" value="{{ $registro->versao ?? 1 }}">@endif
+            @if($codigo === 'roles' && $registro)<input type="hidden" name="atualizado_em" value="{{ $registro->atualizado_em ?? '' }}">@endif
             @if($codigo === 'trips' && $acao === 'cancel')<input type="hidden" name="solicitacao_versao" value="{{ $registro->solicitacao_versao }}">@endif
             @if($codigo === 'requests' && in_array($acao,['create','edit'],true))
                 <ol class="wizard-steps" aria-label="Etapas da solicitação">@foreach(['Viagem','Pessoas','Veículo','Revisão'] as $etapa)<li data-step-label>{{ $loop->iteration }}. {{ $etapa }}</li>@endforeach</ol>
