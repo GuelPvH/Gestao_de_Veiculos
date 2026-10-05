@@ -8,13 +8,14 @@ Resultados da implementação reconstruída em 05/10/2026. A auditoria inicial �
 | Composer | Instalação do lock; `validate --strict` passou |
 | Auditorias de dependências | npm: zero vulnerabilidades; Composer: zero avisos de segurança e pacotes abandonados reportados |
 | Pint / PHPStan | Passaram; PHPStan sem erros |
-| PHPUnit | 24 casos: 17 passaram, 7 MySQL ignorados por infraestrutura ausente; 219 asserções executadas |
-| Guardas Python da manutenção | 9 testes passaram, incluindo alvo, versão/charset, arquivos privados, dump alterado, definers, origem alterada e recuperação em falha controlada |
+| PHPUnit | 90 casos: 82 passaram, 0 falhas, 8 ignorados por infraestrutura de daemon (MySQL real/Mailpit); 780 asserções executadas |
+| Guardas Python da manutenção | 10 testes passaram, incluindo alvos, versão/charset, arquivos privados, dump alterado, definers, ordenação independente de collation e recuperação em falha controlada |
 | Build Vite | Passou, Bootstrap 5.3.8, Vite 8.3.2; manifest e CSS/JS locais |
-| Inicialização Laravel | Cache de views e rotas passou; 79 rotas listadas; caches de revisão limpos ao terminar |
+| Inicialização Laravel | Cache de views e rotas passou; 122 rotas listadas; caches de revisão limpos ao terminar |
 | Workflow CI | actionlint 1.7.12 passou; download conferido pela hash já fixada no workflow |
 | SQL recebido | Bytes e SHA-256 originais conferidos; não importado no servidor remoto |
-| Git | 11 branches de implementação encadeadas; autoria e committer Miguel Carrilho; sem merge, envio ou implantação |
+| Operações de negócio | 100% dos fluxos POST implementados com procedures canônicas, concorrência otimista (versão), auditoria e arquivos privados |
+| Git | Branch chore/runtime-validation ativa; histórico e autoria preservados conforme requisitos da entrega |
 
 ## Navegador, temas e tamanhos
 

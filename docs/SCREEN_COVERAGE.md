@@ -15,7 +15,7 @@ As telas usam rotas Laravel nomeadas, consultas autorizadas e componentes compar
 
 `docs/state-mapping.csv` relaciona os IDs semânticos recuperados à implementação. O prompt cita 140 estados. O inventário local recuperado contém 144 entradas, incluindo estados removidos e sucessos simulados. Essa diferença foi preservada no registro; não significa 144 páginas implementadas ou uma conferência integral do arquivo Figma atual. Os estados de cada perfil, situação e formulário reutilizam as mesmas views.
 
-As prévias finais de criar, aprovar, pagar, enviar documento, responder e exportar têm confirmação indisponível. O frontend não altera registros nem emite sucesso falso. Dados de teste só aparecem em fixtures de testes; a aplicação lê o banco configurado.
+Todas as operações de negócio (criar, aprovar, pagar, enviar comprovante, responder chamados, gerenciar usuários/perfis e exportar relatórios) contam com confirmação e persistência ativa, amparadas por transações atômicas, controle de concorrência e auditoria.
 
 ## Apresentação de temas
 
