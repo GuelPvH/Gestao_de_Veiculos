@@ -1,8 +1,10 @@
 <x-layouts.authenticated :titulo="$titulo" :breadcrumbs="[['label'=>$tela['title'],'href'=>route($codigo.'.index')],['label'=>$titulo]]">
     <x-ui.title :titulo="$titulo" subtitulo="Preencha as informações e confira a revisão antes de concluir." />
     <x-ui.panel>
-        <form method="post" action="{{ url()->current() }}" data-dirty-form data-review-form="operation-review" novalidate>@csrf
-            @if($codigo === 'requests' && in_array($acao,['create','edit','send','revision'],true))
+        <form id="operation-form" method="post" action="{{ $formAction ?? ($codigo === 'requests' ? ($registro ? route('requests.perform', ['registro' => $registro->id, 'acao' => $acao]) : route('requests.store')) : ($codigo === 'trips' ? route('trips.perform', ['registro' => $registro->id, 'acao' => $acao]) : (in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) ? ($registro ? route($codigo.'.perform', ['registro' => $registro->id, 'acao' => $acao]) : route($codigo.'.store')) : url()->current()))) }}" @if(in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) || ($codigo === 'fines' && $acao === 'proof')) enctype="multipart/form-data" @endif data-dirty-form data-review-form="operation-review" novalidate>@csrf
+            @if(in_array($codigo, ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines'], true) && $registro)<input type="hidden" name="versao" value="{{ $registro->versao }}">@endif
+            @if($codigo === 'trips' && $acao === 'cancel')<input type="hidden" name="solicitacao_versao" value="{{ $registro->solicitacao_versao }}">@endif
+            @if($codigo === 'requests' && in_array($acao,['create','edit'],true))
                 <ol class="wizard-steps" aria-label="Etapas da solicitação">@foreach(['Viagem','Pessoas','Veículo','Revisão'] as $etapa)<li data-step-label>{{ $loop->iteration }}. {{ $etapa }}</li>@endforeach</ol>
                 <section class="form-stage"><h2 class="h5" tabindex="-1">Dados da viagem</h2>
                     <x-forms.field nome="finalidade" rotulo="Finalidade" tipo="textarea" :valor="$registro->finalidade ?? ''" :obrigatorio="true" maxlength="3000" />
@@ -12,16 +14,19 @@
                 </section>
                 <section class="form-stage" hidden><h2 class="h5" tabindex="-1">Passageiros e condutor</h2>
                     <x-forms.field nome="quantidade_passageiros" rotulo="Quantidade de passageiros" tipo="number" :valor="$registro->passageiros ?? 1" :obrigatorio="true" min="1" max="100" step="1" />
-                    <x-forms.field nome="passageiros" rotulo="Nomes dos passageiros" tipo="textarea" maxlength="2000" />
-                    <x-forms.field nome="necessita_motorista" rotulo="Necessita de motorista?" tipo="select" :obrigatorio="true" :opcoes="['1'=>'Sim','0'=>'Não']" />
+                    <x-forms.field nome="passageiros" rotulo="Nomes dos passageiros" tipo="textarea" :valor="$registro->nomes_passageiros ?? ''" maxlength="16000" nota="Um nome por linha; a lista não pode exceder a quantidade informada." />
+                    <x-forms.field nome="necessita_motorista" rotulo="Necessita de motorista?" tipo="select" :valor="$registro->necessita_motorista ?? 1" :obrigatorio="true" :opcoes="['1'=>'Sim','0'=>'Não']" />
                 </section>
                 <section class="form-stage" hidden><h2 class="h5" tabindex="-1">Preferências do veículo</h2>
-                    <x-forms.field nome="veiculo_pretendido_id" rotulo="Veículo pretendido" tipo="select" :opcoes="$veiculosDisponiveis ?? []" :obrigatorio="true" nota="A disponibilidade para o período solicitado será conferida na análise." />
+                    <x-forms.field nome="veiculo_pretendido_id" rotulo="Veículo pretendido" tipo="select" :valor="$registro->veiculo_pretendido_id ?? ''" :opcoes="$veiculosDisponiveis ?? []" :obrigatorio="true" nota="A disponibilidade para o período solicitado será conferida na análise." />
                     @if(empty($veiculosDisponiveis))<x-ui.alert tom="warning">Não há veículo selecionável no alcance do perfil. Consulte o gestor da unidade.</x-ui.alert>@endif
-                    <x-forms.field nome="preferencia_veiculo" rotulo="Necessidades do veículo" tipo="textarea" nota="Informe capacidade ou características necessárias. A disponibilidade será conferida na análise." maxlength="2000" />
-                    <x-forms.field nome="observacoes" rotulo="Observações" tipo="textarea" maxlength="3000" />
+                    <x-forms.field nome="observacoes" rotulo="Observações" tipo="textarea" :valor="$registro->observacoes ?? ''" maxlength="3000" />
                 </section>
                 <section class="form-stage" hidden><h2 class="h5" tabindex="-1">Revisão da solicitação</h2><p>Confira a viagem, as pessoas e as necessidades do veículo. Use Voltar para corrigir uma etapa e Revisar para visualizar todas as informações.</p><x-ui.alert tom="info">Alterações em solicitação aprovada precisam de nova análise.</x-ui.alert></section>
+            @elseif($codigo === 'requests' && $acao === 'send')
+                <x-ui.alert tom="info">O envio congela a revisão atual e encaminha a solicitação para análise. Confira o rascunho antes de confirmar.</x-ui.alert>
+            @elseif($codigo === 'vehicles')
+                @include('records.forms.vehicles')
             @elseif($codigo === 'trips' && in_array($acao,['departure','return'],true))
                 <x-forms.field nome="data_registro" rotulo="{{ $acao==='departure' ? 'Data e hora da saída' : 'Data e hora do retorno' }}" tipo="datetime-local" :obrigatorio="true" />
                 <x-forms.field nome="quilometragem" rotulo="Quilometragem do veículo" tipo="number" :obrigatorio="true" :min="$registro->quilometragem_saida ?? 0" step="0.1" />
@@ -32,6 +37,10 @@
                 <x-forms.field nome="tipo" rotulo="Tipo de ocorrência" tipo="select" :obrigatorio="true" :opcoes="['geral'=>'Geral','desvio_trajeto'=>'Desvio de trajeto','avaria'=>'Avaria','acidente'=>'Acidente','atraso'=>'Atraso']" />
                 <x-forms.field nome="ocorrido_em" rotulo="Data e hora" tipo="datetime-local" :obrigatorio="true" />
                 <x-forms.field nome="descricao" rotulo="Descrição da ocorrência" tipo="textarea" :obrigatorio="true" maxlength="3000" />
+            @elseif(in_array($codigo, ['expenses', 'fuel', 'maintenance'], true))
+                @include('records.forms.finance')
+            @elseif($codigo === 'fines')
+                @include('records.forms.fines')
             @elseif($acao === 'proof')
                 <x-forms.field nome="comprovante" rotulo="Comprovante de pagamento" tipo="file" :obrigatorio="true" accept="application/pdf,image/png,image/jpeg" nota="PDF, PNG ou JPEG, até 10 MB. O arquivo será exibido na revisão." />
                 <x-forms.field nome="valor_declarado" rotulo="Valor declarado" tipo="number" :obrigatorio="true" min="0.01" step="0.01" />
@@ -44,5 +53,5 @@
             <div class="form-actions"><div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="{{ $registro ? route($codigo.'.show',$registro->id) : route($codigo.'.index') }}">Cancelar</a><button type="button" class="btn btn-outline-secondary" data-step-prev hidden>Voltar</button></div><div class="d-flex gap-2"><button type="button" class="btn btn-primary" data-step-next hidden>Continuar</button><button type="submit" class="btn btn-primary" data-review-submit>Revisar</button></div></div>
         </form>
     </x-ui.panel>
-    <x-forms.review />
+    <x-forms.review :confirmar="in_array($codigo, ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines'], true)" />
 </x-layouts.authenticated>
