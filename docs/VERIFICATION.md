@@ -1,5 +1,24 @@
 # Verificação executada em 06/10/2026
 
+## Hardening da autenticação nesta entrega
+
+Esta seção registra as mudanças de autenticação feitas nesta branch; os resultados gerais abaixo são de uma execução anterior e não cobrem esta revisão.
+
+| Verificação | Resultado observado |
+|---|---|
+| Autenticação isolada | `vendor/bin/phpunit tests/Feature/Auth/PublicAccessTest.php tests/Feature/Auth/RecoveryMailTest.php`: 10 testes aprovados, 141 asserções, SQLite em memória. |
+| Autorização/administração relacionadas | `vendor/bin/phpunit tests/Feature/AdminWorkflowTest.php tests/Feature/ReadAuthorizationTest.php`: 18 testes aprovados, 148 asserções, SQLite em memória. |
+| MySQL/Mailpit descartáveis | `python3 scripts/qa/mysql-contract.py`: 14 testes aprovados, 229 asserções; MySQL 8.4 descartável, sessão/perfil, prazos, revogação, recuperação SMTP local, consumo único e duas tentativas concorrentes sobre o mesmo token. Importação canônica e patch 1.0.2 preservaram dados e conferiram 68 tabelas, 14 views, 41 procedures e 119 triggers. Não foi teste de carga concorrente. |
+| PHPUnit completo local | SQLite em memória e integração externa explicitamente desativada: 108 casos, 94 aprovados, 14 ignorados, 909 asserções. Os 14 casos MySQL/Mailpit foram executados pelo runner descartável acima. |
+| Formatação/sintaxe | Pint passou nos PHP alterados; `php -l` passou nos dois novos PHP; `node --check resources/js/app.js` e `git diff --check` passaram. |
+| Checks locais de CI | Composer validate/audit, Pint completo, PHPStan completo e 10 guardas Python passaram. O PHP emitiu aviso de que a extensão opcional `phpstan_turbo` não pode ser carregada neste runtime. |
+| Build frontend | Vite 8.3.2 passou em workspace temporário com dependências do lockfile (`npm ci --ignore-scripts --no-audit --no-fund`); bundle contém o handler do fragmento de recuperação. O `node_modules` do checkout e `public/build` não foram alterados. |
+| Auditoria npm | `npm audit --package-lock-only --audit-level=high` inicialmente apontou `shell-quote` transitivo de `concurrently`; removida a dependência de desenvolvimento sem uso, a auditoria reportou zero vulnerabilidades. Build repetido com o novo lockfile passou. |
+| Navegador/servidor da aplicação | Chrome headless passou num harness temporário com o bundle e no fluxo de recuperação da página Laravel servida localmente com MySQL e Mailpit descartáveis. O ambiente de destino não foi acessado. |
+| Banco compartilhado | Não conectado nem alterado. A importação e os testes MySQL ocorreram somente nos containers descartáveis criados pelo runner. |
+
+A autenticação permanece pendente de homologação até que o patch seja aplicado manualmente pelo DBA, SMTP e worker sejam validados no destino e a página Laravel seja conferida no runtime alvo. A política de MFA administrativo foi definida em AUTHENTICATION.md, mas o fator ainda não foi implementado nem homologado.
+
 Base `4f3df65f4b8ce4e867609ee2518e5924983d5fe9`, worktree isolado. Os comandos locais usaram PHP 8.5.4; a matriz PHP 8.3/8.4 configurada no workflow ainda depende do CI remoto. O relatório anterior de 05/10/2026 registrava 82/90 testes aprovados, sem Docker disponível naquele ambiente; é histórico, não prova desta entrega. O checkout principal e o banco remoto não foram modificados.
 
 | Verificação | Resultado observado nesta rodada |

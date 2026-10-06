@@ -26,8 +26,8 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/entrar', [AuthController::class, 'authenticate'])->name('login.submit');
     Route::get('/recuperar-acesso', [PasswordController::class, 'recover'])->name('recovery.index');
     Route::post('/recuperar-acesso', [PasswordController::class, 'sendRecovery'])->name('recovery.send');
-    Route::get('/redefinir-senha/{token}', [PasswordController::class, 'reset'])->name('recovery.reset');
-    Route::post('/redefinir-senha/{token}', [PasswordController::class, 'consume'])->name('recovery.consume');
+    Route::get('/redefinir-senha', [PasswordController::class, 'reset'])->name('recovery.reset');
+    Route::post('/redefinir-senha', [PasswordController::class, 'consume'])->name('recovery.consume');
 });
 Route::middleware('auth')->group(function (): void {
     Route::post('/sair', [AuthController::class, 'logout'])->name('logout');
