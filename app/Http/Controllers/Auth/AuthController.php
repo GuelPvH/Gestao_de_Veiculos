@@ -58,7 +58,6 @@ class AuthController extends Controller
             abort(503);
         }
         RateLimiter::clear($chave);
-        RateLimiter::clear($chaveIp);
 
         return redirect()->route($usuario->deve_trocar_senha ? 'password.edit' : ($vinculos->count() === 1 ? 'dashboard' : 'profiles.index'));
     }
