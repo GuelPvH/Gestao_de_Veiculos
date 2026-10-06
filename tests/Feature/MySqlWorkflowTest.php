@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Services\Auth\ProcedureRunner;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -238,6 +239,9 @@ class MySqlWorkflowTest extends TestCase
         config([
             'app.env' => 'testing', 'app.url' => 'https://frota.example.test',
             'fleet.recovery_mail_enabled' => true,
+            'fleet.recovery_queue_enabled' => true,
+            'fleet.recovery_queue_connection' => 'database',
+            'queue.connections.database.driver' => 'database',
             'mail.default' => 'smtp', 'mail.mailers.smtp.scheme' => 'smtp',
             'mail.mailers.smtp.url' => null, 'mail.mailers.smtp.host' => '127.0.0.1',
             'mail.mailers.smtp.port' => $smtpPorta,
@@ -258,28 +262,35 @@ class MySqlWorkflowTest extends TestCase
         $this->withServerVariables(['HTTP_HOST' => 'host-nao-confiavel.invalid'])
             ->from('/recuperar-acesso')->post('/recuperar-acesso', ['identificador' => $identificador])
             ->assertSessionHas('status', 'Se houver um acesso elegível, você receberá as orientações no e-mail cadastrado.');
+        $this->assertSame(1, DB::table('jobs')->where('queue', 'default')->count());
+        Artisan::call('queue:work', ['connection' => 'database', '--queue' => 'default', '--once' => true, '--sleep' => 0, '--tries' => 3]);
         $posteriores = json_decode(file_get_contents($api), true, 512, JSON_THROW_ON_ERROR);
         $this->assertSame($anteriores['total'] + 1, $posteriores['total']);
         $mensagem = json_decode(file_get_contents('http://127.0.0.1:'.$apiPorta.'/api/v1/message/'.$posteriores['messages'][0]['ID']), true, 512, JSON_THROW_ON_ERROR);
-        $this->assertMatchesRegularExpression('#https://frota\.example\.test/redefinir-senha/[0-9a-f]{64}#', $mensagem['HTML']);
-        $this->assertStringNotContainsString('host-nao-confiavel.invalid', $mensagem['HTML']);
-        preg_match('#/redefinir-senha/([0-9a-f]{64})#', $mensagem['HTML'], $partes);
+        $this->assertTrue((bool) preg_match('~https://frota\.example\.test/redefinir-senha\#[0-9a-f]{64}~', $mensagem['HTML']));
+        $this->assertFalse(str_contains($mensagem['HTML'], 'host-nao-confiavel.invalid'));
+        preg_match('~/redefinir-senha\#([0-9a-f]{64})~', $mensagem['HTML'], $partes);
         $token = $partes[1];
         $registro = DB::table('recuperacoes_senha')->where('usuario_id', $usuario)->first();
         $this->assertSame(32, strlen($registro->token_hash));
         $this->assertSame(hash('sha256', $token, true), $registro->token_hash);
         $this->assertNull($registro->invalidado_em);
 
+        $formulario = $this->get(route('recovery.reset'))->assertOk();
+        $this->assertTrue(str_contains($formulario->getContent(), 'name="token"'));
         $novaSenha = 'NovaSenha!'.bin2hex(random_bytes(10));
-        $this->post(route('recovery.consume', $token), [
+        $this->post(route('recovery.consume'), [
+            'token' => $token,
             'nova_senha' => $novaSenha, 'nova_senha_confirmation' => $novaSenha,
         ])->assertRedirect('/entrar')->assertSessionHas('status');
         $this->assertNotNull(DB::table('recuperacoes_senha')->where('id', $registro->id)->value('usado_em'));
         $this->assertNotNull(DB::table('sessoes')->where('id', $sessao)->value('encerrada_em'));
         $this->assertTrue(password_verify($novaSenha, DB::table('usuarios')->where('id', $usuario)->value('senha_hash')));
-        $this->post(route('recovery.consume', $token), [
+        $segundaTentativa = $this->post(route('recovery.consume'), [
+            'token' => $token,
             'nova_senha' => $novaSenha, 'nova_senha_confirmation' => $novaSenha,
-        ])->assertSessionHasErrors('nova_senha');
+        ])->assertStatus(422);
+        $this->assertTrue(str_contains($segundaTentativa->getContent(), 'Link inválido'));
     }
 
     private function assertNonDelegableProfileRejected(int $ator, int $destinatario): void
