@@ -11,14 +11,32 @@ class RequireEnabledRoute
 {
     public function handle(Request $requisicao, Closure $proximo): Response
     {
-        $caminhos = ['/painel'];
+        $rota = $requisicao->route();
+        abort_unless($rota !== null, 404);
+        $caminho = '/'.ltrim($rota->uri(), '/');
+        $metodo = $requisicao->isMethod('HEAD') ? 'GET' : $requisicao->method();
         $codigo = $requisicao->route('tela');
-        if (is_string($codigo) && is_array(config('screens.'.$codigo))) {
-            $caminhos = ['/'.config('screens.'.$codigo.'.url')];
-        } else {
-            $caminhos = ['/'.$requisicao->path()];
+        $area = is_string($codigo) && is_array(config('screens.'.$codigo))
+            ? '/'.config('screens.'.$codigo.'.url')
+            : $caminho;
+
+        // Rotas administrativas protegidas continuam acessíveis para reativar uma área.
+        $protegida = DB::table('rotas_sistema')->where('caminho', $caminho)
+            ->where('metodo_http', $metodo)->where('protegida', 1)->where('ativa', 1)->exists();
+        if ($protegida) {
+            return $proximo($requisicao);
         }
-        $desativada = DB::table('rotas_sistema')->whereIn('caminho', $caminhos)->where('metodo_http', 'GET')->where('ativa', 0)->exists();
+
+        // A desativação da área (GET) prevalece sobre uma rota específica ativa.
+        // A desativação do método exato também vale para acesso direto e URLs parametrizadas.
+        $desativada = DB::table('rotas_sistema')->where('ativa', 0)
+            ->where(function ($consulta) use ($area, $caminho, $metodo): void {
+                $consulta->where(function ($areaDesativada) use ($area): void {
+                    $areaDesativada->where('caminho', $area)->where('metodo_http', 'GET');
+                })->orWhere(function ($endpointDesativado) use ($caminho, $metodo): void {
+                    $endpointDesativado->where('caminho', $caminho)->where('metodo_http', $metodo);
+                });
+            })->exists();
         if ($desativada) {
             return response()->view('errors.disabled', [], 403);
         }
