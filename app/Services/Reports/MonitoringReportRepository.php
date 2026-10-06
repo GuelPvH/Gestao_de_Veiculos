@@ -9,6 +9,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use stdClass;
+use UnexpectedValueException;
 
 class MonitoringReportRepository
 {
@@ -65,7 +66,7 @@ class MonitoringReportRepository
             $consulta->addSelect($campo[0].' as '.$chave);
         }
 
-        return $consulta->orderByDesc('r.capturado_em')->orderByDesc('r.id')->paginate(10)->withQueryString();
+        return $consulta->orderByDesc('r.capturado_em')->orderBy('r.fonte')->orderByDesc('r.id')->paginate(10)->withQueryString();
     }
 
     /** @return Collection<int, array{fonte: string, id: int}> */
@@ -76,7 +77,13 @@ class MonitoringReportRepository
 
         return $consulta->orderBy('r.capturado_em')->orderBy('r.fonte')->orderBy('r.id')
             ->limit(10001)->get(['r.fonte', 'r.id'])
-            ->map(fn (stdClass $ponto) => ['fonte' => $ponto->fonte, 'id' => (int) $ponto->id]);
+            ->map(function (stdClass $ponto): array {
+                if (! is_string($ponto->fonte) || ! in_array($ponto->fonte, ['manual', 'rastreador'], true)) {
+                    throw new UnexpectedValueException('Fonte de posição inválida para o relatório.');
+                }
+
+                return ['fonte' => $ponto->fonte, 'id' => (int) $ponto->id];
+            });
     }
 
     /** @param array<int, int> $ids
