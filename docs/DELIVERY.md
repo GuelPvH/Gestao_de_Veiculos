@@ -30,6 +30,6 @@ git fetch /tmp/frota-pf-finalization-2026-10-06.bundle 'refs/heads/*:refs/remote
 git worktree add ../frota-pf-review -b review/frota-pf refs/remotes/frota-pf/docs/final-delivery
 ```
 
-O commit de fechamento da documentação registra os hashes dos artefatos; a branch final continua em `docs/final-delivery`.
+O arquivo de checksums fica fora do pacote em `/tmp/frota-pf-finalization-2026-10-06.sha256`; valide-o com `sha256sum -c` antes da transferência. A branch final é `docs/final-delivery`.
 
 O material entregue é código para revisão e homologação local. O banco remoto e a hospedagem não foram acessados nesta rodada; não houve deploy, merge ou alteração de dados reais. A atualização de instalação 1.0.0 está preparada como patch manual documentado em DATABASE.md e depende de backup restaurado e DBA.
