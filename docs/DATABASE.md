@@ -1,6 +1,26 @@
 # Banco canônico e manutenção
 
-`database/sql/frota_pf_mysql.sql`: 230522 bytes; SHA-256 `b1d6fccbc8b69148da612e9d1f1f20f41c61120798a3937644c99ef2cad151d6`. Original preservado. Inventário: 66 tabelas, 14 views, 40 procedures, 119 triggers; InnoDB, utf8mb4_unicode_ci. MySQL 8.0.16+ ou MariaDB 10.11+. Não execute migrations padrão nem `migrate:fresh`.
+Instalação nova em banco vazio: `database/sql/frota_pf_mysql.sql`, versão **1.0.1**, 231679 bytes e SHA-256 `ab2e0576060d2d6161faa2e8ff4d7bec548a7459d16b41af714e5439746a3ab4`. O manifesto e `tests/Support/schema.json` acompanham esses bytes. Inventário validado: 66 tabelas, 14 views, 40 procedures, 119 triggers, 167 FKs e 84 checks nomeados; InnoDB e utf8mb4_unicode_ci. MySQL 8.0.16+ ou MariaDB 10.11+ segundo o contrato do projeto; a integração desta execução usou MySQL 8.4. Não execute migrations padrão nem `migrate:fresh`.
+
+O baseline histórico 1.0.0 está em `database/sql/baselines/1.0.0.sql` (230522 bytes; SHA-256 `b1d6fccbc8b69148da612e9d1f1f20f41c61120798a3937644c99ef2cad151d6`). Instalações existentes nessa versão usam o patch `database/sql/patches/1.0.1-admin-procedures.sql`, que preserva dados e atualiza somente `sp_vincular_perfil`, `sp_desativar_vinculo` e `sp_duplicar_perfil`. A integração descartável testou baseline com dado preexistente, patch, versão e assinaturas 7/3/5. O patch contém DDL; não há rollback transacional para a troca de routines.
+
+## Atualizar instalação 1.0.0 existente
+
+O DBA deve confirmar alvo, versão, assinaturas e definições atuais, grants, ausência de escritas concorrentes, backup completo e restauração testada em outra instância antes de importar. Uma divergência em routines instaladas exige análise manual: a guarda do patch confere versão e quantidades de parâmetros, mas não substitui a comparação das definições. Consulta prévia somente leitura:
+
+```sql
+SELECT DATABASE(), @@version, @@version_comment;
+SELECT versao, instalado_em FROM versoes_modelo ORDER BY instalado_em;
+SELECT SPECIFIC_NAME, COUNT(*) AS parametros FROM information_schema.PARAMETERS
+WHERE SPECIFIC_SCHEMA = DATABASE() AND SPECIFIC_NAME IN
+('sp_vincular_perfil','sp_desativar_vinculo','sp_duplicar_perfil') AND ORDINAL_POSITION > 0
+GROUP BY SPECIFIC_NAME;
+SHOW CREATE PROCEDURE sp_vincular_perfil;
+SHOW CREATE PROCEDURE sp_desativar_vinculo;
+SHOW CREATE PROCEDURE sp_duplicar_perfil;
+```
+
+Após esses pré-requisitos, o DBA pode importar o patch pela aba **Importar** do phpMyAdmin no banco correto ou pelo cliente nativo `mysql --defaults-extra-file="$arquivoOpcoes" "$bancoAlvo" < database/sql/patches/1.0.1-admin-procedures.sql`. Não execute o SQL completo sobre banco existente. Confira depois a linha 1.0.1 em `versoes_modelo`, as três assinaturas 7/3/5, os objetos e uma operação administrativa autorizada. Se a importação falhar no meio, suspenda as escritas: a recuperação é restaurar o backup testado no alvo sob o procedimento de manutenção abaixo e conferir os dados/objetos, nunca presumir rollback de DDL. O patch não foi aplicado a banco remoto nesta execução.
 
 As ferramentas usam Python 3.9+ e clientes nativos. Arquivos de opções, relatórios, dumps e provas ficam em diretório privado **fora do repositório**. Permissões 600. Exemplo de arquivo privado, sem preencher uma senha pública:
 

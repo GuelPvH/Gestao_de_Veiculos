@@ -10,7 +10,7 @@ O endpoint temporário de ícones do Figma retornou Site Unavailable. Reutilizad
 
 Shell com sidebar 248 px, offcanvas abaixo de 992 px, cartões, tabelas com rolagem interna e cartões móveis. O breadcrumb usa Painel e a paginação calcula intervalos reais, preservando filtros. Não há monogramas decorativos, contas demonstrativas, menu Início ou atalho Ajuda. Datas operacionais podem usar a palavra início.
 
-JS centraliza tema, senha visível, loading das requisições reais, validação e navegação do wizard, resumo seguro via textContent, modal de revisão, descarte e foco. Confirmar operações de negócio permanece desabilitado: nenhuma gravação falsa ou mensagem de sucesso é produzida. Bootstrap controla teclado, Escape e foco dos overlays.
+JS centraliza tema, senha visível, loading das requisições reais, validação e navegação do wizard, resumo seguro via textContent, modal de revisão, descarte e foco. Confirmar envia a operação real ao servidor; mensagens de sucesso dependem da gravação. Bootstrap controla teclado, Escape e foco dos overlays.
 
 A seleção mínima de veículos exige frota.selecionar: próprios/unidade limita a unidade do vínculo; órgão permite o catálogo autorizado. O formulário mostra até 100 veículos ativos, somente ID, nome, placa e capacidade. Escolher uma referência não estabelece propriedade do veículo nem grava uma reserva.
 

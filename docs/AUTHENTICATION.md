@@ -14,4 +14,4 @@ Recuperação por e-mail fica desabilitada por padrão. Para habilitar envio ext
 
 Apache fornecido não registra URLs de redefinição no access log. Se usar proxy/hosting externo, aplique a mesma proteção no access log. Não registre corpos de senha, headers Cookie ou tokens de recuperação.
 
-Testes de integração MySqlAuthenticationTest estão preparados para o banco descartável frota_pf_contract_tests, com configuração privada fora do Git e host local. A execução sem essa infraestrutura marca os casos como pendentes; SQLite não substitui procedures/triggers/locks. Consulte VERIFICATION.md para os resultados efetivamente executados.
+`MySqlAuthenticationTest` e `MySqlWorkflowTest` executam contra `frota_pf_contract_tests` criado pela ferramenta de integração. A recuperação usa SMTP real capturado no Mailpit local; sem essa infraestrutura, o PHPUnit genérico ignora estes casos e não os considera aprovados. Consulte VERIFICATION.md para os resultados efetivamente executados. SQLite não substitui procedures, triggers ou locks.

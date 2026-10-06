@@ -9,7 +9,7 @@ menu-servidor,menu,adapted,dashboard / navigation.sidebar · vínculo selecionad
 reports-servidor,reports,adapted,"reports.index · filtros, campos e prévia autorizada"
 export-servidor,form,adapted,"reports.index · filtros, campos e prévia autorizada"
 preview-servidor,preview,adapted,"reports.index · filtros, campos e prévia autorizada"
-download-servidor,success,replaced,reports.index · exportação final desabilitada
+download-servidor,success,replaced,reports.index / reports.download · arquivo CSV privado
 support-servidor,list,adapted,tickets.index
 ticket-new-servidor,form,review,tickets.create
 ticket-servidor,detail,adapted,tickets.show · situação/conversa
@@ -25,7 +25,7 @@ menu-gestor,menu,adapted,dashboard / navigation.sidebar · vínculo selecionado
 reports-gestor,reports,adapted,"reports.index · filtros, campos e prévia autorizada"
 export-gestor,form,adapted,"reports.index · filtros, campos e prévia autorizada"
 preview-gestor,preview,adapted,"reports.index · filtros, campos e prévia autorizada"
-download-gestor,success,replaced,reports.index · exportação final desabilitada
+download-gestor,success,replaced,reports.index / reports.download · arquivo CSV privado
 support-gestor,list,adapted,tickets.index
 ticket-new-gestor,form,review,tickets.create
 ticket-gestor,detail,adapted,tickets.show · situação/conversa
@@ -41,7 +41,7 @@ menu-financeiro,menu,adapted,dashboard / navigation.sidebar · vínculo selecion
 reports-financeiro,reports,adapted,"reports.index · filtros, campos e prévia autorizada"
 export-financeiro,form,adapted,"reports.index · filtros, campos e prévia autorizada"
 preview-financeiro,preview,adapted,"reports.index · filtros, campos e prévia autorizada"
-download-financeiro,success,replaced,reports.index · exportação final desabilitada
+download-financeiro,success,replaced,reports.index / reports.download · arquivo CSV privado
 support-financeiro,list,adapted,tickets.index
 ticket-new-financeiro,form,review,tickets.create
 ticket-financeiro,detail,adapted,tickets.show · situação/conversa
@@ -57,7 +57,7 @@ menu-administrador,menu,adapted,dashboard / navigation.sidebar · vínculo selec
 reports-administrador,reports,adapted,"reports.index · filtros, campos e prévia autorizada"
 export-administrador,form,adapted,"reports.index · filtros, campos e prévia autorizada"
 preview-administrador,preview,adapted,"reports.index · filtros, campos e prévia autorizada"
-download-administrador,success,replaced,reports.index · exportação final desabilitada
+download-administrador,success,replaced,reports.index / reports.download · arquivo CSV privado
 support-administrador,list,adapted,tickets.index
 ticket-new-administrador,form,review,tickets.create
 ticket-administrador,detail,adapted,tickets.show · situação/conversa
@@ -113,20 +113,20 @@ fuel,list,adapted,"expenses / fuel / maintenance · lista, detalhe e revisão"
 maintenance,list,adapted,"expenses / fuel / maintenance · lista, detalhe e revisão"
 expense-new,form,adapted,"expenses / fuel / maintenance · lista, detalhe e revisão"
 expense,detail,adapted,"expenses / fuel / maintenance · lista, detalhe e revisão"
-fine-new,form,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-fine-unassigned,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-fine-assign,form,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-fine-finance,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-fine-own,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-receipt,form,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-receipt-sent,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-receipts,list,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-fine-review,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-fine-correction,form,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-receipt-correction,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-fine-paid,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-fine-cancel,form,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
-fine-cancelled,detail,adapted,"fines.show / operation · apuração, envio e conferência sem confirmação"
+fine-new,form,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+fine-unassigned,detail,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+fine-assign,form,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+fine-finance,detail,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+fine-own,detail,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+receipt,form,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+receipt-sent,detail,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+receipts,list,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+fine-review,detail,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+fine-correction,form,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+receipt-correction,detail,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+fine-paid,detail,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+fine-cancel,form,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
+fine-cancelled,detail,adapted,"fines.show / operation · apuração, envio e conferência com confirmação"
 users,list,adapted,users.index / show / create / operation · vínculos
 permissions,list,adapted,roles.index / show / operation · matriz e duplicação visual
 routes,list,adapted,technical-routes.index / show / create
