@@ -4,7 +4,7 @@ As telas usam rotas Laravel nomeadas, consultas autorizadas e componentes compar
 
 | Área | Rotas e estados |
 |---|---|
-| Acesso | `/`, `/entrar`, erro uniforme, limitação, CSRF, `/acesso-restrito`, `/recuperar-acesso`, `/redefinir-senha/{token}`, `/alterar-senha` |
+| Acesso | `/`, `/entrar`, erro uniforme, limites por identidade/IP, CSRF, `/acesso-restrito`, `/recuperar-acesso`, `/redefinir-senha` com token em fragmento e POST, `/alterar-senha` |
 | Identidade | `/selecionar-perfil`, `/conta`, aparência do navegador, sessões próprias, logout POST |
 | Servidor | Painel; solicitações próprias, quatro etapas, validação, detalhe e histórico; viagens, vistoria, ocorrências; multas próprias e comprovante |
 | Gestor | Fila autorizada, aprovação/negação/ajustes, bloqueio de decisão própria; nova revisão de aprovada; frota, cadastro, agenda, monitoramento e pontos observados |
