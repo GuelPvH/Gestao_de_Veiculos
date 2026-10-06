@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Authorization\AccessContext;
 use App\Services\Read\FleetReadRepository;
+use App\Services\Reports\MonitoringReportRepository;
 use App\Services\Reports\ReportExportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
-    public function index(Request $requisicao, AccessContext $acesso, FleetReadRepository $leituras): View
+    public function index(Request $requisicao, AccessContext $acesso, FleetReadRepository $leituras, MonitoringReportRepository $monitoramento): View
     {
         $catalogo = $this->catalogue($acesso);
         $codigo = (string) $requisicao->query('modulo', array_key_first($catalogo) ?? '');
@@ -35,7 +36,9 @@ class ReportController extends Controller
             throw ValidationException::withMessages(['de' => 'Esta área não possui filtro de período.']);
         }
         $selecionados = $validado['campos'] ?? $campos->pluck('chave')->take(5)->all();
-        $paginacao = $selecionados ? $leituras->page($codigo, $validado, $selecionados) : null;
+        $paginacao = $selecionados ? ($codigo === 'monitoring'
+            ? $monitoramento->page($validado, $selecionados)
+            : $leituras->page($codigo, $validado, $selecionados)) : null;
         $registros = $paginacao ? $leituras->rows($codigo, $paginacao->getCollection(), $selecionados) : collect();
         $colunas = $campos->filter(fn ($campo) => in_array($campo->chave, $selecionados, true))->pluck('rotulo', 'chave')->all();
         $podeExportar = $acesso->level($tela['module'], 'exportar') > 0;
@@ -80,7 +83,7 @@ class ReportController extends Controller
 
     private function fields(string $codigo, array $tela, AccessContext $acesso): Collection
     {
-        $contratos = $tela['columns'] + ($tela['details'] ?? []);
+        $contratos = $tela['columns'] + ($tela['details'] ?? []) + ($tela['reportColumns'] ?? []);
 
         return DB::table('relatorio_campos')->where('modulo_codigo', $tela['module'])->where('ativo', 1)->orderBy('ordem')
             ->get(['id', 'chave', 'rotulo', 'acao_adicional'])
