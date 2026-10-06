@@ -43,4 +43,14 @@ php artisan route:list
 php artisan serve
 ```
 
-No container, use `docker compose exec app php artisan ...`. A criação do administrador inicial é exclusiva do terminal e pede uma senha privada; veja AUTHENTICATION.md. O frontend de operações permite preencher e revisar, com confirmação final indisponível nesta fase.
+No container, use `docker compose exec app php artisan ...`. A criação do administrador inicial é exclusiva do terminal e pede uma senha privada; veja AUTHENTICATION.md. A confirmação das operações grava no MySQL quando a identidade, o vínculo, o estado e a permissão passam nas verificações. O teste de navegador real e suas limitações estão em VERIFICATION.md.
+
+## Preparar homologação em hospedagem
+
+Esta seção é um roteiro, não um registro de implantação executada. Primeiro confirme versão de PHP/extensões, MySQL, acesso à instância autorizada, grants do usuário do aplicativo, diretório público, TLS, espaço persistente e backups. O DocumentRoot deve ser `public/`; não exponha `.env`, `storage`, `vendor`, dumps ou arquivos privados. Publique assets gerados do lock, configure `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://...`, cookies seguros e proxy confiável apenas quando houver proxy real. Mantenha a `APP_KEY` existente ao atualizar: sua troca invalidaria sessões/dados cifrados. O usuário do servidor precisa escrever em `storage` e `bootstrap/cache`; `storage/app/private` e sessões devem sobreviver ao reinício do container.
+
+Use um arquivo de configuração privado modo 600 fora do pacote, com host/schema/usuário de runtime autorizados. Esse usuário precisa de SELECT, INSERT, UPDATE, DELETE e EXECUTE nas procedures do schema; não precisa de DDL. Mantenha a credencial administrativa apenas com o DBA para inspeção, backup e patch. No Compose de desenvolvimento, `mysql-local` é o servidor e phpMyAdmin apenas sua interface administrativa; ambos ficam vinculados a 127.0.0.1. Não use o override local para atingir o banco da hospedagem.
+
+Para instalação nova, importe o SQL 1.0.1 apenas em banco comprovadamente vazio. Para instalação 1.0.0 existente, siga o pré-check, backup/restauração em outra instância, manutenção e patch de DATABASE.md. Confira versão, routines, contagens e uma operação autorizada antes de liberar escritas. Em falha, mantenha manutenção e restaure o backup conferido; não presuma rollback de DDL. Só após a configuração privada de SMTP/TLS e destinatário de teste autorizado, habilite `FLEET_RECOVERY_MAIL_ENABLED=true`; Mailpit local não comprova o provedor da hospedagem.
+
+Depois de instalar dependências dos locks e assets, execute `php artisan package:discover`, `php artisan view:cache` e `php artisan route:cache` no ambiente configurado; confirme `/up`, login, permissões, importação, geração/download privado e reinício com sessão persistente. A documentação de resultados efetivamente executados nesta rodada está em VERIFICATION.md. A hospedagem e o banco remoto não foram acessados nesta finalização.
