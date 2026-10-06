@@ -1,4 +1,4 @@
--- Frota · PF / Frota Pública RO — modelo relacional 1.0.1
+-- Frota · PF / Frota Pública RO — modelo relacional 1.0.2
 -- Instalação nova: MySQL 8.0.16+ / MariaDB 10.11+. Importar em banco vazio.
 -- Não contém DROP, senha padrão nem dados operacionais fictícios.
 -- No phpMyAdmin: selecionar o banco, Importar, formato SQL, UTF-8.
@@ -14,6 +14,28 @@ CREATE TABLE versoes_modelo (
   instalado_em DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   descricao VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Identifica a versão instalada do esquema.';
+
+-- Fila durável do Laravel. A recuperação armazena somente o identificador cifrado no payload.
+CREATE TABLE jobs (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  queue VARCHAR(255) NOT NULL,
+  payload LONGTEXT NOT NULL,
+  attempts TINYINT UNSIGNED NOT NULL,
+  reserved_at INT UNSIGNED NULL,
+  available_at INT UNSIGNED NOT NULL,
+  created_at INT UNSIGNED NOT NULL,
+  KEY ix_jobs_queue (queue)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Fila durável para tarefas assíncronas; payloads sensíveis devem estar cifrados.';
+
+CREATE TABLE failed_jobs (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  uuid VARCHAR(255) NOT NULL UNIQUE,
+  connection TEXT NOT NULL,
+  queue TEXT NOT NULL,
+  payload LONGTEXT NOT NULL,
+  exception LONGTEXT NOT NULL,
+  failed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Falhas da fila Laravel; payload de recuperação contém somente identificador cifrado.';
 
 CREATE TABLE unidades (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -1218,7 +1240,8 @@ CREATE TABLE anexos (
 -- Catálogos iniciais: sem usuários, veículos ou pagamentos fictícios.
 INSERT INTO versoes_modelo (versao,descricao) VALUES
 ('1.0.0','Modelo completo dos fluxos do protótipo Frota · PF / Frota Pública RO'),
-('1.0.1','Justificativa e delegação validada nos procedimentos administrativos.');
+('1.0.1','Justificativa e delegação validada nos procedimentos administrativos.'),
+('1.0.2','Fila durável de recuperação e expiração absoluta de sessão.');
 
 INSERT INTO unidades (id,codigo,nome,cidade,uf) VALUES
 (1,'SEDE','Sede administrativa','Porto Velho','RO');
@@ -2642,6 +2665,26 @@ BEGIN
   COMMIT;
 END$$
 
+CREATE PROCEDURE sp_expirar_sessao(IN p_sessao BIGINT UNSIGNED,IN p_usuario BIGINT UNSIGNED,IN p_limite_minutos SMALLINT UNSIGNED)
+SQL SECURITY INVOKER
+BEGIN
+  DECLARE v_inicio DATETIME(6); DECLARE v_vinculo BIGINT UNSIGNED; DECLARE v_fim DATETIME(6);
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
+  START TRANSACTION;
+  SELECT criado_em,vinculo_ativo_id,encerrada_em INTO v_inicio,v_vinculo,v_fim
+  FROM sessoes WHERE id=p_sessao AND usuario_id=p_usuario FOR UPDATE;
+  IF v_inicio IS NULL OR v_fim IS NOT NULL OR p_limite_minutos NOT BETWEEN 60 AND 1440 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Sessão ou prazo absoluto inválido.';
+  END IF;
+  IF v_inicio>TIMESTAMPADD(MINUTE,-p_limite_minutos,UTC_TIMESTAMP(6)) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Sessão ainda não atingiu o prazo absoluto.';
+  END IF;
+  UPDATE sessoes SET encerrada_em=UTC_TIMESTAMP(6),motivo_encerramento='prazo' WHERE id=p_sessao;
+  INSERT INTO auditoria(ator_usuario_id,ator_vinculo_id,sessao_id,evento,entidade,entidade_id,descricao)
+  VALUES(p_usuario,v_vinculo,p_sessao,'sessao_expirada','sessoes',p_sessao,'prazo_absoluto');
+  COMMIT;
+END$$
+
 CREATE PROCEDURE sp_encerrar_sessao(IN p_sessao BIGINT UNSIGNED,IN p_usuario BIGINT UNSIGNED)
 SQL SECURITY INVOKER
 BEGIN
@@ -2660,10 +2703,14 @@ END$$
 CREATE PROCEDURE sp_consumir_recuperacao(IN p_token_hash VARBINARY(32),IN p_novo_hash VARCHAR(255))
 SQL SECURITY INVOKER
 BEGIN
-  DECLARE v_id BIGINT UNSIGNED; DECLARE v_usuario BIGINT UNSIGNED;
+  DECLARE v_id BIGINT UNSIGNED; DECLARE v_usuario BIGINT UNSIGNED; DECLARE v_usuario_bloqueado BIGINT UNSIGNED;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
-  SELECT id,usuario_id INTO v_id,v_usuario FROM recuperacoes_senha WHERE token_hash=p_token_hash AND usado_em IS NULL AND invalidado_em IS NULL AND expira_em>UTC_TIMESTAMP(6) FOR UPDATE;
+  SELECT usuario_id INTO v_usuario FROM recuperacoes_senha WHERE token_hash=p_token_hash;
+  IF v_usuario IS NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Token de recuperação inválido, vencido ou já utilizado.'; END IF;
+  SELECT id INTO v_usuario_bloqueado FROM usuarios WHERE id=v_usuario FOR UPDATE;
+  SELECT id INTO v_id FROM recuperacoes_senha WHERE token_hash=p_token_hash AND usuario_id=v_usuario
+    AND usado_em IS NULL AND invalidado_em IS NULL AND expira_em>UTC_TIMESTAMP(6) FOR UPDATE;
   IF v_id IS NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Token de recuperação inválido, vencido ou já utilizado.'; END IF;
   UPDATE usuarios SET senha_hash=p_novo_hash,senha_alterada_em=UTC_TIMESTAMP(6),deve_trocar_senha=0 WHERE id=v_usuario;
   UPDATE recuperacoes_senha SET usado_em=UTC_TIMESTAMP(6) WHERE id=v_id;
@@ -3833,4 +3880,4 @@ DELIMITER ;
 
 
 -- Verificação simples de término da importação.
-SELECT 'Frota instalada: versão 1.0.1' AS resultado, COUNT(*) AS tabelas FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE';
+SELECT 'Frota instalada: versão 1.0.2' AS resultado, COUNT(*) AS tabelas FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE';
