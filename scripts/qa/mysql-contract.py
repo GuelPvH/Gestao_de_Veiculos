@@ -114,8 +114,21 @@ def main():
             for procedure, expected in [('sp_vincular_perfil','7'),('sp_desativar_vinculo','3'),('sp_duplicar_perfil','5')]:
                 actual = restore.rows("SELECT COUNT(*) FROM information_schema.PARAMETERS WHERE SPECIFIC_SCHEMA=DATABASE() AND SPECIFIC_NAME='"+procedure+"' AND ORDINAL_POSITION>0;")[0][0]
                 if actual != expected: raise RuntimeError('Assinatura do patch divergente: '+procedure)
-            maintenance.verify_schema(restore)
             results.append('versioned_patch_preserves_data_and_signatures')
+
+            patch_auth = ROOT/'database/sql/patches/1.0.2-auth-hardening.sql'
+            restore.execute(patch_auth.read_text(), capture=False)
+            if restore.rows("SELECT COUNT(*) FROM unidades WHERE codigo='PATCH_QA' AND nome='Unidade preservada no patch';")[0][0] != '1':
+                raise RuntimeError('Patch de autenticação não preservou dados existentes.')
+            if restore.rows("SELECT COUNT(*) FROM versoes_modelo WHERE versao='1.0.2';")[0][0] != '1':
+                raise RuntimeError('Patch de autenticação não registrou a versão instalada.')
+            for table in ['jobs','failed_jobs']:
+                actual = restore.rows("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='"+table+"' AND ENGINE='InnoDB';")[0][0]
+                if actual != '1': raise RuntimeError('Tabela durável de fila ausente ou não transacional: '+table)
+            parameters = restore.rows("SELECT COUNT(*) FROM information_schema.PARAMETERS WHERE SPECIFIC_SCHEMA=DATABASE() AND SPECIFIC_NAME='sp_expirar_sessao' AND ORDINAL_POSITION>0;")[0][0]
+            if parameters != '3': raise RuntimeError('Assinatura de expiração absoluta divergente.')
+            maintenance.verify_schema(restore)
+            results.append('auth_hardening_patch_preserves_data_and_contract')
 
             reader_password = secrets.token_hex(24)
             source.execute("CREATE USER 'frota_reader'@'%' IDENTIFIED BY '"+reader_password+"'; GRANT SELECT ON frota_pf_contract_tests.* TO 'frota_reader'@'%';")
