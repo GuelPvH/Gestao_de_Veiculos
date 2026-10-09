@@ -17,7 +17,7 @@ class SolicitacoesController extends Controller
 
     private function viewData(): array
     {
-        return ['codigo' => 'requests', 'tela' => $this->model->definition()];
+        return ['codigo' => 'requests', 'tela' => $this->model->definition(), 'motoristaSugeridoId' => $this->model->currentUserId()];
     }
 
     public function index(Request $requisicao): View
@@ -59,6 +59,7 @@ class SolicitacoesController extends Controller
             'quantidade_passageiros' => ['required', 'integer', 'min:1', 'max:100'],
             'passageiros' => ['nullable', 'string', 'max:16000'],
             'necessita_motorista' => ['required', Rule::in(['0', '1'])],
+            'motorista_sugerido_id' => ['required', 'integer', Rule::in([$this->model->currentUserId()])],
             'veiculo_pretendido_id' => ['required', 'integer', Rule::in($veiculos)],
             'observacoes' => ['nullable', 'string', 'max:3000'],
             'versao' => [$exigirVersao ? 'required' : 'sometimes', 'integer', 'min:1'],

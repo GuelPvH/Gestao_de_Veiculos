@@ -2,6 +2,7 @@
     <x-ui.title :titulo="$titulo" subtitulo="Preencha as informações e confira a revisão antes de concluir." />
     <x-ui.panel>
         <form id="operation-form" method="post" action="{{ $formAction }}" data-dirty-form data-review-form="operation-review" novalidate>@csrf
+            <input type="hidden" name="motorista_sugerido_id" value="{{ $motoristaSugeridoId }}">
             @if($acao === 'edit')@method('PATCH')@endif
             @if($registro)<input type="hidden" name="versao" value="{{ $registro->versao }}">@endif
             @if(in_array($acao,['create','edit'],true))

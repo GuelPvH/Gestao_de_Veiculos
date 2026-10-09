@@ -34,6 +34,7 @@ class RequestWorkflowTest extends TestCase
             'quantidade_passageiros' => 2,
             'passageiros' => "Ana\nBruno",
             'necessita_motorista' => '1',
+            'motorista_sugerido_id' => 1,
             'veiculo_pretendido_id' => 1,
             'observacoes' => 'Acesso pela portaria principal',
         ], $extras);
@@ -106,10 +107,17 @@ class RequestWorkflowTest extends TestCase
         app()->instance(ProcedureRunner::class, $procedimentos);
 
         $this->post(route('solicitacoes.store'), $this->formData())->assertRedirect(route('solicitacoes.show', 4));
+        $this->assertSame(1, DB::table('solicitacao_revisoes')->where('id', 4)->value('motorista_sugerido_id'));
         $this->assertSame('Visita técnica', DB::table('solicitacao_revisoes')->where('id', 4)->value('finalidade'));
         $this->assertSame('2026-10-10 12:00:00.000000', DB::table('solicitacao_revisoes')->where('id', 4)->value('saida_prevista'));
         $this->assertSame(2, DB::table('solicitacoes')->where('id', 4)->value('versao'));
         $this->assertSame(['Ana', 'Bruno'], DB::table('solicitacao_passageiros')->where('revisao_id', 4)->orderBy('id')->pluck('nome')->all());
+    }
+
+    public function test_driver_hidden_field_cannot_impersonate_another_user(): void
+    {
+        $this->post(route('solicitacoes.store'), $this->formData(['motorista_sugerido_id' => 2]))->assertSessionHasErrors('motorista_sugerido_id');
+        $this->assertSame(0, DB::table('solicitacoes')->count());
     }
 
     public function test_invalid_passenger_list_does_not_create_an_empty_draft(): void

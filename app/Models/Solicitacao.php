@@ -19,6 +19,11 @@ class Solicitacao
 {
     public function __construct(private AccessContext $acesso, private ProcedureRunner $procedimentos, private FleetReadRepository $leituras, private OperationCatalog $operacoes, private ReferenceReadRepository $referencias) {}
 
+    public function currentUserId(): int
+    {
+        return (int) $this->acesso->link()->usuario_id;
+    }
+
     public function definition(): array
     {
         return $this->leituras->definition('requests');
@@ -160,6 +165,7 @@ class Solicitacao
                 'trajeto_planejado' => $dados['trajeto_planejado'] ?? null,
                 'quantidade_passageiros' => (int) $dados['quantidade_passageiros'],
                 'necessita_motorista' => (int) $dados['necessita_motorista'],
+                'motorista_sugerido_id' => $this->currentUserId(),
                 'veiculo_pretendido_id' => (int) $dados['veiculo_pretendido_id'],
                 'observacoes' => $dados['observacoes'] ?? null,
                 'etapa_atual' => 4,
