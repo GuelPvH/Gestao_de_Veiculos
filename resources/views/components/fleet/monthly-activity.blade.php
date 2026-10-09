@@ -1,5 +1,5 @@
-@props(['periodos','series'])
-<x-ui.panel titulo="Atividade nos últimos seis meses">
+@props(['periodos','series','titulo' => 'Atividade nos últimos seis meses'])
+<x-ui.panel :titulo="$titulo">
     <div class="d-flex flex-wrap gap-3 mb-3">@foreach($series as $serie)<span class="small">{{ $serie['title'] }}</span>@endforeach</div>
     @if(count($series))
         <div class="chart-bars" aria-hidden="true">@foreach($periodos as $periodo)<div class="chart-period"><div class="chart-pair">@foreach($periodo['valores'] as $valor)<span class="chart-bar {{ $loop->index ? 'secondary' : '' }}" style="height:{{ $valor['altura'] }}px"></span>@endforeach</div><small>{{ $periodo['mes'] }}</small></div>@endforeach</div>

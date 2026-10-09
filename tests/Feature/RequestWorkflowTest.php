@@ -34,6 +34,7 @@ class RequestWorkflowTest extends TestCase
             'quantidade_passageiros' => 2,
             'passageiros' => "Ana\nBruno",
             'necessita_motorista' => '1',
+            'motorista_sugerido_id' => 1,
             'veiculo_pretendido_id' => 1,
             'observacoes' => 'Acesso pela portaria principal',
         ], $extras);
@@ -44,6 +45,52 @@ class RequestWorkflowTest extends TestCase
         DB::table('solicitacoes')->insert(['id' => 1, 'protocolo' => 'SOL-00000001', 'solicitante_id' => 1, 'unidade_id' => 1, 'revisao_atual_id' => 1, 'situacao' => 'rascunho', 'versao' => $version]);
         DB::table('solicitacao_revisoes')->insert(['id' => 1, 'solicitacao_id' => 1, 'numero' => 1, 'criado_por' => 1]);
         DB::table('vw_solicitacoes_atuais')->where('id', 1)->update(['situacao' => 'rascunho', 'versao' => 1, 'revisao_id' => 1]);
+    }
+
+    public function test_module_pages_use_dedicated_views_and_explicit_actions(): void
+    {
+        $this->get(route('solicitacoes.index'))->assertOk()->assertViewIs('gestor.solicitacoes.index')->assertSee(route('solicitacoes.show', 1), false);
+        $this->get(route('solicitacoes.create'))->assertOk()->assertViewIs('gestor.solicitacoes.create')->assertSee(route('solicitacoes.store'), false);
+        $this->draft();
+        $this->get(route('solicitacoes.edit', 1))->assertOk()->assertViewIs('gestor.solicitacoes.edit')->assertSee('name="_method" value="PATCH"', false);
+        $this->get('/solicitacoes/1/unknown')->assertNotFound();
+        $this->post('/solicitacoes/1/edit', $this->formData(['versao' => 1]))->assertStatus(405);
+        $this->assertSame(1, DB::table('solicitacoes')->where('id', 1)->value('versao'));
+    }
+
+    public function test_decisions_use_modals_and_cancel_routes_are_removed(): void
+    {
+        ReadFixture::profile(2);
+        $this->get(route('solicitacoes.show', 2))->assertOk()
+            ->assertSee('id="request-approve"', false)->assertSee('Confirmar aprovação')
+            ->assertSee('Motivo da negativa')->assertSee('Explique os ajustes necessários')
+            ->assertDontSee('Cancelar solicitação');
+        foreach (['approve', 'deny', 'adjust', 'send', 'revision'] as $acao) {
+            $this->get('/solicitacoes/2/'.$acao)->assertStatus(405);
+        }
+        $this->get('/solicitacoes/2/cancel')->assertNotFound();
+        $this->post('/solicitacoes/2/cancel')->assertNotFound();
+        foreach (['deny', 'adjust'] as $acao) {
+            $this->post(route('solicitacoes.'.$acao.'.submit', 2), ['versao' => 1])->assertSessionHasErrors('justificativa');
+        }
+    }
+
+    public function test_approval_confirmation_supplies_audit_reason_without_textarea(): void
+    {
+        ReadFixture::profile(2);
+        DB::table('vw_solicitacoes_atuais')->where('id', 2)->update(['veiculo_pretendido_id' => 1, 'motorista_sugerido_id' => 2]);
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->once()->with('sp_aprovar_solicitacao', [10, 2, 1, 1, 2, 'Aprovação confirmada pelo gestor.'])->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+        $this->post(route('solicitacoes.approve.submit', 2), ['versao' => 1])->assertRedirect(route('solicitacoes.show', 2));
+    }
+
+    public function test_approval_requires_driver_in_request_and_ignores_posted_replacements(): void
+    {
+        ReadFixture::profile(2);
+        DB::table('vw_solicitacoes_atuais')->where('id', 2)->update(['motorista_sugerido_id' => null]);
+        $this->get(route('solicitacoes.show', 2))->assertOk()->assertDontSee('Veículo confirmado')->assertDontSee('Motorista confirmado')->assertDontSee('Cadastre um motorista');
+        $this->post(route('solicitacoes.approve.submit', 2), ['versao' => 1, 'veiculo_confirmado_id' => 1, 'motorista_confirmado_id' => 2])->assertSessionHasErrors('operacao');
     }
 
     public function test_create_uses_canonical_procedure_and_persists_draft_fields(): void
@@ -59,16 +106,23 @@ class RequestWorkflowTest extends TestCase
         $procedimentos->shouldReceive('call')->once()->with('sp_auditar', [10, 'rascunho_atualizado', 'solicitacoes', 4, 'Dados da revisão vigente atualizados.'])->andReturn([]);
         app()->instance(ProcedureRunner::class, $procedimentos);
 
-        $this->post(route('requests.store'), $this->formData())->assertRedirect(route('requests.show', 4));
+        $this->post(route('solicitacoes.store'), $this->formData())->assertRedirect(route('solicitacoes.show', 4));
+        $this->assertSame(1, DB::table('solicitacao_revisoes')->where('id', 4)->value('motorista_sugerido_id'));
         $this->assertSame('Visita técnica', DB::table('solicitacao_revisoes')->where('id', 4)->value('finalidade'));
         $this->assertSame('2026-10-10 12:00:00.000000', DB::table('solicitacao_revisoes')->where('id', 4)->value('saida_prevista'));
         $this->assertSame(2, DB::table('solicitacoes')->where('id', 4)->value('versao'));
         $this->assertSame(['Ana', 'Bruno'], DB::table('solicitacao_passageiros')->where('revisao_id', 4)->orderBy('id')->pluck('nome')->all());
     }
 
+    public function test_driver_hidden_field_cannot_impersonate_another_user(): void
+    {
+        $this->post(route('solicitacoes.store'), $this->formData(['motorista_sugerido_id' => 2]))->assertSessionHasErrors('motorista_sugerido_id');
+        $this->assertSame(0, DB::table('solicitacoes')->count());
+    }
+
     public function test_invalid_passenger_list_does_not_create_an_empty_draft(): void
     {
-        $this->post(route('requests.store'), $this->formData(['quantidade_passageiros' => 1]))->assertSessionHasErrors('passageiros');
+        $this->post(route('solicitacoes.store'), $this->formData(['quantidade_passageiros' => 1]))->assertSessionHasErrors('passageiros');
         $this->assertSame(0, DB::table('solicitacoes')->count());
     }
 
@@ -80,9 +134,9 @@ class RequestWorkflowTest extends TestCase
         $procedimentos->shouldReceive('call')->once()->with('sp_auditar', [10, 'rascunho_atualizado', 'solicitacoes', 1, 'Dados da revisão vigente atualizados.'])->andReturn([]);
         app()->instance(ProcedureRunner::class, $procedimentos);
 
-        $this->post(route('requests.perform', ['registro' => 1, 'acao' => 'edit']), $this->formData(['versao' => 1]))->assertRedirect(route('requests.show', 1));
+        $this->patch(route('solicitacoes.update', 1), $this->formData(['versao' => 1]))->assertRedirect(route('solicitacoes.show', 1));
         $this->assertSame(2, DB::table('solicitacoes')->where('id', 1)->value('versao'));
-        $this->post(route('requests.perform', ['registro' => 1, 'acao' => 'edit']), $this->formData(['versao' => 1]))->assertSessionHasErrors('operacao');
+        $this->patch(route('solicitacoes.update', 1), $this->formData(['versao' => 1]))->assertSessionHasErrors('operacao');
         $this->assertSame(2, DB::table('solicitacoes')->where('id', 1)->value('versao'));
     }
 
@@ -92,7 +146,7 @@ class RequestWorkflowTest extends TestCase
         $procedimentos = Mockery::mock(ProcedureRunner::class);
         $procedimentos->shouldReceive('call')->once()->with('sp_enviar_solicitacao', [10, 1, 1])->andReturn([]);
         app()->instance(ProcedureRunner::class, $procedimentos);
-        $this->post(route('requests.perform', ['registro' => 1, 'acao' => 'send']), ['versao' => 1])->assertRedirect(route('requests.show', 1));
+        $this->post(route('solicitacoes.send.submit', 1), ['versao' => 1])->assertRedirect(route('solicitacoes.show', 1));
     }
 
     public function test_decision_delegates_to_versioned_procedure(): void
@@ -102,12 +156,12 @@ class RequestWorkflowTest extends TestCase
         $procedimentos = Mockery::mock(ProcedureRunner::class);
         $procedimentos->shouldReceive('call')->once()->with('sp_decidir_solicitacao', [10, 2, 3, 'negada', 'Falta justificativa do deslocamento.'])->andReturn([]);
         app()->instance(ProcedureRunner::class, $procedimentos);
-        $this->post(route('requests.perform', ['registro' => 2, 'acao' => 'deny']), ['versao' => 3, 'justificativa' => 'Falta justificativa do deslocamento.'])->assertRedirect(route('requests.show', 2));
+        $this->post(route('solicitacoes.deny.submit', 2), ['versao' => 3, 'justificativa' => 'Falta justificativa do deslocamento.'])->assertRedirect(route('solicitacoes.show', 2));
     }
 
     public function test_own_request_cannot_be_approved_by_direct_post(): void
     {
         ReadFixture::profile(2);
-        $this->post(route('requests.perform', ['registro' => 1, 'acao' => 'approve']), ['versao' => 1, 'veiculo_confirmado_id' => 1, 'motorista_confirmado_id' => 2, 'justificativa' => 'Teste'])->assertForbidden();
+        $this->post(route('solicitacoes.approve.submit', 1), ['versao' => 1, 'veiculo_confirmado_id' => 1, 'motorista_confirmado_id' => 2, 'justificativa' => 'Teste'])->assertForbidden();
     }
 }

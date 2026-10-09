@@ -5,8 +5,8 @@
         <div class="stack"><x-fleet.monthly-activity :periodos="$periodos" :series="$series" />
         <x-ui.panel titulo="Atividade recente">
             @if($atividade)
-                <x-tables.records :colunas="array_map(fn($campo)=>$campo[1],$atividade['tela']['columns'])" :registros="$atividade['registros']" :rota-detalhe="$atividade['codigo'].'.show'" />
-                <a class="btn btn-outline-secondary mt-3" href="{{ route($atividade['codigo'].'.index') }}">Ver todos os registros</a>
+                <x-tables.records :colunas="array_map(fn($campo)=>$campo[1],$atividade['tela']['columns'])" :registros="$atividade['registros']" :rota-detalhe="($atividade['tela']['route'] ?? $atividade['codigo']).'.show'" />
+                <a class="btn btn-outline-secondary mt-3" href="{{ route((config('screens.'.$atividade['codigo'].'.route') ?? $atividade['codigo']).'.index') }}">Ver todos os registros</a>
             @else<x-ui.empty titulo="Nenhuma atividade disponível" descricao="As informações aparecerão conforme seus registros e permissões." />@endif
         </x-ui.panel>
         </div><div class="stack"><x-ui.panel titulo="Acesso rápido">@foreach($atalhos as $atalho)<a class="row-summary text-decoration-none" href="{{ route($atalho['route']) }}"><x-ui.icon :nome="$atalho['icon']" /><div><strong>{{ $atalho['title'] }}</strong><p class="text-body-secondary small mb-0">Consultar registros</p></div><x-ui.icon nome="chevron-right" /></a>@endforeach</x-ui.panel>

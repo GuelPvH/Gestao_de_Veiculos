@@ -22,7 +22,7 @@ class NotificationController extends Controller
             foreach (['requests' => 'solicitacao_id', 'trips' => 'viagem_id', 'fines' => 'multa_id', 'expenses' => 'despesa_id', 'tickets' => 'chamado_id'] as $codigo => $coluna) {
                 $tela = $leituras->definition($codigo);
                 if ($evento->{$coluna} && $acesso->level($tela['module']) > 0 && $leituras->query($codigo)->where('r.id', $evento->{$coluna})->exists()) {
-                    $evento->link = route($codigo.'.show', $evento->{$coluna});
+                    $evento->link = route((config('screens.'.$codigo.'.route') ?? $codigo).'.show', $evento->{$coluna});
                     break;
                 }
             }

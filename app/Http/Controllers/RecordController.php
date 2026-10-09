@@ -9,7 +9,6 @@ use App\Services\Read\AdminReadRepository;
 use App\Services\Read\FleetReadRepository;
 use App\Services\Read\OperationalReadRepository;
 use App\Services\Read\OperationCatalog;
-use App\Services\Read\ReferenceReadRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -68,7 +67,7 @@ class RecordController extends Controller
         $tela = $this->leituras->definition($codigo);
         abort_unless($this->canCreate($codigo, $tela), 403);
 
-        return view('records.form', ['codigo' => $codigo, 'tela' => $tela, 'acao' => 'create', 'titulo' => 'Novo registro · '.$tela['title'], 'registro' => null, 'formAction' => $codigo === 'fines' ? route('fines.store') : null, 'veiculosMulta' => $codigo === 'fines' ? app(FineWorkflow::class)->vehicleOptions() : [], 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix(null) : collect(), 'perfisDisponiveis' => app(AdminReadRepository::class)->assignableRoles(), 'unidadesDisponiveis' => DB::table('unidades')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all(), 'modulosDisponiveis' => DB::table('modulos')->where('ativo', 1)->orderBy('ordem')->pluck('nome', 'codigo')->all(), 'veiculosDisponiveis' => $codigo === 'requests' ? app(ReferenceReadRepository::class)->vehicles() : [], 'categoriasChamado' => $codigo === 'tickets' ? DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all() : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->where('codigo', '<>', 'abastecimento')->pluck('nome', 'id')->all() : []]);
+        return view('records.form', ['codigo' => $codigo, 'tela' => $tela, 'acao' => 'create', 'titulo' => 'Novo registro · '.$tela['title'], 'registro' => null, 'formAction' => $codigo === 'fines' ? route('fines.store') : null, 'veiculosMulta' => $codigo === 'fines' ? app(FineWorkflow::class)->vehicleOptions() : [], 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix(null) : collect(), 'perfisDisponiveis' => app(AdminReadRepository::class)->assignableRoles(), 'unidadesDisponiveis' => DB::table('unidades')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all(), 'modulosDisponiveis' => DB::table('modulos')->where('ativo', 1)->orderBy('ordem')->pluck('nome', 'codigo')->all(), 'veiculosDisponiveis' => [], 'categoriasChamado' => $codigo === 'tickets' ? DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all() : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->where('codigo', '<>', 'abastecimento')->pluck('nome', 'id')->all() : []]);
     }
 
     private function canCreate(string $codigo, array $tela): bool
@@ -93,22 +92,6 @@ class RecordController extends Controller
 
         $veiculosDisponiveis = [];
         $motoristasDisponiveis = [];
-        if ($codigo === 'requests') {
-            $revisao = DB::table('vw_solicitacoes_atuais')->where('id', $registro)->first(['versao', 'revisao_id', 'necessita_motorista', 'veiculo_pretendido_id']);
-            $dados->versao = $revisao->versao;
-            $dados->necessita_motorista = $revisao->necessita_motorista;
-            $dados->veiculo_pretendido_id = $revisao->veiculo_pretendido_id;
-            $dados->observacoes = DB::table('solicitacao_revisoes')->where('id', $revisao->revisao_id)->value('observacoes');
-            $dados->nomes_passageiros = DB::table('solicitacao_passageiros')->where('revisao_id', $revisao->revisao_id)->orderBy('id')->pluck('nome')->implode("\n");
-            if ($acao === 'approve') {
-                $veiculos = DB::table('vw_frota as v')->where('v.situacao_cadastro', 'ativo');
-                $veiculosDisponiveis = $this->acesso->scope($veiculos, 'frota', 'consultar', null, 'v.unidade_id')->orderBy('v.nome')->limit(100)->get(['v.id', 'v.nome', 'v.placa'])->mapWithKeys(fn ($veiculo) => [$veiculo->id => $veiculo->placa.' · '.$veiculo->nome])->all();
-                $motoristasDisponiveis = DB::table('motoristas as m')->join('usuarios as u', 'u.id', '=', 'm.usuario_id')->where('m.ativo', 1)->where('u.ativo', 1)->orderBy('u.nome')->limit(100)->pluck('u.nome', 'u.id')->all();
-            } else {
-                $veiculosDisponiveis = app(ReferenceReadRepository::class)->vehicles();
-            }
-        }
-
         if ($codigo === 'expenses') {
             $financeiro = DB::table('despesas as d')->join('veiculos as v', 'v.id', '=', 'd.veiculo_id')
                 ->leftJoin('fornecedores as f', 'f.id', '=', 'd.fornecedor_id')->where('d.id', $registro)

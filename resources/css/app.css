@@ -4,7 +4,7 @@
 @import '@fontsource/inter/600.css';
 @import '@fontsource/inter/700.css';
 @import './theme.css';
-[data-bs-theme=dark] .fleet-icon{filter:invert(.8)}
+[data-bs-theme=dark] img.fleet-icon{filter:invert(.8)}
 body{font-family:Inter,'Segoe UI',Arial,sans-serif;font-size:.875rem;line-height:1.5;background:var(--cor-fundo);color:var(--cor-texto)}
 button,a,input,textarea,select{touch-action:manipulation}a{color:var(--cor-primaria)}:focus-visible{outline:3px solid var(--cor-foco);outline-offset:3px}
 .skip-link{position:fixed;top:-10rem;left:1rem;z-index:2000;padding:.8rem;background:var(--cor-superficie)}.skip-link:focus{top:1rem}
@@ -40,3 +40,41 @@ h1{font-size:1.75rem;font-weight:600;line-height:1.4}h2{font-weight:600}
 
 .breadcrumb-item{display:flex;align-items:center;gap:16px}.breadcrumb-item+.breadcrumb-item{padding-left:0}.breadcrumb-item+.breadcrumb-item:before{content:none}.breadcrumb{gap:16px}.breadcrumb a{display:inline-flex;align-items:center;min-height:44px;min-width:44px}.fleet-icon{width:20px;height:20px}.page-link{gap:8px}
 .auth-hero,.auth-right,.auth-form{min-width:0}@media(max-width:767px){.auth-page{grid-template-columns:minmax(0,1fr)}}
+
+/* Gestor: spacing and composition from the desktop/mobile prototype. */
+.gestor-shell .sidebar-brand{background:transparent;padding:8px 0 20px}
+.gestor-shell .fleet-logo{background:transparent}
+.gestor-shell .app-header{min-height:76px}
+.gestor-shell .page-heading{margin-bottom:8px}
+.gestor-shell .metric-card .card-body{padding:20px}
+.gestor-shell .card-header{border-bottom:0;padding:20px 22px 0}
+.gestor-shell .card-header h2{font-size:.875rem}
+.gestor-shell .metric-value{font-size:1.875rem}
+.gestor-overview-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:24px;margin-bottom:24px}
+.gestor-shell .chart-bars{height:210px;border-bottom:0}
+.gestor-shell .sidebar-footer>a.nav-link{display:none}
+.gestor-shell .app-footer{display:none}
+.position-map{min-height:176px;background:var(--cor-fundo);border-radius:8px;overflow:hidden}
+.position-map .empty-state{padding:30px 16px;min-height:176px;display:flex;flex-direction:column;justify-content:center}
+.position-map svg{width:100%;display:block;background:var(--cor-destaque)}
+.map-grid{stroke:var(--cor-superficie);stroke-width:2}.map-point{fill:var(--cor-primaria);stroke:var(--cor-superficie);stroke-width:3}
+@media(max-width:991px){.gestor-overview-grid{grid-template-columns:1fr}}
+
+.fleet-icon{display:inline-flex;align-items:center;justify-content:center;color:inherit}
+.fleet-icon svg{width:20px;height:20px;flex-shrink:0}
+.gestor-shell .page-heading{margin-bottom:16px}
+.gestor-shell .page-heading:has(+.btn){margin-bottom:8px}
+.gestor-shell .breadcrumb a{min-height:24px;min-width:20px}
+.gestor-shell .breadcrumb{font-size:.75rem;gap:12px}
+.gestor-shell .breadcrumb .fleet-icon,.gestor-shell .breadcrumb svg{width:16px;height:16px}
+.gestor-shell .card-body{padding:22px}
+.gestor-shell .position-map h2{font-size:.875rem}
+.gestor-shell .sidebar-footer .btn-link{text-decoration:none;font-size:.75rem}
+@media(max-width:767px){.gestor-shell .card-body{padding:16px}.gestor-shell .content-area{padding:24px 16px}.gestor-shell .header-unit{font-size:.75rem}.gestor-shell .metric-value{font-size:1.5rem}.gestor-shell .metric-card .card-body{padding:16px}}
+
+.position-map .empty-state{align-items:center}
+
+.gestor-filter-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(180px,1fr) auto;gap:16px;align-items:end}
+.gestor-filter-row>button{margin-bottom:16px}
+.gestor-shell .table th,.gestor-shell .table td{padding:14px 16px}
+@media(max-width:767px){.gestor-filter-row{grid-template-columns:1fr}.gestor-filter-row>button{margin-top:-8px}}

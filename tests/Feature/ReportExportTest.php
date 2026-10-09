@@ -79,11 +79,13 @@ class ReportExportTest extends TestCase
         $this->assertStringContainsString("'=HYPERLINK", $conteudo);
         $this->assertStringContainsString('MATCH-14', $conteudo);
         $this->assertSame(13, count(array_filter(explode("\n", trim($conteudo)))));
+        $this->get(route('reports.ready', 1))->assertOk()->assertSee('Arquivo gerado');
         $this->get(route('reports.download', 1))->assertOk()->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
 
         DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'solicitacoes')->where('acao_codigo', 'exportar')->delete();
         $acesso = app(AccessContext::class);
         $acesso->load($acesso->link());
+        $this->get(route('reports.ready', 1))->assertForbidden();
         $this->get(route('reports.download', 1))->assertForbidden();
     }
 

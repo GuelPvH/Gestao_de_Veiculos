@@ -9,7 +9,7 @@
         @if(Route::has('notifications.index'))<a class="btn btn-link icon-button" href="{{ route('notifications.index') }}" aria-label="Notificações"><x-ui.icon nome="bell" /></a>@endif
         <div class="dropdown">
             <button type="button" class="btn account-button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Opções da conta">
-                <span class="avatar" aria-hidden="true">{{ mb_substr($usuario->nome ?? '', 0, 1) }}</span>
+                <span class="avatar" aria-hidden="true">{{ collect(explode(' ', trim($usuario->nome ?? '')))->filter()->take(2)->map(fn($parte) => mb_substr($parte, 0, 1))->implode('') }}</span>
                 <span class="d-none d-sm-inline">{{ $usuario->nome ?? 'Conta' }}</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">

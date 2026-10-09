@@ -21,13 +21,26 @@ class ReadAuthorizationTest extends TestCase
         ReadFixture::profile(1);
     }
 
+    public function test_history_requires_both_consultation_and_location_permission(): void
+    {
+        ReadFixture::profile(4);
+        $this->get(route('history.index'))->assertForbidden();
+        ReadFixture::grant('rastreamento', 'consultar', 3);
+        $acesso = app(AccessContext::class);
+        $acesso->load($acesso->link());
+        $this->get(route('history.index'))->assertForbidden();
+        ReadFixture::grant('rastreamento', 'ver_localizacao', 2);
+        $acesso->load($acesso->link());
+        $this->get(route('history.index'))->assertOk();
+    }
+
     public function test_own_unit_and_agency_queries_apply_scope_before_totals_and_ids(): void
     {
         $repo = app(FleetReadRepository::class);
         $acesso = app(AccessContext::class);
         $vinculo = $acesso->link();
         $this->assertSame(1, $repo->query('requests')->count());
-        $this->get(route('requests.show', 2))->assertNotFound();
+        $this->get(route('solicitacoes.show', 2))->assertNotFound();
         foreach ([2 => 2, 3 => 3] as $nivel => $total) {
             DB::table('vw_permissoes_efetivas')->delete();
             ReadFixture::grant('solicitacoes', 'consultar', $nivel);
@@ -35,7 +48,7 @@ class ReadAuthorizationTest extends TestCase
             $this->assertSame($total, $repo->page('requests', [])->total());
         }
         ReadFixture::profile(4);
-        $this->get(route('requests.index'))->assertForbidden();
+        $this->get(route('solicitacoes.index'))->assertForbidden();
     }
 
     public function test_financial_and_gps_projection_respect_record_scope_separately(): void
@@ -66,7 +79,7 @@ class ReadAuthorizationTest extends TestCase
         $repo = app(FleetReadRepository::class);
         $acoes = app(OperationCatalog::class);
         $this->assertArrayNotHasKey('approve', $acoes->allowed('requests', $repo->record('requests', 1)));
-        $this->get(route('requests.operation', ['registro' => 1, 'acao' => 'approve']))->assertForbidden();
+        $this->post(route('solicitacoes.approve.submit', 1), ['versao' => 1])->assertForbidden();
         $this->get(route('trips.operation', ['registro' => 1, 'acao' => 'return']))->assertForbidden();
         $this->get(route('trips.operation', ['registro' => 1, 'acao' => 'departure']))->assertOk();
     }
@@ -94,9 +107,9 @@ class ReadAuthorizationTest extends TestCase
     public function test_disabled_route_and_business_post_do_not_perform_writes(): void
     {
         DB::table('rotas_sistema')->where('modulo_codigo', 'solicitacoes')->update(['ativa' => 0]);
-        $this->get(route('requests.index'))->assertForbidden()->assertSee('Página temporariamente desativada');
+        $this->get(route('solicitacoes.index'))->assertForbidden()->assertSee('Página temporariamente desativada');
         $antes = DB::table('vw_solicitacoes_atuais')->count();
-        $this->post(route('requests.store'), ['destino' => 'Tentativa de escrita'])->assertForbidden();
+        $this->post(route('solicitacoes.store'), ['destino' => 'Tentativa de escrita'])->assertForbidden();
         $this->assertSame($antes, DB::table('vw_solicitacoes_atuais')->count());
     }
 
@@ -107,7 +120,7 @@ class ReadAuthorizationTest extends TestCase
             ['id' => 2, 'usuario_id' => 1, 'tipo' => 'Atualizacao fora do alcance', 'solicitacao_id' => 2, 'caminho_destino' => 'https://foreign.invalid/', 'criado_em' => '2026-10-05 12:00:00'],
             ['id' => 3, 'usuario_id' => 2, 'tipo' => 'Notificacao de outra identidade', 'solicitacao_id' => 2, 'caminho_destino' => 'https://foreign.invalid/', 'criado_em' => '2026-10-05 12:00:00'],
         ]);
-        $this->get(route('notifications.index'))->assertOk()->assertSee('Atualizacao autorizada')->assertDontSee('Notificacao de outra identidade')->assertDontSee('foreign.invalid')->assertSee(route('requests.show', 1), false)->assertDontSee(route('requests.show', 2), false)->assertHeader('Cache-Control', 'max-age=0, no-store, private');
+        $this->get(route('notifications.index'))->assertOk()->assertSee('Atualizacao autorizada')->assertDontSee('Notificacao de outra identidade')->assertDontSee('foreign.invalid')->assertSee(route('solicitacoes.show', 1), false)->assertDontSee(route('solicitacoes.show', 2), false)->assertHeader('Cache-Control', 'max-age=0, no-store, private');
     }
 
     public function test_pagination_keeps_query_filters_and_never_counts_other_identities(): void
@@ -116,7 +129,7 @@ class ReadAuthorizationTest extends TestCase
         for ($id = 4; $id <= 17; $id++) {
             DB::table('vw_solicitacoes_atuais')->insert(array_merge($original, ['id' => $id, 'protocolo' => 'MATCH-'.$id]));
         }
-        $resposta = $this->get(route('requests.index', ['q' => 'MATCH', 'ordem' => 'antigos', 'page' => 2]));
+        $resposta = $this->get(route('solicitacoes.index', ['q' => 'MATCH', 'ordem' => 'antigos', 'page' => 2]));
         $resposta->assertOk()->assertSee('MATCH-14')->assertDontSee('MATCH-4')->assertSee('q=MATCH', false)->assertSee('ordem=antigos', false)->assertSee('14</strong> resultados', false);
     }
 

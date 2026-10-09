@@ -1,0 +1,52 @@
+# Carregado automaticamente pelo Docker Compose para desenvolvimento local.
+services:
+  app:
+    environment:
+      VITE_HOT_FILE: /var/www/html/dev-hot/hot
+    depends_on:
+      vite:
+        condition: service_healthy
+    volumes:
+      - ./app:/var/www/html/app:ro
+      - ./bootstrap:/var/www/html/bootstrap:ro
+      - ./config:/var/www/html/config:ro
+      - ./routes:/var/www/html/routes:ro
+      - ./resources:/var/www/html/resources:ro
+      - ./public/icons:/var/www/html/public/icons:ro
+      - ./public/images:/var/www/html/public/images:ro
+      - ./public/index.php:/var/www/html/public/index.php:ro
+      - ./docker/php/development.ini:/usr/local/etc/php/conf.d/development.ini:ro
+      - dev_hot:/var/www/html/dev-hot:ro
+    tmpfs:
+      - /var/www/html/bootstrap/cache:uid=33,gid=33,mode=0775
+
+  vite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development-assets
+    image: gestao-de-veiculos-vite:local
+    environment:
+      APP_URL: "${APP_URL:-http://localhost:8080}"
+      VITE_DOCKER: "1"
+      VITE_PORT: "${VITE_PORT:-5173}"
+      VITE_HOT_FILE: /app/dev-hot/hot
+    ports:
+      - "127.0.0.1:${VITE_PORT:-5173}:${VITE_PORT:-5173}"
+    volumes:
+      - ./app:/app/app:ro
+      - ./routes:/app/routes:ro
+      - ./resources:/app/resources:ro
+      - ./vite.config.js:/app/vite.config.js:ro
+      - dev_hot:/app/dev-hot
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+(process.env.VITE_PORT || 5173)+'/@vite/client').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      start_period: 10s
+      retries: 10
+
+volumes:
+  dev_hot:

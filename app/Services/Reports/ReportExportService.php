@@ -80,7 +80,7 @@ class ReportExportService
         return $id;
     }
 
-    public function download(int $id): StreamedResponse
+    public function ready(int $id): \stdClass
     {
         $vinculo = $this->acesso->link();
         abort_unless($vinculo && $this->acesso->can('relatorios', 'consultar', (int) $vinculo->usuario_id, (int) $vinculo->unidade_id), 403);
@@ -95,7 +95,13 @@ class ReportExportService
         $chave = (string) $exportacao->chave_armazenamento;
         abort_unless(preg_match('/^relatorios\/[A-Za-z0-9]{40}\.csv$/D', $chave) === 1 && Storage::disk('local')->exists($chave), 404);
 
-        return Storage::disk('local')->download($chave, $exportacao->nome_original, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
+        return $exportacao;
+    }
+
+    public function download(int $id): StreamedResponse
+    {
+        $exportacao = $this->ready($id);
+        return Storage::disk('local')->download($exportacao->chave_armazenamento, $exportacao->nome_original, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
     }
 
     /** @return Collection<int, int>|Collection<int, array{fonte: string, id: int}> */

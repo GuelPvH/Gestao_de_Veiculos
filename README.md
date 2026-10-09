@@ -16,4 +16,36 @@ Siga [docs/SETUP.md](docs/SETUP.md) para dependências, configuração privada e
 - [Matriz de finalização e lacunas de homologação](docs/FINALIZATION.md)
 - [Branches, pacote e aplicação no Git](docs/DELIVERY.md)
 
-Nesta finalização, somente bancos descartáveis locais foram usados; a situação da hospedagem está descrita em [docs/DELIVERY.md](docs/DELIVERY.md). O repositório contém somente exemplos de configuração, sem credenciais reais. A integração MySQL descartável é executada por `python3 scripts/qa/mysql-contract.py`, com containers criados exclusivamente pelo próprio comando.
+O banco remoto permanece sem alteração. O repositório contém somente exemplos de configuração, sem credenciais reais. A integração MySQL descartável é executada por `python3 scripts/qa/mysql-contract.py`, com dois containers criados exclusivamente pelo próprio comando.
+
+
+## Desenvolvimento com banco remoto
+
+O padrão da equipe é usar o banco remoto configurado privadamente no `.env`.
+O passo a passo completo para quem acabou de clonar, incluindo configuração e
+chave da aplicação, está em [docs/SETUP.md](docs/SETUP.md).
+
+Depois de preparar a configuração, na primeira execução:
+
+```bash
+docker compose --profile admin up --build -d
+```
+
+Para iniciar nas próximas vezes:
+
+```bash
+docker compose --profile admin up -d
+```
+
+Aplicação: http://localhost:8080. phpMyAdmin: http://localhost:8081.
+O `docker-compose.override.yml` é carregado automaticamente, monta o código local
+e inicia o Vite. Alterações em PHP, rotas e Blade aparecem ao atualizar a página;
+CSS e JavaScript em `resources` usam a atualização automática do Vite.
+Reconstrua as imagens ao alterar dependências ou o Dockerfile.
+
+## Banco local opcional
+
+O banco local com dados fictícios é uma alternativa para desenvolvimento individual,
+separada da configuração padrão da equipe. Consulte a seção de banco local em
+[docs/SETUP.md](docs/SETUP.md) e as contas e contagens em
+[docs/local-test-data.md](docs/local-test-data.md).

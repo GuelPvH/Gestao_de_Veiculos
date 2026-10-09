@@ -31,3 +31,15 @@ for (const palco of document.querySelectorAll('[data-device-stage]')) { const if
 for(const botao of document.querySelectorAll('[data-report-reload]')) botao.addEventListener('click',()=>{ for(const campo of botao.form.querySelectorAll('input[name="campos[]"]')) campo.disabled=true; });
 for(const escolha of document.querySelectorAll('[data-checklist-result]')) escolha.addEventListener('change',()=>{const nota=escolha.closest('.row').querySelector('[data-checklist-note]');nota.required=escolha.value==='problema';});
 for(const escolha of document.querySelectorAll('[data-fuel-type]')) escolha.addEventListener('change',()=>{const unidade=escolha.form.querySelector('[data-fuel-unit]');const correta={gasolina:'litro',etanol:'litro',diesel:'litro',gnv:'m3',eletricidade:'kwh'}[escolha.value];if(correta)unidade.value=correta;});
+
+// Confere a selecao antes de abrir a confirmacao de aprovacao.
+document.querySelector('[data-request-approve]')?.addEventListener('click', () => {
+ const formulario = document.getElementById('approve-request');
+ if (formulario.reportValidity()) Modal.getOrCreateInstance(document.getElementById('request-approve')).show();
+});
+
+const reabrirSolicitacao = document.querySelector('[data-request-reopen]');
+if (reabrirSolicitacao) {
+ const modal = document.getElementById(`request-${reabrirSolicitacao.dataset.requestReopen}`);
+ if (modal) Modal.getOrCreateInstance(modal).show();
+}

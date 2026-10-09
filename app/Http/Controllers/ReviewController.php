@@ -19,7 +19,7 @@ class ReviewController extends Controller
         $links = ['dashboard' => 'Painel'];
         foreach (config('screens') as $codigo => $tela) {
             if ($acesso->level($tela['module']) > 0) {
-                $links[$codigo.'.index'] = $tela['title'];
+                $links[($tela['route'] ?? $codigo).'.index'] = $tela['title'];
             }
         }
         foreach (['agenda.index' => ['frota', 'Agenda'], 'account.index' => ['conta', 'Conta'], 'notifications.index' => ['notificacoes', 'Notificações'], 'reports.index' => ['relatorios', 'Relatórios'], 'configuration.index' => ['configuracoes', 'Configuração']] as $rota => $tela) {

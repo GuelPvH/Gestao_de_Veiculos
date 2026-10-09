@@ -6,7 +6,10 @@
             @endif
         </x-slot:acoes>
     </x-ui.title>
-    <x-ui.panel titulo="Registros">
+    <x-ui.panel>
+        @if(($vinculoAtual->perfil_codigo ?? '') === 'gestor')
+            @include('records.gestor-filters', ['codigo'=>'tickets'])
+        @else
         <form method="GET" action="{{ route('tickets.index') }}" class="filter-grid">
             <x-forms.field nome="q" rotulo="Buscar chamados" :valor="$filtros['q'] ?? ''" maxlength="150" />
             <x-forms.field nome="situacao" rotulo="Situação" tipo="select" :valor="$filtros['situacao'] ?? ''" :opcoes="array_combine($tela['states'], array_map(fn ($valor) => config('statuses.'.$valor, ucfirst(str_replace('_', ' ', $valor))), $tela['states']))" />
@@ -21,6 +24,7 @@
             <div class="col-md-4"><x-forms.field nome="ate" rotulo="Até" tipo="date" :valor="$filtros['ate'] ?? ''" /></div>
             <div class="col-md-4 align-self-center"><button type="submit" class="btn btn-outline-secondary">Aplicar período</button></div>
         </form>
+        @endif
         <x-tables.records :colunas="array_map(fn ($campo) => $campo[1], $tela['columns'])" :registros="$registros" rota-detalhe="tickets.show" />
         <x-navigation.pagination :paginacao="$paginacao" />
     </x-ui.panel>
