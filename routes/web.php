@@ -45,6 +45,7 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     foreach (['despesas' => 'financeiro/despesas', 'multas' => 'financeiro/multas', 'usuarios' => 'administracao/usuarios', 'perfis' => 'administracao/perfis', 'rotas' => 'administracao/rotas', 'auditoria' => 'administracao/auditoria', 'configuracao' => 'administracao/configuracoes'] as $origem => $destino) {
         Route::redirect('/'.$origem, '/'.$destino);
     }
+    Route::get('/historico-trajetos', [\App\Http\Controllers\MonitoringController::class, 'history'])->name('history.index');
     Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
     Route::get('/administracao/configuracoes', [ConfigurationController::class, 'index'])->name('configuration.index');
     Route::post('/administracao/configuracoes', [ConfigurationController::class, 'update'])->name('configuration.update');

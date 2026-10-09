@@ -1,6 +1,6 @@
 <x-layouts.authenticated titulo="Notificações" :breadcrumbs="[['label' => 'Notificações']]">
-    <x-ui.title titulo="Notificações" subtitulo="Atualizações destinadas à sua identidade." />
-    <x-ui.panel titulo="Atualizações">
+    <x-ui.title titulo="Notificações" subtitulo="Acompanhe a operação e o que precisa da sua atenção." />
+    <x-ui.panel titulo="Atualizações recentes">
         @forelse ($registros as $evento)
             <article class="row-summary">
                 <x-ui.icon nome="bell" />

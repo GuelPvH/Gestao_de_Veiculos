@@ -1,11 +1,11 @@
 @props(['titulo', 'breadcrumbs' => []])
 <x-layouts.base :titulo="$titulo">
-    <div class="app-shell">
+    <div class="app-shell {{ ($vinculoAtual->perfil_codigo ?? '') === 'gestor' ? 'gestor-shell' : '' }}">
         <x-navigation.sidebar :itens="$itensMenu ?? []" :vinculo="$vinculoAtual ?? null" />
         <div class="app-main">
             <x-navigation.header :usuario="$usuarioAtual ?? null" :vinculo="$vinculoAtual ?? null" />
             <main id="main-content" class="content-area" tabindex="-1">
-                <x-navigation.breadcrumb :itens="$breadcrumbs" />
+                @if(count($breadcrumbs))<x-navigation.breadcrumb :itens="$breadcrumbs" />@endif
                 <x-ui.feedback />
                 {{ $slot }}
             </main>

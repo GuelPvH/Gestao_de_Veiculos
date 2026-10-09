@@ -62,6 +62,9 @@ class ReadPagesTest extends TestCase
             foreach (['account.index' => 'account', 'notifications.index' => 'notifications', 'reports.index' => 'reports'] as $rota => $nome) {
                 $registrar($perfil, route($rota), $nome);
             }
+            if ($acesso->level('rastreamento') && $acesso->level('rastreamento', 'ver_localizacao')) {
+                $registrar($perfil, route('history.index'), 'history');
+            }
             if ($acesso->level('frota')) {
                 $registrar($perfil, route('agenda.index', ['semana' => '2026-10-05']), 'agenda');
             }

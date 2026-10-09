@@ -21,6 +21,19 @@ class ReadAuthorizationTest extends TestCase
         ReadFixture::profile(1);
     }
 
+    public function test_history_requires_both_consultation_and_location_permission(): void
+    {
+        ReadFixture::profile(4);
+        $this->get(route('history.index'))->assertForbidden();
+        ReadFixture::grant('rastreamento', 'consultar', 3);
+        $acesso = app(AccessContext::class);
+        $acesso->load($acesso->link());
+        $this->get(route('history.index'))->assertForbidden();
+        ReadFixture::grant('rastreamento', 'ver_localizacao', 2);
+        $acesso->load($acesso->link());
+        $this->get(route('history.index'))->assertOk();
+    }
+
     public function test_own_unit_and_agency_queries_apply_scope_before_totals_and_ids(): void
     {
         $repo = app(FleetReadRepository::class);

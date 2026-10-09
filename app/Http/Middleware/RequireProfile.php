@@ -23,10 +23,22 @@ class RequireProfile
                 $menu[] = ['label' => $tela['title'], 'route' => $codigo.'.index', 'active' => $codigo.'.*', 'icon' => $tela['icon']];
             }
         }
-        foreach (['agenda.index' => ['Agenda de veículos', 'frota', 'calendar-days'], 'reports.index' => ['Relatórios', 'relatorios', 'file-text'], 'configuration.index' => ['Configuração', 'configuracoes', 'file-text']] as $rota => $item) {
+        foreach (['agenda.index' => ['Agenda de veículos', 'frota', 'calendar-days'], 'history.index' => ['Histórico de trajetos', 'rastreamento', 'history'], 'reports.index' => ['Relatórios', 'relatorios', 'file-text'], 'configuration.index' => ['Configuração', 'configuracoes', 'file-text']] as $rota => $item) {
             if ($acesso->level($item[1]) > 0 && Route::has($rota)) {
                 $menu[] = ['label' => $item[0], 'route' => $rota, 'active' => $rota, 'icon' => $item[2]];
             }
+        }
+        if (($acesso->link()->perfil_codigo ?? '') === 'gestor') {
+            $ordem = ['dashboard', 'requests.index', 'agenda.index', 'vehicles.index', 'monitoring.index', 'history.index', 'trips.index', 'reports.index', 'tickets.index'];
+            foreach ($menu as &$item) {
+                $item['label'] = match ($item['route']) {
+                    'dashboard' => 'Visão geral',
+                    'trips.index' => 'Viagens e ocorrências',
+                    default => $item['label'],
+                };
+            }
+            unset($item);
+            usort($menu, fn ($a, $b) => (array_search($a['route'], $ordem, true) === false ? 99 : array_search($a['route'], $ordem, true)) <=> (array_search($b['route'], $ordem, true) === false ? 99 : array_search($b['route'], $ordem, true)));
         }
         View::share('itensMenu', $menu);
 
