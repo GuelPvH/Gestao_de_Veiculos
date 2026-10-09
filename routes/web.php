@@ -66,6 +66,7 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::post('/notificacoes/{evento}/ocultar', [NotificationController::class, 'hide'])->whereNumber('evento')->name('notifications.hide');
     Route::get('/relatorios', [ReportController::class, 'index'])->name('reports.index');
     Route::post('/relatorios/exportar', [ReportController::class, 'export'])->name('reports.export');
+    Route::get('/relatorios/{exportacao}/concluido', [ReportController::class, 'ready'])->whereNumber('exportacao')->name('reports.ready');
     Route::get('/relatorios/{exportacao}/arquivo', [ReportController::class, 'download'])->whereNumber('exportacao')->name('reports.download');
     Route::get('/apresentacao', [ReviewController::class, 'index'])->name('review.index');
     Route::post('/solicitacoes/novo', [RequestController::class, 'store'])->defaults('tela', 'requests')->name('requests.store');

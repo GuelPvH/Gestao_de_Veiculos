@@ -30,6 +30,7 @@ class ReportController extends Controller
             'campos' => 'nullable|array|min:1', 'campos.*' => ['string', Rule::in($campos->pluck('chave')->all())],
             'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de',
             'q' => 'nullable|string|max:150', 'page' => 'nullable|integer|min:1',
+            'etapa' => ['nullable', Rule::in(['catalogo', 'preparar', 'previa'])],
         ]);
         if ((! empty($validado['de']) || ! empty($validado['ate'])) && ! isset($tela['date'])) {
             throw ValidationException::withMessages(['de' => 'Esta área não possui filtro de período.']);
@@ -40,7 +41,9 @@ class ReportController extends Controller
         $colunas = $campos->filter(fn ($campo) => in_array($campo->chave, $selecionados, true))->pluck('rotulo', 'chave')->all();
         $podeExportar = $acesso->level($tela['module'], 'exportar') > 0;
 
-        return view('reports.index', compact('catalogo', 'codigo', 'tela', 'campos', 'selecionados', 'paginacao', 'registros', 'colunas', 'validado', 'podeExportar'));
+        $gestor = ($acesso->link()->perfil_codigo ?? '') === 'gestor';
+        $etapa = $validado['etapa'] ?? ($requisicao->has('campos') ? 'previa' : ($requisicao->has('modulo') ? 'preparar' : 'catalogo'));
+        return view($gestor ? 'reports.gestor' : 'reports.index', compact('catalogo', 'codigo', 'tela', 'campos', 'selecionados', 'paginacao', 'registros', 'colunas', 'validado', 'podeExportar', 'etapa'));
     }
 
     public function export(Request $requisicao, AccessContext $acesso, ReportExportService $exportador): RedirectResponse
@@ -56,7 +59,13 @@ class ReportController extends Controller
         ]);
         $id = $exportador->create($codigo, $validado['campos'], $validado, $campos);
 
-        return redirect()->route('reports.download', $id);
+        return redirect()->route(($acesso->link()->perfil_codigo ?? '') === 'gestor' ? 'reports.ready' : 'reports.download', $id);
+    }
+
+    public function ready(int $exportacao, ReportExportService $exportador): View
+    {
+        $arquivo = $exportador->ready($exportacao);
+        return view('reports.ready', compact('exportacao', 'arquivo'));
     }
 
     public function download(int $exportacao, ReportExportService $exportador): StreamedResponse
