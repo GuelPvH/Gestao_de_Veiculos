@@ -42,6 +42,13 @@ docker run --rm --user "$(id -u):$(id -g)" \
   php:8.5-cli-bookworm php scripts/setup/ensure-key.php
 ```
 
+ou caso esteja no WINDOWS
+
+```bash
+docker run --rm --mount "type=bind,source=$($PWD.Path),target=/project" `
+--workdir /project php:8.5-cli-bookworm php scripts/setup/ensure-key.php
+```
+
 O comando preserva uma chave existente. Não substitua `APP_KEY` depois de colocar essa instalação em uso.
 
 4. Construa as imagens e inicie os serviços:
