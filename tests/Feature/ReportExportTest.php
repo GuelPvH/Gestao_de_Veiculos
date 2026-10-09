@@ -70,7 +70,7 @@ class ReportExportTest extends TestCase
 
         $this->post(route('reports.export'), [
             'modulo' => 'requests', 'campos' => ['protocolo', 'destino'],
-        ])->assertRedirect(route('reports.ready', 1));
+        ])->assertRedirect(route('reports.download', 1));
         $arquivo = DB::table('arquivos')->where('nome_original', 'frota-pf-relatorio-1.csv')->first();
         $this->assertNotNull($arquivo);
         $this->assertStringStartsWith('relatorios/', $arquivo->chave_armazenamento);

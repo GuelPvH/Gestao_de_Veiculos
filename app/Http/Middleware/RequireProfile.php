@@ -19,8 +19,8 @@ class RequireProfile
         }
         $menu = [['label' => 'Painel', 'route' => 'dashboard', 'active' => 'dashboard', 'icon' => 'home']];
         foreach (config('screens', []) as $codigo => $tela) {
-            if (is_array($tela) && $acesso->level($tela['module']) > 0 && Route::has($codigo.'.index')) {
-                $menu[] = ['label' => $tela['title'], 'route' => $codigo.'.index', 'active' => $codigo.'.*', 'icon' => $tela['icon']];
+            if (is_array($tela) && $acesso->level($tela['module']) > 0 && Route::has(($tela['route'] ?? $codigo).'.index')) {
+                $menu[] = ['label' => $tela['title'], 'route' => ($tela['route'] ?? $codigo).'.index', 'active' => ($tela['route'] ?? $codigo).'.*', 'icon' => $tela['icon']];
             }
         }
         foreach (['agenda.index' => ['Agenda de veículos', 'frota', 'calendar-days'], 'history.index' => ['Histórico de trajetos', 'rastreamento', 'history'], 'reports.index' => ['Relatórios', 'relatorios', 'file-text'], 'configuration.index' => ['Configuração', 'configuracoes', 'file-text']] as $rota => $item) {
@@ -29,7 +29,7 @@ class RequireProfile
             }
         }
         if (($acesso->link()->perfil_codigo ?? '') === 'gestor') {
-            $ordem = ['dashboard', 'requests.index', 'agenda.index', 'vehicles.index', 'monitoring.index', 'history.index', 'trips.index', 'reports.index', 'tickets.index'];
+            $ordem = ['dashboard', 'solicitacoes.index', 'agenda.index', 'vehicles.index', 'monitoring.index', 'history.index', 'trips.index', 'reports.index', 'tickets.index'];
             foreach ($menu as &$item) {
                 $item['label'] = match ($item['route']) {
                     'dashboard' => 'Visão geral',

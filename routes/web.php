@@ -12,7 +12,7 @@ use App\Http\Controllers\FineController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RecordController;
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\RequestController;
+use App\Http\Controllers\SolicitacoesController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TripController;
@@ -39,14 +39,11 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/alterar-senha', [PasswordController::class, 'update'])->name('password.update');
     });
 });
-Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->get('/painel', [DashboardController::class, 'index'])->name('dashboard');
 
 Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->group(function (): void {
     foreach (['despesas' => 'financeiro/despesas', 'multas' => 'financeiro/multas', 'usuarios' => 'administracao/usuarios', 'perfis' => 'administracao/perfis', 'rotas' => 'administracao/rotas', 'auditoria' => 'administracao/auditoria', 'configuracao' => 'administracao/configuracoes'] as $origem => $destino) {
         Route::redirect('/'.$origem, '/'.$destino);
     }
-    Route::get('/historico-trajetos', [\App\Http\Controllers\MonitoringController::class, 'history'])->name('history.index');
-    Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
     Route::get('/administracao/configuracoes', [ConfigurationController::class, 'index'])->name('configuration.index');
     Route::post('/administracao/configuracoes', [ConfigurationController::class, 'update'])->name('configuration.update');
     Route::post('/administracao/usuarios/novo', [AdminController::class, 'storeUser'])->defaults('tela', 'users')->defaults('area', 'users')->defaults('operacao', 'store')->name('users.store');
@@ -60,18 +57,7 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::post('/administracao/perfis/{registro}/permissoes/revogar', [AdminController::class, 'revokeRole'])->whereNumber('registro')->defaults('tela', 'roles')->defaults('area', 'roles')->defaults('operacao', 'revoke')->name('roles.revoke');
     Route::post('/administracao/rotas/novo', [AdminController::class, 'storeRoute'])->defaults('tela', 'technical-routes')->defaults('area', 'technical-routes')->defaults('operacao', 'store')->name('technical-routes.store');
     Route::post('/administracao/rotas/{registro}/edit', [AdminController::class, 'updateRoute'])->whereNumber('registro')->defaults('tela', 'technical-routes')->defaults('area', 'technical-routes')->defaults('operacao', 'update')->name('technical-routes.update');
-    Route::get('/conta', [AccountController::class, 'index'])->name('account.index');
-    Route::get('/notificacoes', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notificacoes/{evento}/ler', [NotificationController::class, 'read'])->whereNumber('evento')->name('notifications.read');
-    Route::post('/notificacoes/{evento}/ocultar', [NotificationController::class, 'hide'])->whereNumber('evento')->name('notifications.hide');
-    Route::get('/relatorios', [ReportController::class, 'index'])->name('reports.index');
-    Route::post('/relatorios/exportar', [ReportController::class, 'export'])->name('reports.export');
-    Route::get('/relatorios/{exportacao}/concluido', [ReportController::class, 'ready'])->whereNumber('exportacao')->name('reports.ready');
-    Route::get('/relatorios/{exportacao}/arquivo', [ReportController::class, 'download'])->whereNumber('exportacao')->name('reports.download');
     Route::get('/apresentacao', [ReviewController::class, 'index'])->name('review.index');
-    Route::post('/solicitacoes/novo', [RequestController::class, 'store'])->defaults('tela', 'requests')->name('requests.store');
-    Route::post('/solicitacoes/{registro}/{acao}', [RequestController::class, 'perform'])->whereNumber('registro')->defaults('tela', 'requests')->name('requests.perform');
-    Route::post('/viagens/{registro}/{acao}', [TripController::class, 'perform'])->whereNumber('registro')->where('acao', 'departure|return|occurrence|cancel')->defaults('tela', 'trips')->name('trips.perform');
     Route::post('/financeiro/multas/novo', [FineController::class, 'store'])->defaults('tela', 'fines')->name('fines.store');
     Route::get('/financeiro/multas/{registro}/comprovantes/{comprovante}', [FineController::class, 'download'])->whereNumber('registro')->whereNumber('comprovante')->defaults('tela', 'fines')->name('fines.download');
     Route::post('/financeiro/multas/{registro}/{acao}', [FineController::class, 'perform'])->whereNumber('registro')->where('acao', 'edit|assign|proof|verify|correct|settle|dispute|cancel')->defaults('tela', 'fines')->name('fines.perform');
@@ -93,6 +79,46 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::post('/financeiro/pneus/{registro}/instalacoes/{instalacao}/remover', [TyreController::class, 'remove'])->whereNumber('registro')->whereNumber('instalacao')->defaults('acao', 'remove')->name('tyres.remove');
     Route::post('/financeiro/pneus/{registro}/descartar', [TyreController::class, 'discard'])->whereNumber('registro')->defaults('acao', 'discard')->name('tyres.discard');
 
+    foreach (config('screens') as $codigo => $tela) {
+        if (in_array($codigo, ['tickets', 'vehicles', 'requests', 'trips', 'monitoring'], true)) {
+            continue;
+        }
+        Route::get('/'.$tela['url'], [RecordController::class, 'index'])->defaults('tela', $codigo)->name($codigo.'.index');
+        if ($tela['create'] ?? false) {
+            Route::get('/'.$tela['url'].'/novo', [RecordController::class, 'create'])->defaults('tela', $codigo)->name($codigo.'.create');
+        }
+        Route::get('/'.$tela['url'].'/{registro}', [RecordController::class, 'show'])->whereNumber('registro')->defaults('tela', $codigo)->name($codigo.'.show');
+        Route::get('/'.$tela['url'].'/{registro}/{acao}', [RecordController::class, 'operation'])->whereNumber('registro')->defaults('tela', $codigo)->name($codigo.'.operation');
+    }
+
+    Route::prefix('solicitacoes')->as('solicitacoes.')->controller(SolicitacoesController::class)->group(function (): void {
+            Route::get('', 'index')->defaults('tela', 'requests')->name('index');
+            Route::get('novo', 'create')->defaults('tela', 'requests')->name('create');
+            Route::post('novo', 'store')->defaults('tela', 'requests')->name('store');
+            Route::get('{registro}', 'show')->whereNumber('registro')->defaults('tela', 'requests')->name('show');
+            Route::get('{registro}/edit', 'edit')->whereNumber('registro')->defaults('tela', 'requests')->name('edit');
+            Route::patch('{registro}/edit', 'update')->whereNumber('registro')->defaults('tela', 'requests')->name('update');
+            Route::post('{registro}/send', 'sendSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('send.submit');
+            Route::post('{registro}/revision', 'revisionSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('revision.submit');
+            Route::post('{registro}/approve', 'approveSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('approve.submit');
+            Route::post('{registro}/deny', 'denySubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('deny.submit');
+            Route::post('{registro}/adjust', 'adjustSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('adjust.submit');
+        });
+
+    //Rotas Gestor
+    // Compartilhadas com outros perfis conforme as permissoes do vinculo ativo.
+    Route::get('/painel', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/historico-trajetos', [\App\Http\Controllers\MonitoringController::class, 'history'])->name('history.index');
+    Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
+    Route::get('/conta', [AccountController::class, 'index'])->name('account.index');
+    Route::get('/notificacoes', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notificacoes/{evento}/ler', [NotificationController::class, 'read'])->whereNumber('evento')->name('notifications.read');
+    Route::post('/notificacoes/{evento}/ocultar', [NotificationController::class, 'hide'])->whereNumber('evento')->name('notifications.hide');
+    Route::get('/relatorios', [ReportController::class, 'index'])->name('reports.index');
+    Route::post('/relatorios/exportar', [ReportController::class, 'export'])->name('reports.export');
+    Route::get('/relatorios/{exportacao}/concluido', [ReportController::class, 'ready'])->whereNumber('exportacao')->name('reports.ready');
+    Route::get('/relatorios/{exportacao}/arquivo', [ReportController::class, 'download'])->whereNumber('exportacao')->name('reports.download');
+    Route::post('/viagens/{registro}/{acao}', [TripController::class, 'perform'])->whereNumber('registro')->where('acao', 'departure|return|occurrence|cancel')->defaults('tela', 'trips')->name('trips.perform');
     Route::get('/chamados', [TicketController::class, 'index'])->defaults('tela', 'tickets')->name('tickets.index');
     Route::get('/chamados/novo', [TicketController::class, 'create'])->defaults('tela', 'tickets')->name('tickets.create');
     Route::post('/chamados/novo', [TicketController::class, 'store'])->defaults('tela', 'tickets')->name('tickets.store');
@@ -106,8 +132,9 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::get('/frota/{registro}', [RecordController::class, 'show'])->whereNumber('registro')->defaults('tela', 'vehicles')->name('vehicles.show');
     Route::get('/frota/{registro}/{acao}', [VehicleController::class, 'operation'])->whereNumber('registro')->where('acao', 'edit|block|release')->defaults('tela', 'vehicles')->name('vehicles.operation');
     Route::post('/frota/{registro}/{acao}', [VehicleController::class, 'perform'])->whereNumber('registro')->where('acao', 'edit|block|release')->defaults('tela', 'vehicles')->name('vehicles.perform');
+
     foreach (config('screens') as $codigo => $tela) {
-        if (in_array($codigo, ['tickets', 'vehicles'], true)) {
+        if (! in_array($codigo, ['trips', 'monitoring'], true)) {
             continue;
         }
         Route::get('/'.$tela['url'], [RecordController::class, 'index'])->defaults('tela', $codigo)->name($codigo.'.index');

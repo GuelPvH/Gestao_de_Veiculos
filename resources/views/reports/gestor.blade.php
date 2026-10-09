@@ -17,7 +17,7 @@
         </x-ui.panel>
     @else
         <x-ui.panel :titulo="$tela['title']">
-            @if($paginacao && count($colunas))<x-tables.records :colunas="$colunas" :registros="$registros" :rota-detalhe="$codigo.'.show'" /><x-navigation.pagination :paginacao="$paginacao" />@else<x-ui.empty titulo="Nenhum campo disponível" descricao="Escolha uma área e campos autorizados para consultar." />@endif
+            @if($paginacao && count($colunas))<x-tables.records :colunas="$colunas" :registros="$registros" :rota-detalhe="(config('screens.'.$codigo.'.route') ?? $codigo).'.show'" /><x-navigation.pagination :paginacao="$paginacao" />@else<x-ui.empty titulo="Nenhum campo disponível" descricao="Escolha uma área e campos autorizados para consultar." />@endif
             <div class="d-flex flex-wrap gap-2 mt-4">
                 @if($podeExportar && $paginacao && $paginacao->total() > 0 && count($selecionados))
                 <form method="post" action="{{ route('reports.export') }}">@csrf<input type="hidden" name="modulo" value="{{ $codigo }}">@foreach($selecionados as $chave)<input type="hidden" name="campos[]" value="{{ $chave }}">@endforeach @foreach(['de','ate','q'] as $filtro)@if(!empty($validado[$filtro]))<input type="hidden" name="{{ $filtro }}" value="{{ $validado[$filtro] }}">@endif @endforeach<button class="btn btn-primary" type="submit">Gerar arquivo</button></form>

@@ -26,7 +26,7 @@ class DashboardController extends Controller
             if (count($indicadores) < 4) {
                 $indicadores[] = ['rotulo' => $tela['title'], 'valor' => $total, 'nota' => 'Registros no alcance do perfil'];
             }
-            $atalhos[] = ['title' => $tela['title'], 'route' => $codigo.'.index', 'icon' => $tela['icon']];
+            $atalhos[] = ['title' => $tela['title'], 'route' => ($tela['route'] ?? $codigo).'.index', 'icon' => $tela['icon']];
             if (! $atividade && $total > 0) {
                 $registros = $leituras->select($codigo, $leituras->query($codigo))->orderByDesc($tela['id'] ?? 'r.id')->limit(5)->get();
                 $atividade = ['tela' => $tela, 'codigo' => $codigo, 'registros' => $leituras->rows($codigo, $registros)];

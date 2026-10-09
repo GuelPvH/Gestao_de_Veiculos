@@ -50,13 +50,14 @@ class ReadPagesTest extends TestCase
                 if (! $acesso->level($tela['module'])) {
                     continue;
                 }
-                $registrar($perfil, route($codigo.'.index'), $codigo.'-index');
-                $registrar($perfil, route($codigo.'.show', 1), $codigo.'-detail');
+                $registrar($perfil, route(($tela['route'] ?? $codigo).'.index'), $codigo.'-index');
+                $registrar($perfil, route((config('screens.'.$codigo.'.route') ?? $codigo).'.show', 1), $codigo.'-detail');
                 if (($tela['create'] ?? false) && $acesso->can($tela['module'], 'criar', 1, 1)) {
-                    $registrar($perfil, route($codigo.'.create'), $codigo.'-create');
+                    $registrar($perfil, route(($tela['route'] ?? $codigo).'.create'), $codigo.'-create');
                 }
                 foreach ($acoes->allowed($codigo, $repo->record($codigo, 1)) as $acao => $rotulo) {
-                    $registrar($perfil, route($codigo.'.operation', ['registro' => 1, 'acao' => $acao]), $codigo.'-'.$acao);
+                    if ($codigo === 'requests' && $acao !== 'edit') continue;
+                    $registrar($perfil, ($codigo === 'requests' ? route('solicitacoes.'.$acao, 1) : route($codigo.'.operation', ['registro' => 1, 'acao' => $acao])), $codigo.'-'.$acao);
                 }
             }
             foreach (['account.index' => 'account', 'notifications.index' => 'notifications', 'reports.index' => 'reports'] as $rota => $nome) {
@@ -79,9 +80,10 @@ class ReadPagesTest extends TestCase
         foreach (['requests' => ['aguardando_analise', 'ajustes_solicitados', 'aprovada', 'negada', 'cancelada'], 'trips' => ['programada', 'em_andamento', 'concluida', 'cancelada']] as $codigo => $estados) {
             foreach ($estados as $estado) {
                 DB::table(config('screens.'.$codigo.'.table'))->where('id', 2)->update(['situacao' => $estado]);
-                $registrar('gestor', route($codigo.'.show', 2), $codigo.'-'.$estado);
+                $registrar('gestor', route((config('screens.'.$codigo.'.route') ?? $codigo).'.show', 2), $codigo.'-'.$estado);
                 foreach (app(OperationCatalog::class)->allowed($codigo, app(FleetReadRepository::class)->record($codigo, 2)) as $acao => $rotulo) {
-                    $registrar('gestor', route($codigo.'.operation', ['registro' => 2, 'acao' => $acao]), $codigo.'-'.$estado.'-'.$acao);
+                    if ($codigo === 'requests' && $acao !== 'edit') continue;
+                    $registrar('gestor', ($codigo === 'requests' ? route('solicitacoes.'.$acao, 2) : route($codigo.'.operation', ['registro' => 2, 'acao' => $acao])), $codigo.'-'.$estado.'-'.$acao);
                 }
             }
         }
