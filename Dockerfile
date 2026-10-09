@@ -50,6 +50,14 @@ COPY resources ./resources
 COPY vite.config.js ./
 RUN npm run build
 
+FROM assets AS development-assets
+
+RUN install -d -m 777 /app/dev-hot \
+    && install -d -o node -g node -m 755 /app/node_modules/.vite /app/node_modules/.vite-temp
+USER node
+EXPOSE 5173
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+
 FROM php-base AS runtime
 
 COPY --chown=www-data:www-data . .
@@ -61,7 +69,8 @@ RUN install -d -m 775 -o www-data -g www-data \
         storage/app/private storage/app/public storage/framework/cache/data \
         storage/framework/sessions storage/framework/testing storage/framework/views \
         storage/logs bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && install -d -m 777 /var/www/html/dev-hot
 
 USER www-data
 
