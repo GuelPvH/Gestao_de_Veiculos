@@ -1,4 +1,4 @@
--- Frota · PF / Frota Pública RO — modelo relacional 1.0.2
+-- Frota · PF / Frota Pública RO — modelo relacional 1.0.0
 -- Instalação nova: MySQL 8.0.16+ / MariaDB 10.11+. Importar em banco vazio.
 -- Não contém DROP, senha padrão nem dados operacionais fictícios.
 -- No phpMyAdmin: selecionar o banco, Importar, formato SQL, UTF-8.
@@ -14,28 +14,6 @@ CREATE TABLE versoes_modelo (
   instalado_em DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   descricao VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Identifica a versão instalada do esquema.';
-
--- Fila durável do Laravel. A recuperação armazena somente o identificador cifrado no payload.
-CREATE TABLE jobs (
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  queue VARCHAR(255) NOT NULL,
-  payload LONGTEXT NOT NULL,
-  attempts TINYINT UNSIGNED NOT NULL,
-  reserved_at INT UNSIGNED NULL,
-  available_at INT UNSIGNED NOT NULL,
-  created_at INT UNSIGNED NOT NULL,
-  KEY ix_jobs_queue (queue)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Fila durável para tarefas assíncronas; payloads sensíveis devem estar cifrados.';
-
-CREATE TABLE failed_jobs (
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  uuid VARCHAR(255) NOT NULL UNIQUE,
-  connection TEXT NOT NULL,
-  queue TEXT NOT NULL,
-  payload LONGTEXT NOT NULL,
-  exception LONGTEXT NOT NULL,
-  failed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Falhas da fila Laravel; payload de recuperação contém somente identificador cifrado.';
 
 CREATE TABLE unidades (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -1239,9 +1217,7 @@ CREATE TABLE anexos (
 
 -- Catálogos iniciais: sem usuários, veículos ou pagamentos fictícios.
 INSERT INTO versoes_modelo (versao,descricao) VALUES
-('1.0.0','Modelo completo dos fluxos do protótipo Frota · PF / Frota Pública RO'),
-('1.0.1','Justificativa e delegação validada nos procedimentos administrativos.'),
-('1.0.2','Fila durável de recuperação e expiração absoluta de sessão.');
+('1.0.0','Modelo completo dos fluxos do protótipo Frota · PF / Frota Pública RO');
 
 INSERT INTO unidades (id,codigo,nome,cidade,uf) VALUES
 (1,'SEDE','Sede administrativa','Porto Velho','RO');
@@ -2540,10 +2516,10 @@ BEGIN
   SELECT v_id AS usuario_id;
 END$$
 
-CREATE PROCEDURE sp_vincular_perfil(IN p_ator_vinculo BIGINT UNSIGNED,IN p_usuario BIGINT UNSIGNED,IN p_perfil BIGINT UNSIGNED,IN p_unidade BIGINT UNSIGNED,IN p_inicio DATETIME(6),IN p_fim DATETIME(6),IN p_justificativa VARCHAR(1000))
+CREATE PROCEDURE sp_vincular_perfil(IN p_ator_vinculo BIGINT UNSIGNED,IN p_usuario BIGINT UNSIGNED,IN p_perfil BIGINT UNSIGNED,IN p_unidade BIGINT UNSIGNED,IN p_inicio DATETIME(6),IN p_fim DATETIME(6))
 SQL SECURITY INVOKER
 BEGIN
-  DECLARE v_ator BIGINT UNSIGNED; DECLARE v_id BIGINT UNSIGNED; DECLARE v_max_atribuicao INT; DECLARE v_max_perfil INT; DECLARE v_nao_delegavel INT; DECLARE v_lock INT; DECLARE v_ativo INT;
+  DECLARE v_ator BIGINT UNSIGNED; DECLARE v_id BIGINT UNSIGNED; DECLARE v_max_atribuicao INT; DECLARE v_max_perfil INT; DECLARE v_lock INT; DECLARE v_ativo INT;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
   SELECT id INTO v_lock FROM configuracao_sistema WHERE id=1 FOR UPDATE;
@@ -2552,18 +2528,13 @@ BEGIN
   IF v_ator=p_usuario THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Atribuição de perfil ao próprio usuário exige outro administrador autorizado.'; END IF;
   SELECT COUNT(*) INTO v_ativo FROM perfis WHERE id=p_perfil AND ativo=1;
   IF v_ativo=0 OR p_inicio IS NULL OR (p_fim IS NOT NULL AND p_fim<=p_inicio) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Perfil inativo ou período de vínculo inválido.'; END IF;
-  IF p_justificativa IS NULL OR CHAR_LENGTH(TRIM(p_justificativa))<5 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Informe a justificativa para atribuir o perfil.'; END IF;
   SELECT MAX(nivel_alcance) INTO v_max_atribuicao FROM vw_permissoes_efetivas WHERE vinculo_id=p_ator_vinculo AND modulo_codigo='usuarios' AND acao_codigo='delegar';
   SELECT MAX(CASE p.alcance WHEN 'proprios' THEN 1 WHEN 'unidade' THEN 2 ELSE 3 END) INTO v_max_perfil
   FROM perfil_permissoes pp JOIN permissoes p ON p.id=pp.permissao_id WHERE pp.perfil_id=p_perfil;
   IF COALESCE(v_max_perfil,0)>COALESCE(v_max_atribuicao,0) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Perfil pretendido excede o alcance autorizado para atribuição.'; END IF;
-  SELECT COUNT(*) INTO v_nao_delegavel FROM perfil_permissoes pp JOIN permissoes p ON p.id=pp.permissao_id WHERE pp.perfil_id=p_perfil
-  AND NOT EXISTS(SELECT 1 FROM vw_permissoes_efetivas pe WHERE pe.vinculo_id=p_ator_vinculo AND pe.modulo_codigo=p.modulo_codigo AND pe.acao_codigo=p.acao_codigo AND pe.delegavel=1
-  AND pe.nivel_alcance>=CASE p.alcance WHEN 'proprios' THEN 1 WHEN 'unidade' THEN 2 ELSE 3 END);
-  IF v_nao_delegavel>0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Perfil pretendido contém ações que este vínculo não pode delegar.'; END IF;
   INSERT INTO usuario_perfis(usuario_id,perfil_id,unidade_id,vigente_desde,vigente_ate,concedido_por) VALUES(p_usuario,p_perfil,p_unidade,p_inicio,p_fim,v_ator);
   SET v_id=LAST_INSERT_ID();
-  CALL sp_auditar(p_ator_vinculo,'perfil_atribuido','usuario_perfis',v_id,p_justificativa);
+  CALL sp_auditar(p_ator_vinculo,'perfil_atribuido','usuario_perfis',v_id,'Perfil existente atribuído a outro usuário dentro do alcance administrativo.');
   COMMIT;
   SELECT v_id AS vinculo_id;
 END$$
@@ -2571,12 +2542,11 @@ END$$
 CREATE PROCEDURE sp_desativar_vinculo(IN p_ator_vinculo BIGINT UNSIGNED,IN p_vinculo BIGINT UNSIGNED,IN p_motivo VARCHAR(500))
 SQL SECURITY INVOKER
 BEGIN
-  DECLARE v_usuario BIGINT UNSIGNED; DECLARE v_unidade BIGINT UNSIGNED; DECLARE v_ator BIGINT UNSIGNED; DECLARE v_lock INT; DECLARE v_ativo INT;
+  DECLARE v_usuario BIGINT UNSIGNED; DECLARE v_unidade BIGINT UNSIGNED; DECLARE v_ator BIGINT UNSIGNED; DECLARE v_lock INT;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
   SELECT id INTO v_lock FROM configuracao_sistema WHERE id=1 FOR UPDATE;
-  SELECT usuario_id,unidade_id,ativo INTO v_usuario,v_unidade,v_ativo FROM usuario_perfis WHERE id=p_vinculo FOR UPDATE;
-  IF v_ativo IS NULL OR v_ativo<>1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Vínculo inexistente ou já revogado.'; END IF;
+  SELECT usuario_id,unidade_id INTO v_usuario,v_unidade FROM usuario_perfis WHERE id=p_vinculo FOR UPDATE;
   CALL sp_exigir_permissao(p_ator_vinculo,'usuarios','editar',v_usuario,v_unidade);
   SELECT usuario_id INTO v_ator FROM usuario_perfis WHERE id=p_ator_vinculo;
   IF p_motivo IS NULL OR CHAR_LENGTH(TRIM(p_motivo))=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Informe o motivo da revogação.'; END IF;
@@ -2586,7 +2556,7 @@ BEGIN
   COMMIT;
 END$$
 
-CREATE PROCEDURE sp_duplicar_perfil(IN p_ator_vinculo BIGINT UNSIGNED,IN p_origem BIGINT UNSIGNED,IN p_codigo VARCHAR(60),IN p_nome VARCHAR(100),IN p_justificativa VARCHAR(1000))
+CREATE PROCEDURE sp_duplicar_perfil(IN p_ator_vinculo BIGINT UNSIGNED,IN p_origem BIGINT UNSIGNED,IN p_codigo VARCHAR(60),IN p_nome VARCHAR(100))
 SQL SECURITY INVOKER
 BEGIN
   DECLARE v_usuario BIGINT UNSIGNED; DECLARE v_nao_delegavel INT; DECLARE v_id BIGINT UNSIGNED; DECLARE v_lock INT;
@@ -2594,7 +2564,6 @@ BEGIN
   START TRANSACTION;
   SELECT id INTO v_lock FROM configuracao_sistema WHERE id=1 FOR UPDATE;
   CALL sp_exigir_permissao(p_ator_vinculo,'perfis','criar',NULL,NULL);
-  IF p_justificativa IS NULL OR CHAR_LENGTH(TRIM(p_justificativa))<5 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Informe a justificativa para duplicar o perfil.'; END IF;
   SELECT usuario_id INTO v_usuario FROM usuario_perfis WHERE id=p_ator_vinculo;
   SELECT COUNT(*) INTO v_nao_delegavel FROM perfil_permissoes pp JOIN permissoes p ON p.id=pp.permissao_id WHERE pp.perfil_id=p_origem
   AND NOT EXISTS(SELECT 1 FROM vw_permissoes_efetivas pe WHERE pe.vinculo_id=p_ator_vinculo AND pe.modulo_codigo=p.modulo_codigo AND pe.acao_codigo=p.acao_codigo AND pe.delegavel=1
@@ -2604,7 +2573,7 @@ BEGIN
   IF ROW_COUNT()<>1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Perfil de origem não encontrado.'; END IF;
   SET v_id=LAST_INSERT_ID();
   INSERT INTO perfil_permissoes(perfil_id,permissao_id,delegavel,concedido_por) SELECT v_id,permissao_id,delegavel,v_usuario FROM perfil_permissoes WHERE perfil_id=p_origem;
-  CALL sp_auditar(p_ator_vinculo,'perfil_duplicado','perfis',v_id,p_justificativa);
+  CALL sp_auditar(p_ator_vinculo,'perfil_duplicado','perfis',v_id,'Cópia independente das concessões autorizadas.');
   COMMIT;
   SELECT v_id AS perfil_id;
 END$$
@@ -2665,26 +2634,6 @@ BEGIN
   COMMIT;
 END$$
 
-CREATE PROCEDURE sp_expirar_sessao(IN p_sessao BIGINT UNSIGNED,IN p_usuario BIGINT UNSIGNED,IN p_limite_minutos SMALLINT UNSIGNED)
-SQL SECURITY INVOKER
-BEGIN
-  DECLARE v_inicio DATETIME(6); DECLARE v_vinculo BIGINT UNSIGNED; DECLARE v_fim DATETIME(6);
-  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
-  START TRANSACTION;
-  SELECT criado_em,vinculo_ativo_id,encerrada_em INTO v_inicio,v_vinculo,v_fim
-  FROM sessoes WHERE id=p_sessao AND usuario_id=p_usuario FOR UPDATE;
-  IF v_inicio IS NULL OR v_fim IS NOT NULL OR p_limite_minutos NOT BETWEEN 60 AND 1440 THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Sessão ou prazo absoluto inválido.';
-  END IF;
-  IF v_inicio>TIMESTAMPADD(MINUTE,-p_limite_minutos,UTC_TIMESTAMP(6)) THEN
-    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Sessão ainda não atingiu o prazo absoluto.';
-  END IF;
-  UPDATE sessoes SET encerrada_em=UTC_TIMESTAMP(6),motivo_encerramento='prazo' WHERE id=p_sessao;
-  INSERT INTO auditoria(ator_usuario_id,ator_vinculo_id,sessao_id,evento,entidade,entidade_id,descricao)
-  VALUES(p_usuario,v_vinculo,p_sessao,'sessao_expirada','sessoes',p_sessao,'prazo_absoluto');
-  COMMIT;
-END$$
-
 CREATE PROCEDURE sp_encerrar_sessao(IN p_sessao BIGINT UNSIGNED,IN p_usuario BIGINT UNSIGNED)
 SQL SECURITY INVOKER
 BEGIN
@@ -2703,14 +2652,10 @@ END$$
 CREATE PROCEDURE sp_consumir_recuperacao(IN p_token_hash VARBINARY(32),IN p_novo_hash VARCHAR(255))
 SQL SECURITY INVOKER
 BEGIN
-  DECLARE v_id BIGINT UNSIGNED; DECLARE v_usuario BIGINT UNSIGNED; DECLARE v_usuario_bloqueado BIGINT UNSIGNED;
+  DECLARE v_id BIGINT UNSIGNED; DECLARE v_usuario BIGINT UNSIGNED;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
   START TRANSACTION;
-  SELECT usuario_id INTO v_usuario FROM recuperacoes_senha WHERE token_hash=p_token_hash;
-  IF v_usuario IS NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Token de recuperação inválido, vencido ou já utilizado.'; END IF;
-  SELECT id INTO v_usuario_bloqueado FROM usuarios WHERE id=v_usuario FOR UPDATE;
-  SELECT id INTO v_id FROM recuperacoes_senha WHERE token_hash=p_token_hash AND usuario_id=v_usuario
-    AND usado_em IS NULL AND invalidado_em IS NULL AND expira_em>UTC_TIMESTAMP(6) FOR UPDATE;
+  SELECT id,usuario_id INTO v_id,v_usuario FROM recuperacoes_senha WHERE token_hash=p_token_hash AND usado_em IS NULL AND invalidado_em IS NULL AND expira_em>UTC_TIMESTAMP(6) FOR UPDATE;
   IF v_id IS NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Token de recuperação inválido, vencido ou já utilizado.'; END IF;
   UPDATE usuarios SET senha_hash=p_novo_hash,senha_alterada_em=UTC_TIMESTAMP(6),deve_trocar_senha=0 WHERE id=v_usuario;
   UPDATE recuperacoes_senha SET usado_em=UTC_TIMESTAMP(6) WHERE id=v_id;
@@ -3880,4 +3825,4 @@ DELIMITER ;
 
 
 -- Verificação simples de término da importação.
-SELECT 'Frota instalada: versão 1.0.2' AS resultado, COUNT(*) AS tabelas FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE';
+SELECT 'Frota instalada: versão 1.0.0' AS resultado, COUNT(*) AS tabelas FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE';

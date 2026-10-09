@@ -3,18 +3,23 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\DeliverRecoveryLink;
 use App\Models\User;
 use App\Services\Auth\PasswordPolicy;
 use App\Services\Auth\PasswordVerifier;
 use App\Services\Auth\ProcedureRunner;
+use App\Services\Auth\RecoverySettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\MessageBag;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class PasswordController extends Controller
@@ -28,6 +33,12 @@ class PasswordController extends Controller
     {
         $dados = $requisicao->validate(['senha_atual' => ['required', 'string', 'max:256'], 'nova_senha' => PasswordPolicy::rules()]);
         $usuarioId = (int) $requisicao->user()->getAuthIdentifier();
+        $identidade = 'fleet-password-user:'.hash('sha256', (string) $usuarioId);
+        $identidadeIp = 'fleet-password-user-ip:'.hash('sha256', $usuarioId.'|'.$requisicao->ip());
+        abort_if(RateLimiter::tooManyAttempts($identidade, 15) || RateLimiter::tooManyAttempts($identidadeIp, 5), 429);
+        RateLimiter::hit($identidade, 60);
+        RateLimiter::hit($identidadeIp, 60);
+
         DB::transaction(function () use ($usuarioId, $dados, $verificador): void {
             $usuario = User::query()->whereKey($usuarioId)->lockForUpdate()->firstOrFail();
             if (! $verificador->verify($dados['senha_atual'], $usuario->getAuthPassword())) {
@@ -39,6 +50,8 @@ class PasswordController extends Controller
             DB::table('recuperacoes_senha')->where('usuario_id', $usuarioId)->whereNull('usado_em')->whereNull('invalidado_em')->update(['invalidado_em' => $agora]);
             DB::table('auditoria')->insert(['ator_usuario_id' => $usuarioId, 'evento' => 'senha_alterada', 'entidade' => 'usuarios', 'entidade_id' => $usuarioId, 'descricao' => 'Senha alterada; sessões anteriores encerradas.']);
         });
+        RateLimiter::clear($identidade);
+        RateLimiter::clear($identidadeIp);
         Auth::logout();
         $requisicao->session()->invalidate();
         $requisicao->session()->regenerateToken();
@@ -46,92 +59,73 @@ class PasswordController extends Controller
         return redirect()->route('login')->with('status', 'Senha alterada. Entre novamente com a nova senha.');
     }
 
-    public function recover(): View
+    public function recover(RecoverySettings $settings): View
     {
-        return view('auth.recover', ['disponivel' => $this->mailEnabled()]);
+        return view('auth.recover', ['disponivel' => $settings->available()]);
     }
 
-    private function mailEnabled(): bool
+    public function sendRecovery(Request $requisicao, RecoverySettings $settings): RedirectResponse
     {
-        if (! config('fleet.recovery_mail_enabled') || config('mail.default') !== 'smtp' || ! $this->recoveryBaseUrl()) {
-            return false;
-        }
-
-        $smtp = config('mail.mailers.smtp');
-        if (! is_array($smtp) || ! empty($smtp['url']) || ! filter_var(config('mail.from.address'), FILTER_VALIDATE_EMAIL)) {
-            return false;
-        }
-
-        if ($smtp['scheme'] === 'smtps') {
-            return true;
-        }
-
-        // Captura local sem TLS é permitida apenas em desenvolvimento e testes.
-        return $smtp['scheme'] === 'smtp'
-            && in_array(config('app.env'), ['local', 'testing'], true)
-            && in_array($smtp['host'], ['127.0.0.1', 'localhost', '::1'], true);
-    }
-
-    private function recoveryBaseUrl(): ?string
-    {
-        $url = rtrim((string) config('app.url'), '/');
-        $partes = parse_url($url);
-
-        if (! filter_var($url, FILTER_VALIDATE_URL) || ! is_array($partes)
-            || ($partes['scheme'] ?? null) !== 'https' || empty($partes['host'])
-            || isset($partes['user']) || isset($partes['pass'])
-            || isset($partes['query']) || isset($partes['fragment'])) {
-            return null;
-        }
-
-        return $url;
-    }
-
-    public function sendRecovery(Request $requisicao): RedirectResponse
-    {
-        $chave = 'fleet-recovery:'.hash('sha256', (string) $requisicao->ip());
-        abort_if(RateLimiter::tooManyAttempts($chave, 5), 429);
-        RateLimiter::hit($chave, 60);
         $dados = $requisicao->validate(['identificador' => ['required', 'string', 'max:100']]);
-        if (! $this->mailEnabled()) {
+        $identificador = mb_strtolower(trim($dados['identificador']));
+        $ip = (string) $requisicao->ip();
+        $chaveIp = 'fleet-recovery-ip:'.hash('sha256', $ip);
+        $chaveIdentidade = 'fleet-recovery-identity:'.hash('sha256', $identificador);
+        $chavePar = 'fleet-recovery-identity-ip:'.hash('sha256', $identificador.'|'.$ip);
+        abort_if(RateLimiter::tooManyAttempts($chaveIp, 5)
+            || RateLimiter::tooManyAttempts($chaveIdentidade, 5)
+            || RateLimiter::tooManyAttempts($chavePar, 3), 429);
+        RateLimiter::hit($chaveIp, 60);
+        RateLimiter::hit($chaveIdentidade, 3600);
+        RateLimiter::hit($chavePar, 60);
+
+        if (! $settings->available()) {
             return back()->with('status', 'A recuperação por e-mail está indisponível. Solicite a revisão de acesso à administração.');
         }
-        $usuario = User::query()->where('identificador', $dados['identificador'])->where('ativo', 1)->first();
-        if ($usuario && $usuario->email) {
-            $token = bin2hex(random_bytes(32));
-            $hash = hash('sha256', $token, true);
-            DB::table('recuperacoes_senha')->insert(['usuario_id' => $usuario->id, 'token_hash' => $hash, 'expira_em' => now('UTC')->addMinutes(30)]);
-            try {
-                $url = $this->recoveryBaseUrl().route('recovery.reset', ['token' => $token], false);
-                Mail::send('auth.recovery-email', ['url' => $url], function ($mensagem) use ($usuario): void {
-                    $mensagem->to($usuario->email)->subject('Recuperação de acesso · Frota · PF');
-                });
-            } catch (Throwable) {
-                DB::table('recuperacoes_senha')->where('token_hash', $hash)->update(['invalidado_em' => now('UTC')]);
-            }
+
+        try {
+            $job = DeliverRecoveryLink::forIdentifier($identificador)
+                ->onConnection($settings->queueConnection())
+                ->onQueue('default');
+            dispatch($job);
+        } catch (Throwable) {
+            Log::warning('Uma solicitação pública de recuperação não pôde ser enfileirada.');
         }
 
         return back()->with('status', 'Se houver um acesso elegível, você receberá as orientações no e-mail cadastrado.');
     }
 
-    public function reset(string $token): View
+    public function reset(): View
     {
-        abort_unless(preg_match('/^[0-9a-f]{64}$/', $token), 404);
-
-        return view('auth.reset', compact('token'));
+        return view('auth.reset', ['token' => '']);
     }
 
-    public function consume(Request $requisicao, string $token, ProcedureRunner $procedimentos, PasswordVerifier $verificador): RedirectResponse
+    public function consume(Request $requisicao, ProcedureRunner $procedimentos, PasswordVerifier $verificador): RedirectResponse|Response
     {
-        abort_unless(preg_match('/^[0-9a-f]{64}$/', $token), 404);
         $chave = 'fleet-reset:'.hash('sha256', (string) $requisicao->ip());
         abort_if(RateLimiter::tooManyAttempts($chave, 5), 429);
         RateLimiter::hit($chave, 60);
-        $dados = $requisicao->validate(['nova_senha' => PasswordPolicy::rules()]);
+        $token = is_string($requisicao->input('token')) ? $requisicao->input('token') : '';
+        $validador = Validator::make([
+            'token' => $token,
+            'nova_senha' => $requisicao->input('nova_senha'),
+            'nova_senha_confirmation' => $requisicao->input('nova_senha_confirmation'),
+        ], [
+            'token' => ['required', 'string', 'regex:/\A[0-9a-f]{64}\z/'],
+            'nova_senha' => PasswordPolicy::rules(),
+        ]);
+        if ($validador->fails()) {
+            return response()->view('auth.reset', ['token' => $token, 'errors' => $validador->errors()], 422);
+        }
+
+        $dados = $validador->validated();
         try {
-            $procedimentos->call('sp_consumir_recuperacao', [hash('sha256', $token, true), $verificador->make($dados['nova_senha'])]);
+            $procedimentos->call('sp_consumir_recuperacao', [hash('sha256', $dados['token'], true), $verificador->make($dados['nova_senha'])]);
         } catch (Throwable) {
-            return back()->withErrors(['nova_senha' => 'Link inválido, vencido ou já utilizado. Solicite a recuperação novamente.']);
+            return response()->view('auth.reset', [
+                'token' => '',
+                'errors' => new MessageBag(['nova_senha' => ['Link inválido, vencido ou já utilizado. Solicite a recuperação novamente.']]),
+            ], 422);
         }
         $requisicao->session()->invalidate();
         $requisicao->session()->regenerateToken();

@@ -1,69 +1,67 @@
-# Verificação executada
+# Verificação executada em 06/10/2026
 
-Resultados da implementação reconstruída em 05/10/2026. A auditoria inicial é de 04/10/2026; os resultados abaixo pertencem à execução atual. A implementação foi executada em ambiente de trabalho isolado, sem operar o VS Code ou Firefox da máquina do usuário.
+## Hardening da autenticação nesta entrega
 
-| Verificação | Resultado real |
+Esta seção registra as mudanças de autenticação feitas nesta branch; os resultados gerais abaixo são de uma execução anterior e não cobrem esta revisão.
+
+| Verificação | Resultado observado |
 |---|---|
-| PHP nativo | 8.3.6, com PDO MySQL/SQLite, DOM/XML, mbstring, intl, fileinfo e demais extensões necessárias |
-| Composer | Instalação do lock; `validate --strict` passou |
-| Auditorias de dependências | npm: zero vulnerabilidades; Composer: zero avisos de segurança e pacotes abandonados reportados |
-| Pint / PHPStan | Passaram; PHPStan sem erros |
-| PHPUnit | 90 casos: 82 passaram, 0 falhas, 8 ignorados por infraestrutura de daemon (MySQL real/Mailpit); 780 asserções executadas |
-| Guardas Python da manutenção | 10 testes passaram, incluindo alvos, versão/charset, arquivos privados, dump alterado, definers, ordenação independente de collation e recuperação em falha controlada |
-| Build Vite | Passou, Bootstrap 5.3.8, Vite 8.3.2; manifest e CSS/JS locais |
-| Inicialização Laravel | Cache de views e rotas passou; 122 rotas listadas; caches de revisão limpos ao terminar |
-| Workflow CI | actionlint 1.7.12 passou; download conferido pela hash já fixada no workflow |
-| SQL recebido | Bytes e SHA-256 originais conferidos; não importado no servidor remoto |
-| Operações de negócio | 100% dos fluxos POST implementados com procedures canônicas, concorrência otimista (versão), auditoria e arquivos privados |
-| Git | Branch chore/runtime-validation ativa; histórico e autoria preservados conforme requisitos da entrega |
+| Autenticação isolada | `vendor/bin/phpunit tests/Feature/Auth/PublicAccessTest.php tests/Feature/Auth/RecoveryMailTest.php`: 10 testes aprovados, 141 asserções, SQLite em memória. |
+| Autorização/administração relacionadas | `vendor/bin/phpunit tests/Feature/AdminWorkflowTest.php tests/Feature/ReadAuthorizationTest.php`: 18 testes aprovados, 148 asserções, SQLite em memória. |
+| MySQL/Mailpit descartáveis | `python3 scripts/qa/mysql-contract.py`: 14 testes aprovados, 229 asserções; MySQL 8.4 descartável, sessão/perfil, prazos, revogação, recuperação SMTP local, consumo único e duas tentativas concorrentes sobre o mesmo token. Importação canônica e patch 1.0.2 preservaram dados e conferiram 68 tabelas, 14 views, 41 procedures e 119 triggers. Não foi teste de carga concorrente. |
+| PHPUnit completo local | SQLite em memória e integração externa explicitamente desativada: 108 casos, 94 aprovados, 14 ignorados, 909 asserções. Os 14 casos MySQL/Mailpit foram executados pelo runner descartável acima. |
+| Formatação/sintaxe | Pint passou nos PHP alterados; `php -l` passou nos dois novos PHP; `node --check resources/js/app.js` e `git diff --check` passaram. |
+| Checks locais de CI | Composer validate/audit, Pint completo, PHPStan completo e 10 guardas Python passaram. O PHP emitiu aviso de que a extensão opcional `phpstan_turbo` não pode ser carregada neste runtime. |
+| Build frontend | Vite 8.3.2 passou em workspace temporário com dependências do lockfile (`npm ci --ignore-scripts --no-audit --no-fund`); bundle contém o handler do fragmento de recuperação. O `node_modules` do checkout e `public/build` não foram alterados. |
+| Auditoria npm | `npm audit --package-lock-only --audit-level=high` inicialmente apontou `shell-quote` transitivo de `concurrently`; removida a dependência de desenvolvimento sem uso, a auditoria reportou zero vulnerabilidades. Build repetido com o novo lockfile passou. |
+| Navegador/servidor da aplicação | Chrome headless passou num harness temporário com o bundle e no fluxo de recuperação da página Laravel servida localmente com MySQL e Mailpit descartáveis. O ambiente de destino não foi acessado. |
+| Banco compartilhado | Não conectado nem alterado. A importação e os testes MySQL ocorreram somente nos containers descartáveis criados pelo runner. |
 
-## Navegador, temas e tamanhos
+A autenticação permanece pendente de homologação até que o patch seja aplicado manualmente pelo DBA, SMTP e worker sejam validados no destino e a página Laravel seja conferida no runtime alvo. A política de MFA administrativo foi definida em AUTHENTICATION.md, mas o fator ainda não foi implementado nem homologado.
 
-Chromium 143.0.7499.0 executou a revisão de HTML renderizado pelo kernel Laravel, com fixtures isoladas de leitura. O navegador carrega assets locais; a viewport, o tema Bootstrap e o zoom variam sobre o documento carregado. Esse método verifica layout e comportamento dos componentes, mas não substitui um servidor MySQL nem valida a sessão de domínio.
+Base `4f3df65f4b8ce4e867609ee2518e5924983d5fe9`, worktree isolado. Os comandos locais usaram PHP 8.5.4; a matriz PHP 8.3/8.4 configurada no workflow ainda depende do CI remoto. O relatório anterior de 05/10/2026 registrava 82/90 testes aprovados, sem Docker disponível naquele ambiente; é histórico, não prova desta entrega. O checkout principal e o banco remoto não foram modificados.
 
-Na execução final: **135 combinações de telas/estados**, **1080 verificações nos tamanhos normais** (1440×900, 768, 390 e 320 px, nos dois temas), **104 verificações com zoom de 200%**, **52 análises axe** e **8 interações de teclado/foco**. Não houve falha registrada, imagem ausente, asset recusado, ID duplicado ou erro JavaScript. Foram produzidas **74 capturas** de páginas representativas.
+| Verificação | Resultado observado nesta rodada |
+|---|---|
+| Composer | `validate --strict` passou; auditoria do lock sem avisos de segurança/abandonados |
+| PHP | Pint passou; PHPStan passou sem erros nem ignores novos |
+| Workflow | `actionlint` 1.7.12 passou; o arquivo baixado bateu com a SHA-256 fixada no workflow |
+| PHPUnit genérico | 102 testes: 91 aprovados, 11 ignorados por dependerem de MySQL/Mailpit descartáveis; 828 asserções. Os ignorados foram executados separadamente abaixo |
+| Guardas Python | 10 testes aprovados |
+| MySQL descartável | `python3 scripts/qa/mysql-contract.py` passou: 10 testes reais de autenticação e negócio, 153 asserções; runtime `frota_runtime` com SELECT/INSERT/UPDATE/DELETE/EXECUTE, sem DDL |
+| Banco e recuperação | MySQL 8.4: 66 tabelas, 14 views, 40 procedures, 119 triggers; verificação de 167 FKs/84 checks, backup/restauração com objetos e dados, falha parcial controlada e recuperação, baseline 1.0.0 → patch 1.0.1 com dado preservado e assinaturas 7/3/5 |
+| SMTP local | Mailpit real na integração: entrega capturada, origem confiável, hash do token, uso único, revogação da sessão. SMTP de hospedagem não foi usado |
+| Frontend | `npm run build` passou (Vite 8.3.2); `npm audit --package-lock-only --audit-level=high` sem vulnerabilidades reportadas |
+| Docker/Compose | Imagem construída e aplicação iniciada em Compose isolado, usuário `www-data`, app e phpMyAdmin em loopback para `mysql-local`, healthcheck HTTP 200; Apache corrigido para servir `/icons/*.svg` com HTTP 200 |
+| Persistência após reinício | Sessão autenticada e arquivo sintético no volume privado permaneceram acessíveis após reiniciar somente o container app |
+| Navegador real | Chromium conectado ao Compose/MySQL: cadastro de veículo, login, criação/revisão/confirmação/envio de solicitação, aprovação, saída/checklist, ocorrência e retorno, com persistência após recarga. 32 combinações de 4 telas × 4 larguras × 2 temas mais 16 verificações com zoom 200%; 4 análises axe, sem falha registrada |
+| phpMyAdmin | HTTP 200 em loopback; `PMA_HOST=mysql-local`, igual ao `DB_HOST` do app. A tela não substitui a inspeção do banco remoto |
+| CI remoto | Ainda sem execução do commit desta entrega; publicação bloqueada pela falta de autenticação GitHub neste ambiente |
 
-As análises axe usam WCAG 2 A/AA e 2.1 AA; zero ocorrências nesse conjunto não equivale a certificação integral de acessibilidade. A revisão também conferiu desktop/celular, logo, campos, estados, cores e apresentação dos temas. Tabelas largas podem rolar internamente; a página não apresentou rolagem horizontal. O erro inicial na tela de acesso em 320 px com zoom de 200% foi corrigido e a execução final repetiu esse caso.
+O teste MySQL de monitoramento cria 11 posições de rastreador e 1 manual, inclusive IDs que podem coincidir entre fontes, e verifica prévia, CSV com 12 linhas, campos autorizados, download e revogação. Também simula falha de gravação do CSV e confere estado `falhou` sem arquivo final. O teste de administração exercita as assinaturas novas das procedures, auditoria, recusa de delegação excessiva e desativação de POST com GET ainda ativo. A verificação do navegador é separada dos testes HTTP/SQLite e usa identidades exclusivas de teste no banco isolado. Capturas e relatório JSON com dados sintéticos foram mantidos em diretório privado fora do Git.
 
-Interações verificadas: abertura do offcanvas, Escape e retorno do foco, menu da conta por teclado, rejeição de etapa vazia, preenchimento do wizard com referência autorizada de veículo, foco da revisão e confirmação indisponível, Escape do modal e diálogo de descarte. A conta visível nas capturas é fixture de teste; não existe seed de conta pública no sistema.
+Não se deve interpretar esses testes como cobertura completa de todas as transições. Ainda faltam cenários MySQL/navegador específicos de edição/revisão/cancelamento de solicitações, concorrência real entre sessões, financeiro, multas, pneus, upload/download inválido ou falho, chamados e notificações individuais. Os testes de navegador não exercitaram recuperação de senha, relatórios e rotas administrativas até o fim; esses fluxos têm integração HTTP/MySQL parcial. A inspeção visual atual cobriu quatro páginas; a revisão de 05/10 com 135 combinações de telas/estados e 52 análises axe permanece evidência histórica de fixtures, não do runtime atual. A matriz de cobertura detalhada está em FINALIZATION.md.
 
-## O que os testes comprovam
+A situação da hospedagem nesta rodada não foi verificada por conexão autorizada. Nenhum comando de escrita, backup, patch, importação, limpeza ou criação de usuário foi aplicado ao banco remoto. A captura Mailpit não comprova entrega SMTP em produção. CI remoto verde e homologação de todos os módulos não podem ser declarados antes das etapas pendentes.
 
-Testes HTTP exercitam CSRF real, limites de login antes da consulta, mensagens públicas e rotas protegidas. As fixtures de leitura materializam tabelas/views SQLite a partir das colunas do SQL original e usam os catálogos canônicos. Exercitam próprios/unidade/órgão, IDs diretos, ausência de valores e coordenadas sem permissão, filtros/paginação, seleção de campos de relatórios, notificações, notas internas, rotas desativadas e operações de negócio sem escrita. Esse recurso não emula procedures, triggers, constraints ou locks MySQL.
+## Reproduzir localmente
 
-As ferramentas de manutenção receberam testes adversariais isolados. A aprovação pós-importação também exige 167 FKs e 84 checks nomeados, chaves primárias e collation das tabelas; esses checks no servidor aguardam a integração abaixo. Os números do esquema são contratos estáticos conferidos, não resultado de uma importação executada neste ambiente.
-
-## Pendências materiais
-
-- **MySQL real:** 7 testes de autenticação estão preparados e não foram executados. Um MySQL nativo 8.0.46 foi instalado/inicializado, mas a criação de socket UNIX foi bloqueada pelo ambiente. Docker não está disponível. Nenhum teste SQLite é apresentado como prova desses contratos.
-- **Integração descartável:** `python3 scripts/qa/mysql-contract.py` exige Docker e clientes nativos; cria duas instâncias locais próprias para importar o SQL, conferir objetos, restaurar backup, provocar uma importação parcial, recuperar dados, testar privilégios e executar a autenticação. O comando e o job CI estão preparados, mas não executados aqui. Não aceitam a conexão remota do aplicativo.
-- **Servidor remoto:** conexão TCP indisponível (errno 101). Não houve login SQL remoto, backup testado, limpeza, importação ou criação de administrador. A etapa destrutiva permanece bloqueada pelos pré-requisitos de DATABASE.md.
-- **Docker/Compose:** arquivos e workflow verificados, mas build e inicialização dos containers ainda precisam de runtime Docker. phpMyAdmin foi configurado; não foi aberto contra o banco remoto.
-- **SMTP e integrações operacionais:** não testados. E-mail permanece desabilitado; pagamentos, GPS externo, uploads e exportação operacional completa não fazem parte do backend desta fase.
-- **GitHub:** o push com dry-run falhou por ausência de credenciais. As branches estão no bundle; CI remoto, PRs, merge e implantação não foram executados.
-
-Não trate o aplicativo como homologado para produção antes da integração MySQL, do teste de acesso e da configuração efetiva do ambiente autorizado.
-
-## Reproduzir
-
-Com PHP e dependências instaladas:
+Use dependências dos locks e ambiente de teste isolado. O PHPUnit genérico usa SQLite em memória; o comando de integração provisiona apenas containers próprios e valida o nome do banco descartável:
 
 ```sh
+composer --no-plugins --no-scripts validate --strict
+composer --no-plugins --no-scripts audit --locked --abandoned=fail
 vendor/bin/pint --test
 vendor/bin/phpstan analyse --no-progress --memory-limit=1G
-php vendor/bin/phpunit
+php vendor/bin/phpunit --no-progress
 python3 -m unittest discover -s tests/database -v
+python3 scripts/qa/mysql-contract.py
+npm audit --package-lock-only --audit-level=high
 npm run build
 php artisan view:cache
 php artisan route:cache
 ```
 
-Para revisão do navegador, crie dois diretórios privados fora do Git, defina `FLEET_UI_EXPORT_DIR` e `FLEET_UI_REPORT_DIR`, execute `php vendor/bin/phpunit --filter ReadPagesTest` e depois `node scripts/qa/browser.mjs`. Instale previamente o Chromium do Playwright (`npx playwright install chromium`) ou defina `FLEET_CHROMIUM_PATH` para um executável compatível. `FLEET_UI_FILTER` permite selecionar um subconjunto; os testes de interação requerem Painel do Gestor e formulário de solicitações do Servidor. Os HTMLs temporários contêm tokens CSRF de fixture e não devem ser publicados.
+Para o navegador real, instale Playwright pelo lock, inicie o Compose local sobre `frota_pf_local` **vazio**, importe o SQL após conferir alvo e provisione identidades sintéticas nesse banco. Mantenha configuração de acesso e resultados fora do Git, com permissões privadas. O script exige `FLEET_BROWSER_CONFIG`, `FLEET_BROWSER_REPORT_DIR` e `FLEET_BROWSER_DISPOSABLE=1`, além de `FLEET_CHROMIUM_PATH` quando usar Chrome do host. A configuração JSON modo 600 contém `url` de loopback, `composeProject` e `users.servidor`/`users.gestor` com `identificador`, `senha` e `users.servidor.nome`; cada execução deve usar um motorista sintético sem reservas conflitantes. O script confere que o container Compose desse projeto aponta para `mysql-local/frota_pf_local` e cria um veículo novo pela UI. `node scripts/qa/browser-real.mjs` grava capturas e relatório no diretório definido.
 
-A integração real exige Docker, `mysql`, `mysqldump`, Python e PHP com PDO MySQL:
-
-```sh
-python3 scripts/qa/mysql-contract.py
-```
-
-Fontes oficiais consultadas para compatibilidade: [Laravel 13](https://laravel.com/docs/13.x/releases), [Bootstrap 5.3](https://getbootstrap.com/docs/5.3/getting-started/introduction/) e [phpMyAdmin](https://docs.phpmyadmin.net/en/latest/intro.html). Locks e versões estáveis existentes foram preservados; não se adotou documentação de versão dev como requisito de instalação.
+Para instalar ou atualizar o esquema de uma hospedagem autorizada, siga DATABASE.md. DDL não é revertido por rollback de transação; exigem-se backup completo e restauração comprovada em outra instância antes de qualquer alteração do banco existente.

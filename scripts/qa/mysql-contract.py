@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import urllib.request
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -20,6 +21,8 @@ spec.loader.exec_module(maintenance)
 def run(arguments, **kwargs):
     result = subprocess.run(arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kwargs)
     if result.returncode:
+        if arguments[0] == 'php':
+            raise RuntimeError('Falha nos testes PHPUnit do banco descartável:\n' + result.stdout.decode()[-5000:])
         raise RuntimeError('Falha na integração descartável: ' + arguments[0])
     return result.stdout.decode().strip()
 
@@ -93,6 +96,40 @@ def main():
             args.marker = directory/'success-marker.json'
             maintenance.rebuild(source, args)
             results.append(maintenance.verify_schema(source))
+
+            baseline = ROOT/'database/sql/baselines/1.0.0.sql'
+            patch = ROOT/'database/sql/patches/1.0.1-admin-procedures.sql'
+            if maintenance.sha(baseline) != 'b1d6fccbc8b69148da612e9d1f1f20f41c61120798a3937644c99ef2cad151d6':
+                raise RuntimeError('Baseline versionada alterada; atualização recusada.')
+            restore.execute(maintenance.cleanup(restore.database, restore.inventory()), capture=False)
+            restore.execute(baseline.read_text(), capture=False)
+            restore.execute("INSERT INTO unidades(codigo,nome) VALUES('PATCH_QA','Unidade preservada no patch');")
+            old_params = restore.rows("SELECT COUNT(*) FROM information_schema.PARAMETERS WHERE SPECIFIC_SCHEMA=DATABASE() AND SPECIFIC_NAME='sp_vincular_perfil' AND ORDINAL_POSITION>0;")[0][0]
+            if old_params != '6': raise RuntimeError('Baseline de procedures não corresponde à versão esperada.')
+            restore.execute(patch.read_text(), capture=False)
+            if restore.rows("SELECT COUNT(*) FROM unidades WHERE codigo='PATCH_QA' AND nome='Unidade preservada no patch';")[0][0] != '1':
+                raise RuntimeError('Patch não preservou dados existentes.')
+            if restore.rows("SELECT COUNT(*) FROM versoes_modelo WHERE versao='1.0.1';")[0][0] != '1':
+                raise RuntimeError('Patch não registrou a versão instalada.')
+            for procedure, expected in [('sp_vincular_perfil','7'),('sp_desativar_vinculo','3'),('sp_duplicar_perfil','5')]:
+                actual = restore.rows("SELECT COUNT(*) FROM information_schema.PARAMETERS WHERE SPECIFIC_SCHEMA=DATABASE() AND SPECIFIC_NAME='"+procedure+"' AND ORDINAL_POSITION>0;")[0][0]
+                if actual != expected: raise RuntimeError('Assinatura do patch divergente: '+procedure)
+            results.append('versioned_patch_preserves_data_and_signatures')
+
+            patch_auth = ROOT/'database/sql/patches/1.0.2-auth-hardening.sql'
+            restore.execute(patch_auth.read_text(), capture=False)
+            if restore.rows("SELECT COUNT(*) FROM unidades WHERE codigo='PATCH_QA' AND nome='Unidade preservada no patch';")[0][0] != '1':
+                raise RuntimeError('Patch de autenticação não preservou dados existentes.')
+            if restore.rows("SELECT COUNT(*) FROM versoes_modelo WHERE versao='1.0.2';")[0][0] != '1':
+                raise RuntimeError('Patch de autenticação não registrou a versão instalada.')
+            for table in ['jobs','failed_jobs']:
+                actual = restore.rows("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='"+table+"' AND ENGINE='InnoDB';")[0][0]
+                if actual != '1': raise RuntimeError('Tabela durável de fila ausente ou não transacional: '+table)
+            parameters = restore.rows("SELECT COUNT(*) FROM information_schema.PARAMETERS WHERE SPECIFIC_SCHEMA=DATABASE() AND SPECIFIC_NAME='sp_expirar_sessao' AND ORDINAL_POSITION>0;")[0][0]
+            if parameters != '3': raise RuntimeError('Assinatura de expiração absoluta divergente.')
+            maintenance.verify_schema(restore)
+            results.append('auth_hardening_patch_preserves_data_and_contract')
+
             reader_password = secrets.token_hex(24)
             source.execute("CREATE USER 'frota_reader'@'%' IDENTIFIED BY '"+reader_password+"'; GRANT SELECT ON frota_pf_contract_tests.* TO 'frota_reader'@'%';")
             reader_options = private(directory, 'reader.cnf', '[client]\nhost=127.0.0.1\nport='+str(connection['port'])+'\nuser=frota_reader\npassword="'+reader_password+'"\n')
@@ -102,9 +139,31 @@ def main():
             except RuntimeError as error:
                 if 'Cliente SQL recusou' not in str(error): raise
             results.append('ddl_privilege_denied')
+            runtime_password = secrets.token_hex(24)
+            source.execute("CREATE USER 'frota_runtime'@'%' IDENTIFIED BY '"+runtime_password+"'; GRANT SELECT, INSERT, UPDATE, DELETE, EXECUTE ON frota_pf_contract_tests.* TO 'frota_runtime'@'%';")
+            connection['username'] = 'frota_runtime'
+            connection['password'] = runtime_password
             configuration = private(directory, 'connection.json', json.dumps(connection))
-            environment = dict(os.environ, FLEET_MYSQL_TEST_CONFIG=str(configuration))
-            output = run(['php', str(ROOT/'vendor/bin/phpunit'), '--filter', 'MySqlAuthenticationTest', '--no-progress'], env=environment, cwd=ROOT)
+            mail_name = 'frota-contract-mail-'+secrets.token_hex(5)
+            run(['docker', 'run', '--detach', '--rm', '--name', mail_name,
+                 '-p', '127.0.0.1::1025', '-p', '127.0.0.1::8025',
+                 'axllent/mailpit@sha256:7f33095f80e901f6ad08028f06ca284aa58fe84942be5496008d041d3b9f4d4d'])
+            containers.append(mail_name)
+            smtp_port = int(run(['docker', 'inspect', '--format', '{{(index (index .NetworkSettings.Ports "1025/tcp") 0).HostPort}}', mail_name]))
+            api_port = int(run(['docker', 'inspect', '--format', '{{(index (index .NetworkSettings.Ports "8025/tcp") 0).HostPort}}', mail_name]))
+            ready = False
+            for _ in range(30):
+                try:
+                    urllib.request.urlopen('http://127.0.0.1:'+str(api_port)+'/api/v1/messages', timeout=2).close()
+                    ready = True
+                    break
+                except OSError:
+                    time.sleep(1)
+            if not ready: raise RuntimeError('Captura SMTP descartável não ficou disponível.')
+            environment = dict(os.environ, FLEET_MYSQL_TEST_CONFIG=str(configuration),
+                               FLEET_TEST_MAILPIT='1', FLEET_TEST_MAILPIT_SMTP_PORT=str(smtp_port),
+                               FLEET_TEST_MAILPIT_API_PORT=str(api_port))
+            output = run(['php', str(ROOT/'vendor/bin/phpunit'), '--filter', 'MySql(Authentication|Workflow)Test', '--no-progress'], env=environment, cwd=ROOT)
             print(output)
             print(json.dumps({'mysql_contract':'passed','results':results}))
     finally:

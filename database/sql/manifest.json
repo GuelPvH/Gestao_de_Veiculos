@@ -1,6 +1,6 @@
 {
-  "sha256": "b1d6fccbc8b69148da612e9d1f1f20f41c61120798a3937644c99ef2cad151d6",
-  "bytes": 230522,
+  "sha256": "943ad4a7c95d5546e5fc49c00d38d776bc5ee120664968279513d0f8368b27b5",
+  "bytes": 234323,
   "tables": [
     "abastecimentos",
     "acoes",
@@ -22,7 +22,9 @@
     "exportacao_campos",
     "exportacao_registros",
     "exportacoes",
+    "failed_jobs",
     "fornecedores",
+    "jobs",
     "manutencao_itens",
     "manutencoes",
     "modulo_acoes",
@@ -111,6 +113,7 @@
     "sp_enviar_solicitacao",
     "sp_exigir_admin_restante",
     "sp_exigir_permissao",
+    "sp_expirar_sessao",
     "sp_gravar_checklist",
     "sp_marcar_notificacao",
     "sp_notificar",

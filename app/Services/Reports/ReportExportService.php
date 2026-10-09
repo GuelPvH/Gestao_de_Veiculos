@@ -6,7 +6,6 @@ use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
 use App\Services\Read\FleetReadRepository;
 use Carbon\CarbonImmutable;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -28,6 +27,7 @@ class ReportExportService
     public function __construct(
         private AccessContext $acesso,
         private FleetReadRepository $leituras,
+        private MonitoringReportRepository $monitoramento,
         private ProcedureRunner $procedimentos,
     ) {}
 
@@ -104,75 +104,65 @@ class ReportExportService
         return Storage::disk('local')->download($exportacao->chave_armazenamento, $exportacao->nome_original, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
     }
 
-    /** @return Collection<int, int> */
+    /** @return Collection<int, int>|Collection<int, array{fonte: string, id: int}> */
     private function ids(string $codigo, array $filtros): Collection
     {
         if ($codigo === 'monitoring') {
-            $consulta = $this->monitoringQuery();
-            $this->acesso->scope($consulta, 'rastreamento', 'consultar', null, 'v.unidade_id');
-            $this->acesso->scope($consulta, 'rastreamento', 'exportar', null, 'v.unidade_id');
-            if (($filtros['q'] ?? '') !== '') {
-                $consulta->where(function (Builder $busca) use ($filtros): void {
-                    $busca->where('v.placa', 'like', '%'.$filtros['q'].'%')->orWhere('v.nome', 'like', '%'.$filtros['q'].'%');
-                });
-            }
-            foreach (['de' => '>=', 'ate' => '<'] as $campo => $operador) {
-                if (! empty($filtros[$campo])) {
-                    $instante = CarbonImmutable::parse($filtros[$campo], config('fleet.timezone'));
-                    $limite = $campo === 'de' ? $instante->startOfDay() : $instante->addDay()->startOfDay();
-                    $consulta->where('r.capturado_em', $operador, $limite->utc());
-                }
-            }
-
-            return $consulta->orderBy('r.id')->limit(10001)->pluck('r.id')->map(fn ($id) => (int) $id);
+            return $this->monitoramento->ids($filtros);
         }
         $tela = $this->leituras->definition($codigo);
         $consulta = $this->leituras->filtered($codigo, $filtros);
         $this->acesso->scope($consulta, $tela['module'], 'exportar', $tela['owner'], $tela['unit']);
 
-        return $consulta->orderBy($tela['id'] ?? 'r.id')->limit(10001)->pluck($tela['id'] ?? 'r.id')->map(fn ($id) => (int) $id);
-    }
-
-    private function monitoringQuery(): Builder
-    {
-        return DB::table('vw_ultima_posicao_rastreador as r')
-            ->join('veiculo_rastreadores as vr', 'vr.id', '=', 'r.instalacao_id')
-            ->join('veiculos as v', 'v.id', '=', 'r.veiculo_id')
-            ->whereNull('vr.removido_em');
+        return $consulta->orderBy($tela['id'] ?? 'r.id')->limit(10001)->pluck($tela['id'] ?? 'r.id')->map(fn ($id) => (int) $id)->values();
     }
 
     private function writeCsv(int $id, int $usuario): void
     {
-        $campos = DB::table('exportacao_campos as ec')->join('relatorio_campos as rc', 'rc.id', '=', 'ec.campo_id')
-            ->where('ec.exportacao_id', $id)->orderBy('ec.ordem')->get(['rc.chave', 'rc.rotulo']);
-        if ($campos->isEmpty()) {
-            throw new RuntimeException('A exportação confirmada não possui campos.');
-        }
-        $arquivo = tmpfile();
-        if ($arquivo === false) {
-            throw new RuntimeException('Não foi possível preparar o arquivo temporário.');
-        }
-        $chave = 'relatorios/'.Str::random(40).'.csv';
+        $arquivo = null;
+        $chave = null;
         try {
-            fwrite($arquivo, "\xEF\xBB\xBF");
-            fputcsv($arquivo, $campos->pluck('rotulo')->all(), ';', '"', '');
+            $campos = DB::table('exportacao_campos as ec')->join('relatorio_campos as rc', 'rc.id', '=', 'ec.campo_id')
+                ->where('ec.exportacao_id', $id)->orderBy('ec.ordem')->get(['rc.chave', 'rc.rotulo']);
+            if ($campos->isEmpty()) {
+                throw new RuntimeException('A exportação confirmada não possui campos.');
+            }
+            $arquivo = tmpfile();
+            if ($arquivo === false) {
+                throw new RuntimeException('Não foi possível preparar o arquivo temporário.');
+            }
+            $chave = 'relatorios/'.Str::random(40).'.csv';
+            if (fwrite($arquivo, "\xEF\xBB\xBF") !== 3 || fputcsv($arquivo, $campos->pluck('rotulo')->all(), ';', '"', '') === false) {
+                throw new RuntimeException('Não foi possível escrever o cabeçalho CSV.');
+            }
             $registros = DB::table('exportacao_registros')->where('exportacao_id', $id)->orderBy('ordem')->select('snapshot')->cursor();
             $total = 0;
             foreach ($registros as $registro) {
                 $snapshot = json_decode($registro->snapshot, true, 512, JSON_THROW_ON_ERROR);
                 $linha = $campos->map(fn ($campo) => $this->csvCell($snapshot[$campo->chave] ?? null))->all();
-                fputcsv($arquivo, $linha, ';', '"', '');
+                if (fputcsv($arquivo, $linha, ';', '"', '') === false) {
+                    throw new RuntimeException('Não foi possível escrever um registro CSV.');
+                }
                 $total++;
             }
             if ($total === 0 || $total > 10000) {
                 throw new RuntimeException('A seleção confirmada está vazia ou excede o limite.');
             }
             $tamanho = ftell($arquivo);
-            rewind($arquivo);
+            if ($tamanho === false) {
+                throw new RuntimeException('Não foi possível medir o CSV.');
+            }
+            if (rewind($arquivo) === false) {
+                throw new RuntimeException('Não foi possível reler o CSV.');
+            }
             $hash = hash_init('sha256');
-            hash_update_stream($hash, $arquivo);
+            if (hash_update_stream($hash, $arquivo) !== $tamanho) {
+                throw new RuntimeException('O hash do CSV não abrange todos os bytes.');
+            }
             $digest = hash_final($hash, true);
-            rewind($arquivo);
+            if (rewind($arquivo) === false) {
+                throw new RuntimeException('Não foi possível preparar o CSV para armazenamento.');
+            }
             if (! Storage::disk('local')->writeStream($chave, $arquivo)) {
                 throw new RuntimeException('Não foi possível armazenar o CSV privado.');
             }
@@ -197,8 +187,14 @@ class ReportExportService
             if (is_resource($arquivo)) {
                 fclose($arquivo);
             }
-            Storage::disk('local')->delete($chave);
             DB::table('exportacoes')->where('id', $id)->whereIn('situacao', ['previa', 'fila', 'processando'])->update(['situacao' => 'falhou', 'erro_codigo' => 'GERACAO_CSV']);
+            if ($chave !== null) {
+                try {
+                    Storage::disk('local')->delete($chave);
+                } catch (Throwable $limpeza) {
+                    report($limpeza);
+                }
+            }
             throw $erro;
         }
     }
@@ -219,21 +215,45 @@ class ReportExportService
     private function allStillAllowed(string $codigo, int $exportacao, int $total): bool
     {
         $tela = $this->leituras->definition($codigo);
+        $acoes = DB::table('exportacao_campos as ec')->join('relatorio_campos as rc', 'rc.id', '=', 'ec.campo_id')
+            ->where('ec.exportacao_id', $exportacao)->whereNotNull('rc.acao_adicional')->distinct()->pluck('rc.acao_adicional')->all();
+        if ($codigo === 'monitoring') {
+            $registros = DB::table('exportacao_registros')->where('exportacao_id', $exportacao)
+                ->get(['posicao_rastreamento_id', 'posicao_manual_id']);
+            if ($registros->count() !== $total) {
+                return false;
+            }
+            $fontes = ['rastreador' => [], 'manual' => []];
+            foreach ($registros as $registro) {
+                if (($registro->posicao_rastreamento_id === null) === ($registro->posicao_manual_id === null)) {
+                    return false;
+                }
+                $fonte = $registro->posicao_manual_id === null ? 'rastreador' : 'manual';
+                $fontes[$fonte][] = (int) ($registro->posicao_manual_id ?? $registro->posicao_rastreamento_id);
+            }
+            foreach ($fontes as $fonte => $ids) {
+                if (in_array(0, $ids, true) || count($ids) !== count(array_unique($ids))) {
+                    return false;
+                }
+                foreach (array_chunk($ids, 500) as $grupo) {
+                    if (! $this->monitoramento->stillAllowed($fonte, $grupo, $acoes)) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
         $coluna = self::TARGETS[$codigo];
         $ids = DB::table('exportacao_registros')->where('exportacao_id', $exportacao)->orderBy('ordem')->pluck($coluna)->map(fn ($id) => (int) $id);
         if ($ids->count() !== $total || $ids->contains(0)) {
             return false;
         }
-        $acoes = DB::table('exportacao_campos as ec')->join('relatorio_campos as rc', 'rc.id', '=', 'ec.campo_id')
-            ->where('ec.exportacao_id', $exportacao)->whereNotNull('rc.acao_adicional')->distinct()->pluck('rc.acao_adicional')->all();
         foreach ($ids->chunk(500) as $grupo) {
-            $consulta = $codigo === 'monitoring' ? $this->monitoringQuery() : $this->leituras->query($codigo);
-            $dono = $codigo === 'monitoring' ? null : $tela['owner'];
-            $unidade = $codigo === 'monitoring' ? 'v.unidade_id' : $tela['unit'];
-            $identificador = $codigo === 'monitoring' ? 'r.id' : ($tela['id'] ?? 'r.id');
-            if ($codigo === 'monitoring') {
-                $this->acesso->scope($consulta, $tela['module'], 'consultar', $dono, $unidade);
-            }
+            $consulta = $this->leituras->query($codigo);
+            $dono = $tela['owner'];
+            $unidade = $tela['unit'];
+            $identificador = $tela['id'] ?? 'r.id';
             $this->acesso->scope($consulta, $tela['module'], 'exportar', $dono, $unidade);
             foreach ($acoes as $acao) {
                 $this->acesso->scope($consulta, $tela['module'], $acao, $dono, $unidade);

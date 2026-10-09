@@ -4,14 +4,14 @@ As telas usam rotas Laravel nomeadas, consultas autorizadas e componentes compar
 
 | Área | Rotas e estados |
 |---|---|
-| Acesso | `/`, `/entrar`, erro uniforme, limitação, CSRF, `/acesso-restrito`, `/recuperar-acesso`, `/redefinir-senha/{token}`, `/alterar-senha` |
+| Acesso | `/`, `/entrar`, erro uniforme, limites por identidade/IP, CSRF, `/acesso-restrito`, `/recuperar-acesso`, `/redefinir-senha` com token em fragmento e POST, `/alterar-senha` |
 | Identidade | `/selecionar-perfil`, `/conta`, aparência do navegador, sessões próprias, logout POST |
 | Servidor | Painel; solicitações próprias, quatro etapas, validação, detalhe e histórico; viagens, vistoria, ocorrências; multas próprias e comprovante |
-| Gestor | Fila autorizada, aprovação/negação/ajustes, bloqueio de decisão própria; nova revisão de aprovada; frota, cadastro visual, agenda, monitoramento e pontos observados |
+| Gestor | Fila autorizada, aprovação/negação/ajustes, bloqueio de decisão própria; nova revisão de aprovada; frota, cadastro, agenda, monitoramento e pontos observados |
 | Financeiro | Despesas, abastecimento e manutenção; pneus instalados; multa sem responsável, apuração, comprovantes, correção, conferência, quitação e cancelamento; conferência própria bloqueada |
 | Administrador | Usuários, vínculos e validade; perfil/matriz/duplicação; metadados de rotas; auditoria sem snapshots sensíveis; parâmetros de configuração |
 | Compartilhado | Notificações da identidade; relatórios com campos, filtros e prévia; chamados e notas internas autorizadas; apresentação de temas protegida e isolada |
-| Estados comuns | Loading de requisição, vazio real, erro associado, revisão sem confirmação, descarte, 401/403/404/419/429/503, rota desativada e sessão encerrada |
+| Estados comuns | Loading de requisição, vazio real, erro associado, revisão e confirmação, descarte, 401/403/404/419/429/503, rota desativada e sessão encerrada |
 
 `docs/state-mapping.csv` relaciona os IDs semânticos recuperados à implementação. O prompt cita 140 estados. O inventário local recuperado contém 144 entradas, incluindo estados removidos e sucessos simulados. Essa diferença foi preservada no registro; não significa 144 páginas implementadas ou uma conferência integral do arquivo Figma atual. Os estados de cada perfil, situação e formulário reutilizam as mesmas views.
 

@@ -248,7 +248,7 @@ class AdminWorkflow
 
     private function registeredModule(string $caminho, string $metodo): ?string
     {
-        foreach (Route::getRoutes() as $rota) {
+        foreach (Route::getRoutes()->getRoutes() as $rota) {
             if ('/'.ltrim($rota->uri(), '/') !== $caminho || ! in_array($metodo, $rota->methods(), true)) {
                 continue;
             }

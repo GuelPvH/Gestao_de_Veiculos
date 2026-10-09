@@ -1,41 +1,35 @@
-# Entrega e branches
+# Entrega para revisão
 
-A entrega é uma implementação Laravel no repositório indicado, baseada na auditoria da base `a6507fcad576e091c96307840aeeebfc0d2422da`. O prompt mestre e a auditoria foram lidos integralmente. O ambiente anterior não manteve o trabalho local; a implementação foi reconstruída, e um checkpoint de branches foi preservado nesta execução.
+O trabalho parte de `origin/main` em `4f3df65f4b8ce4e867609ee2518e5924983d5fe9`, atualizado com `git fetch --prune` antes das alterações. O checkout principal tinha mudanças do usuário em testes e foi preservado. A implementação foi feita em worktree isolado e distribuída como branches lineares, uma por assunto:
 
-Referências: Site Frota · PF, projeto `appgprj_6aadfc2541208191909a1faa07f4a031`; a auditoria identifica a versão 3, commit `b2f48b197c6b803c2c0b957f5f9040a1460bd5d1`. O pacote local do protótipo foi usado para inventário; não foi possível verificar que seus bytes correspondem integralmente àquele commit. O shell e o acesso também foram conferidos pelo contexto de design do Figma `WBYS4p49ZYemTXuEsCoBHt` (2:50 e 2:8), apresentação 56:37316 e componente de logo 26:13189.
+| Branch | Commit | Base |
+|---|---|---|
+| `fix/database-manifest` | `115d50e` | `origin/main` |
+| `fix/phpstan-types` | `11e84dd` | `fix/database-manifest` |
+| `fix/reports-monitoring` | `68545ac` | `fix/phpstan-types` |
+| `fix/route-enforcement` | `741efe9` | `fix/reports-monitoring` |
+| `test/mysql-workflows` | `edb9931` | `fix/route-enforcement` |
+| `chore/container-runtime` | `12e4d06` | `test/mysql-workflows` |
+| `test/browser-flows` | `b7ac139` | `chore/container-runtime` |
+| `docs/final-delivery` | HEAD de entrega (SHA disponível no histórico Git) | `test/browser-flows` |
 
-Branches empilhadas, uma fase por branch:
+Todos os novos commits usam Miguel Carrilho `<miguelcleiton25@outlook.com>` como autor e committer. Não há coautoria ou trailer de ferramenta. Os testes e limites constam em VERIFICATION.md e FINALIZATION.md.
 
-1. `chore/project-setup`
-2. `chore/database-rebuild`
-3. `feat/bootstrap-components`
-4. `feat/session-authentication`
-5. `feat/server-pages`
-6. `feat/manager-pages`
-7. `feat/finance-pages`
-8. `feat/admin-pages`
-9. `feat/shared-pages`
-10. `test/acceptance`
-11. `docs/implementation-guide`
+O push das branches está pendente de validação da autenticação do remoto. Nenhum PR, CI remoto, merge ou deploy foi criado ou alegado.
 
-A etapa final do prompt foi dividida em aceitação e documentação: a segunda parte depende dos resultados da primeira e permanece na mesma sequência de branches.
+Artefatos locais fora do repositório:
 
-Os novos commits usam apenas Miguel Carrilho `<miguelcleiton5@outlook.com>` como autor e committer, sem trailers de coautoria. Não houve merge em main, force push, implantação ou publicação de PR. A tentativa de push com --dry-run não pôde autenticar no GitHub neste ambiente; nenhuma branch foi enviada.
+- Bundle com a base e as branches encadeadas: `/tmp/frota-pf-finalization-2026-10-06.bundle`. `git bundle verify` passou.
+- Código-fonte do commit `docs/final-delivery`, 371 arquivos rastreados: `/tmp/frota-pf-finalization-2026-10-06.zip`. Não contém credenciais, `.env`, banco, capturas, `vendor` ou `node_modules`.
 
-## Usar o pacote
-
-O ZIP contém o código fonte sem credenciais, dependências ou dumps. Extraia em uma pasta separada e siga SETUP.md. O bundle preserva as branches e os commits para aplicar no Git já clonado, sem sobrescrever trabalho existente:
+Para trazer as branches a um clone já existente sem substituir mudanças locais:
 
 ```sh
-git bundle verify /caminho/frota-pf-branches.bundle
-git fetch /caminho/frota-pf-branches.bundle 'refs/heads/*:refs/remotes/frota-delivery/*'
-git worktree add ../frota-pf-review -b review/frota-pf refs/remotes/frota-delivery/docs/implementation-guide
+git bundle verify /tmp/frota-pf-finalization-2026-10-06.bundle
+git fetch /tmp/frota-pf-finalization-2026-10-06.bundle 'refs/heads/*:refs/remotes/frota-pf/*'
+git worktree add ../frota-pf-review -b review/frota-pf refs/remotes/frota-pf/docs/final-delivery
 ```
 
-Depois de revisar e testar na sua máquina, publique as branches desejadas com sua autenticação GitHub. O bundle também contém a base original; a exigência de autoria aplica-se aos novos commits da entrega.
+O arquivo de checksums fica fora do pacote em `/tmp/frota-pf-finalization-2026-10-06.sha256`; valide-o com `sha256sum -c` antes da transferência. A branch final é `docs/final-delivery`.
 
-## Limites comprovados
-
-O servidor remoto não foi autenticado nem alterado. O TCP retornou rede indisponível; portanto não há backup remoto validado, reset remoto, importação remota ou administrador remoto criado. O SQL e os comandos estão preparados, mas a limpeza depende do backup completo restaurado e conferido em outra instância, conforme DATABASE.md.
-
-PHP, Blade e Chromium foram executados no ambiente de trabalho. Não houve controle do VS Code ou Firefox da máquina do usuário. A integração real MySQL e o build Docker ficam preparados para Docker/CI; os resultados executados e as pendências estão em VERIFICATION.md. SMTP real, GPS externo, pagamentos, uploads operacionais e exportação completa permanecem na fase posterior indicada pelo prompt.
+O material entregue é código para revisão e homologação local. O banco remoto e a hospedagem não foram acessados nesta rodada; não houve deploy, merge ou alteração de dados reais. A atualização de instalação 1.0.0 está preparada como patch manual documentado em DATABASE.md e depende de backup restaurado e DBA.

@@ -39,8 +39,23 @@ class FleetSession
         $dados = $requisicao->session()->get('fleet_session', []);
         abort_unless(is_array($dados) && isset($dados['id'], $dados['token']) && preg_match('/^[0-9a-f]{64}$/', (string) $dados['token']), 401);
         $sessao = DB::table('sessoes')->where('id', (int) $dados['id'])->where('usuario_id', (int) $usuario->id)
-            ->select('token_hash', 'vinculo_ativo_id', 'encerrada_em', 'expira_em')->first();
+            ->select('token_hash', 'vinculo_ativo_id', 'encerrada_em', 'expira_em', 'criado_em')->first();
         abort_unless($sessao && hash_equals((string) $sessao->token_hash, hash('sha256', $dados['token'], true)) && $sessao->encerrada_em === null, 401);
+
+        $limiteAbsoluto = (int) config('fleet.session_max_lifetime_minutes', 720);
+        abort_unless($limiteAbsoluto >= 60 && $limiteAbsoluto <= 1440, 500);
+        if (CarbonImmutable::parse($sessao->criado_em, 'UTC')->addMinutes($limiteAbsoluto)->lessThanOrEqualTo(CarbonImmutable::now('UTC'))) {
+            try {
+                $this->procedimentos->call('sp_expirar_sessao', [(int) $dados['id'], (int) $usuario->id, $limiteAbsoluto]);
+            } catch (\PDOException $erro) {
+                if ($erro->getCode() !== '45000') {
+                    throw $erro;
+                }
+            }
+
+            abort(401);
+        }
+
         // A procedure encerra sessões vencidas/revogadas e só depois aceita atividade.
         try {
             $this->procedimentos->call('sp_registrar_atividade', [(int) $dados['id'], (int) $usuario->id]);
@@ -59,7 +74,7 @@ class FleetSession
     {
         abort_unless($this->links($usuario)->contains('vinculo_id', $vinculo), 403);
         $this->procedimentos->call('sp_trocar_perfil_sessao', [(int) $requisicao->session()->get('fleet_session.id', 0), $usuario, $vinculo]);
-        $requisicao->session()->regenerate();
+        $requisicao->session()->regenerate(true);
     }
 
     public function end(Request $requisicao, int $usuario): void
