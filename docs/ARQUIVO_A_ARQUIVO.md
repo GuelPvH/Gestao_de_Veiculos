@@ -391,7 +391,7 @@ O commit-base alterou somente [`docs/SETUP.md`](SETUP.md). No passo 3, foi acres
 | `tests/Support/schema.json` | Inventário estrutural esperado do banco | Permite comparar versão instalada |
 | `tests/TestCase.php` | Base dos testes Laravel | Padroniza inicialização da suíte |
 | `tests/Unit/ExampleTest.php` | Teste unitário exemplo | Confere infraestrutura básica de testes |
-| `tests/Unit/PasswordVerifierTest.php` | Fixture ou suporte de teste PasswordVerifierTest.php. | Mantém cenários reprodutíveis sem depender de registros reais. |
+| `tests/Unit/PasswordVerifierTest.php` | Testa bcrypt com senha completa, rejeita sufixos/senhas inválidas e verifica Argon2id quando disponível. | Protege contra truncamento de senha no bcrypt e preserva compatibilidade com hashes Argon2id. |
 | `tests/database/test_safety.py` | Testa salvaguardas das ferramentas de manutenção | Confere validação de alvo e modo de execução |
 
 ### Este documento
