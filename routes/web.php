@@ -111,6 +111,7 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::get('/painel', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/historico-trajetos', [\App\Http\Controllers\MonitoringController::class, 'history'])->name('history.index');
     Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
+    Route::get('/agenda/reservas/{reserva}', [AgendaController::class, 'show'])->whereNumber('reserva')->name('agenda.show');
     Route::get('/conta', [AccountController::class, 'index'])->name('account.index');
     Route::get('/notificacoes', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notificacoes/{evento}/ler', [NotificationController::class, 'read'])->whereNumber('evento')->name('notifications.read');
