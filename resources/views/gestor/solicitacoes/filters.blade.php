@@ -5,7 +5,6 @@
         <button class="btn btn-outline-secondary" type="submit">Filtrar</button>
     </div>
     <div class="d-flex flex-wrap gap-2 mb-3">
-        @if($podeExportar ?? false)<a class="btn btn-outline-secondary" href="{{ route('reports.index', ['modulo'=>$codigo]) }}">Exportar</a>@endif
         @if(!empty($filtros['q']) || !empty($filtros['situacao']))<a class="btn btn-link" href="{{ route('solicitacoes.index') }}">Limpar filtros</a>@endif
         <button type="button" class="btn btn-link" data-bs-toggle="collapse" data-bs-target="#advanced-filters" aria-expanded="{{ !empty($filtros['de']) || !empty($filtros['ate']) ? 'true' : 'false' }}" aria-controls="advanced-filters">Mais filtros</button>
     </div>
