@@ -200,6 +200,6 @@ class FleetReadRepository
             return [];
         }
 
-        return $consulta->orderByDesc('a.id')->limit(40)->get(['a.id', 'f.nome_original', 'f.situacao'])->map(fn (stdClass $arquivo) => ['nome' => $arquivo->nome_original, 'situacao' => $arquivo->situacao, 'url' => in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) && $arquivo->situacao === 'disponivel' ? route($codigo.'.download', ['registro' => $id, 'anexo' => $arquivo->id]) : null])->all();
+        return $consulta->orderByDesc('a.id')->limit(40)->get(['a.id', 'f.nome_original', 'f.situacao'])->map(fn (stdClass $arquivo) => ['nome' => $arquivo->nome_original, 'situacao' => $arquivo->situacao, 'url' => $codigo === 'requests' && $arquivo->situacao === 'disponivel' ? route('solicitacoes.download', ['registro' => $id, 'anexo' => $arquivo->id]) : (in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) && $arquivo->situacao === 'disponivel' ? route($codigo.'.download', ['registro' => $id, 'anexo' => $arquivo->id]) : null)])->all();
     }
 }

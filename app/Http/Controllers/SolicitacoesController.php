@@ -53,6 +53,10 @@ class SolicitacoesController extends Controller
             'finalidade' => ['required', 'string', 'max:3000'],
             'origem' => ['required', 'string', 'max:255'],
             'destino' => ['required', 'string', 'max:255'],
+            'origem_latitude' => ['required', 'numeric', 'between:-90,90'],
+            'origem_longitude' => ['required', 'numeric', 'between:-180,180'],
+            'destino_latitude' => ['required', 'numeric', 'between:-90,90'],
+            'destino_longitude' => ['required', 'numeric', 'between:-180,180'],
             'saida_prevista' => ['required', 'date_format:Y-m-d\TH:i'],
             'retorno_previsto' => ['required', 'date_format:Y-m-d\TH:i', 'after:saida_prevista'],
             'trajeto_planejado' => ['nullable', 'string', 'max:3000'],
@@ -62,6 +66,7 @@ class SolicitacoesController extends Controller
             'motorista_sugerido_id' => ['required', 'integer', Rule::in([$this->model->currentUserId()])],
             'veiculo_pretendido_id' => ['required', 'integer', Rule::in($veiculos)],
             'observacoes' => ['nullable', 'string', 'max:3000'],
+            'anexo' => ['nullable', 'file', 'mimes:pdf,png,jpg,jpeg', 'max:10240'],
             'versao' => [$exigirVersao ? 'required' : 'sometimes', 'integer', 'min:1'],
         ]);
         $nomes = collect(preg_split('/\r\n|\r|\n/', (string) ($dados['passageiros'] ?? '')))->map(fn (string $nome) => trim($nome))->filter();
@@ -76,7 +81,7 @@ class SolicitacoesController extends Controller
     {
         $dados = $this->draftData($requisicao);
         try {
-            $id = $this->model->create($dados);
+            $id = $this->model->create($dados, $requisicao->file('anexo'));
         } catch (QueryException|PDOException) {
             return back()->withErrors(['operacao' => 'Não foi possível criar o rascunho. Confira os dados e tente novamente.'])->withInput();
         }
@@ -103,7 +108,7 @@ class SolicitacoesController extends Controller
 
         try {
             if ($acao === 'edit') {
-                $this->model->save($registro, (int) $dados['versao'], $dados);
+                $this->model->save($registro, (int) $dados['versao'], $dados, 'editar', $requisicao->file('anexo'));
             } else {
                 $this->model->transition($acao, $registro, (int) $dados['versao'], $dados);
             }
@@ -164,5 +169,11 @@ class SolicitacoesController extends Controller
         return $this->perform($requisicao, $registro, 'adjust');
     }
 
+
+    public function download(int $registro, int $anexo): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $arquivo = $this->model->attachment($registro, $anexo);
+        return \Illuminate\Support\Facades\Storage::disk('local')->download($arquivo->chave_armazenamento, $arquivo->nome_original);
+    }
 
 }

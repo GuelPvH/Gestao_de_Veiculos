@@ -95,6 +95,7 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
             Route::get('', 'index')->defaults('tela', 'requests')->name('index');
             Route::get('novo', 'create')->defaults('tela', 'requests')->name('create');
             Route::post('novo', 'store')->defaults('tela', 'requests')->name('store');
+            Route::get('{registro}/anexos/{anexo}', 'download')->whereNumber('registro')->whereNumber('anexo')->defaults('tela', 'requests')->name('download');
             Route::get('{registro}', 'show')->whereNumber('registro')->defaults('tela', 'requests')->name('show');
             Route::get('{registro}/edit', 'edit')->whereNumber('registro')->defaults('tela', 'requests')->name('edit');
             Route::patch('{registro}/edit', 'update')->whereNumber('registro')->defaults('tela', 'requests')->name('update');
