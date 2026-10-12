@@ -26,6 +26,9 @@ class RecordController extends Controller
     {
         $codigo = $this->screen($requisicao);
         $tela = $this->leituras->definition($codigo);
+        if ($codigo === 'monitoring') {
+            return view('monitoring.index', compact('tela'));
+        }
         $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de', 'ordem' => 'nullable|in:recentes,antigos', 'page' => 'nullable|integer|min:1']);
         $paginacao = $this->leituras->page($codigo, $filtros);
 
