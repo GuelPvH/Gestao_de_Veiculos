@@ -71,11 +71,15 @@ class TicketController extends Controller
         return redirect()->route('tickets.show', $id)->with('status', 'Chamado aberto. Você já pode anexar um documento.');
     }
 
-    public function operation(int $registro, string $acao, TicketService $chamados): View
+    public function operation(int $registro, string $acao, TicketService $chamados): View|RedirectResponse
     {
         $chamado = $chamados->ticket($registro);
         $rotulos = $chamados->actions($chamado);
         abort_unless(isset($rotulos[$acao]), 403);
+
+        if ($acao === 'attach') {
+            return redirect()->route('tickets.show', ['registro' => $registro, 'anexar' => 1]);
+        }
 
         return view('tickets.form', [
             'acao' => $acao, 'chamado' => $chamado, 'titulo' => $rotulos[$acao],

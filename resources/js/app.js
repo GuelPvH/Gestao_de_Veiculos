@@ -43,3 +43,9 @@ if (reabrirSolicitacao) {
  const modal = document.getElementById(`request-${reabrirSolicitacao.dataset.requestReopen}`);
  if (modal) Modal.getOrCreateInstance(modal).show();
 }
+
+const reabrirAnexoChamado = document.querySelector('[data-ticket-attach-reopen]');
+if (reabrirAnexoChamado) {
+ const modal = document.getElementById('ticket-attach');
+ if (modal) Modal.getOrCreateInstance(modal).show();
+}

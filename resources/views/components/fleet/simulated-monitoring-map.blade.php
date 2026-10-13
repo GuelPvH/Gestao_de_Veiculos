@@ -1,12 +1,16 @@
+@props(['compact' => false])
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div><span class="small ms-2">12 viaturas em circulação</span></div>
-    <div class="d-flex gap-2"><button id="monitoring-center" class="btn btn-outline-secondary btn-sm" type="button">Centralizar mapa</button><button id="monitoring-pause" class="btn btn-outline-secondary btn-sm" type="button" aria-pressed="false">Pausar</button></div>
+    @unless($compact)
+    <div class="d-flex gap-2"><button id="monitoring-center" class="btn btn-outline-secondary btn-sm" type="button">Centralizar mapa</button></div>
+    @endunless
 </div>
-<div id="simulated-monitoring-map" class="reservation-map-frame" role="region" aria-label="Mapa de Porto Velho com viaturas simuladas em movimento"></div>
+<div id="simulated-monitoring-map" class="reservation-map-frame {{ $compact ? 'monitoring-map-compact' : '' }}" role="region" aria-label="Mapa de Porto Velho com viaturas simuladas em movimento"></div>
 <p class="small text-body-secondary mt-3 mb-0" id="monitoring-status" role="status">Carregando mapa…</p>
 <noscript>Ative o JavaScript para acompanhar as viaturas simuladas.</noscript>
 <style>
 #simulated-monitoring-map{height: min(68vh, 680px);min-height:360px}
+#simulated-monitoring-map.monitoring-map-compact{height:236px;min-height:236px}
 .simulated-car-icon{background:none;border:0}
 .simulated-car{display:grid;place-items:center;width:34px;height:34px;border:2px solid white;border-radius:50%;background:#173c71;color:white;box-shadow:0 2px 7px #0005}
 .simulated-car svg{width:22px;height:22px}
@@ -55,11 +59,11 @@
             car.marker.setLatLng([a[0] + (b[0] - a[0]) * fraction, a[1] + (b[1] - a[1]) * fraction]);
         }
         cars.forEach(position);
-        let paused = false, last = performance.now(), lastStatus = 0, frame;
+        let last = performance.now(), lastStatus = 0, frame;
         function animate(now) {
             const elapsed = Math.min((now - last) / 1000, 0.25);
             last = now;
-            if (!paused && !document.hidden) {
+            if (!document.hidden) {
                 cars.forEach(car => { car.distance += car.speed * elapsed; position(car); });
                 if (now - lastStatus > 1000) {
                     status.textContent = `Posições simuladas · Atualização: ${new Date().toLocaleTimeString('pt-BR', {timeZone:'America/Porto_Velho'})}`;
@@ -69,13 +73,7 @@
             frame = requestAnimationFrame(animate);
         }
         frame = requestAnimationFrame(animate);
-        document.getElementById('monitoring-center').addEventListener('click', () => map.setView(center, 14));
-        document.getElementById('monitoring-pause').addEventListener('click', event => {
-            paused = !paused;
-            event.currentTarget.textContent = paused ? 'Retomar' : 'Pausar';
-            event.currentTarget.setAttribute('aria-pressed', String(paused));
-            if (paused) status.textContent = 'Simulação pausada.';
-        });
+        document.getElementById('monitoring-center')?.addEventListener('click', () => map.setView(center, 14));
         addEventListener('pagehide', () => cancelAnimationFrame(frame), {once:true});
     } catch (error) {
         status.textContent = 'Não foi possível carregar o mapa. Confira sua conexão e atualize a página.';

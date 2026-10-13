@@ -37,6 +37,10 @@ class TicketActionRequest extends FormRequest
 
     protected function getRedirectUrl(): string
     {
+        if ($this->route('acao') === 'attach') {
+            return route('tickets.show', $this->route('registro'));
+        }
+
         return route('tickets.operation', ['registro' => $this->route('registro'), 'acao' => $this->route('acao')]);
     }
 }

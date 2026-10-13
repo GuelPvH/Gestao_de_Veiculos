@@ -29,7 +29,11 @@
         <div class="stack">
             <x-ui.panel titulo="Ações disponíveis">
                 @forelse ($operacoes as $acao => $rotulo)
+                    @if ($acao === 'attach')
+                        <button type="button" class="btn btn-outline-secondary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#ticket-attach">{{ $rotulo }}</button>
+                    @else
                     <a class="btn btn-outline-secondary w-100 mb-2" href="{{ route('tickets.operation', ['registro' => $chamado->id, 'acao' => $acao]) }}">{{ $rotulo }}</a>
+                    @endif
                 @empty
                     <p class="text-body-secondary mb-0">Nenhuma ação disponível para seu perfil e para a situação atual.</p>
                 @endforelse
@@ -46,4 +50,19 @@
             </x-ui.panel>
         </div>
     </div>
+    @if (isset($operacoes['attach']))
+        <x-ui.modal id="ticket-attach" titulo="Anexar documento">
+            <form method="POST" action="{{ route('tickets.perform', ['registro' => $chamado->id, 'acao' => 'attach']) }}" enctype="multipart/form-data">
+                @csrf
+                <x-forms.field nome="arquivo" rotulo="Documento" tipo="file" :obrigatorio="true" accept="application/pdf,image/png,image/jpeg" nota="PDF, PNG ou JPEG, até 10 MB. O download exige acesso ao chamado." />
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Anexar documento</button>
+                </div>
+            </form>
+        </x-ui.modal>
+        @if ($errors->has('arquivo') || request()->query('anexar'))
+            <span hidden data-ticket-attach-reopen></span>
+        @endif
+    @endif
 </x-layouts.authenticated>
