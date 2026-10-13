@@ -9,11 +9,9 @@ class VehicleInputRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-        $placa = $this->input('placa');
         $renavam = $this->input('renavam');
         $chassi = $this->input('chassi');
         $this->merge([
-            'placa' => is_string($placa) ? strtoupper(preg_replace('/[\s-]+/', '', $placa)) : $placa,
             'renavam' => is_string($renavam) && trim($renavam) !== '' ? trim($renavam) : null,
             'chassi' => is_string($chassi) && trim($chassi) !== '' ? strtoupper(trim($chassi)) : null,
         ]);
@@ -33,7 +31,7 @@ class VehicleInputRequest extends FormRequest
             'unidade_id' => $criando ? ['required', 'integer', 'min:1'] : ['prohibited'],
             'categoria_id' => ['required', 'integer', Rule::exists('categorias_veiculo', 'id')->where('ativa', 1)],
             'nome' => ['required', 'string', 'max:120'],
-            'placa' => ['required', 'string', 'regex:/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/'],
+            'placa' => ['required', 'string', 'max:10'],
             'renavam' => ['nullable', 'string', 'max:20'],
             'chassi' => ['nullable', 'string', 'max:30'],
             'marca' => ['nullable', 'string', 'max:80'],

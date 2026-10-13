@@ -356,7 +356,7 @@ CREATE TABLE veiculos (
   unidade_id BIGINT UNSIGNED NOT NULL,
   categoria_id SMALLINT UNSIGNED NOT NULL,
   nome VARCHAR(120) NOT NULL,
-  placa CHAR(7) NOT NULL,
+  placa VARCHAR(10) NOT NULL,
   renavam VARCHAR(20) NULL,
   chassi VARCHAR(30) NULL,
   marca VARCHAR(80) NULL,
@@ -379,8 +379,7 @@ CREATE TABLE veiculos (
   CONSTRAINT fk_veiculo_categoria FOREIGN KEY (categoria_id) REFERENCES categorias_veiculo(id),
   CONSTRAINT fk_veiculo_autor FOREIGN KEY (criado_por) REFERENCES usuarios(id),
   CONSTRAINT ck_veiculo_capacidade CHECK (capacidade BETWEEN 1 AND 100),
-  CONSTRAINT ck_veiculo_km CHECK (quilometragem_atual >= 0),
-  CONSTRAINT ck_veiculo_placa CHECK (CHAR_LENGTH(placa) = 7)
+  CONSTRAINT ck_veiculo_km CHECK (quilometragem_atual >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Cadastro da frota. Em viagem e manutenção são estados derivados da agenda.';
 
 CREATE TABLE documentos_veiculo (

@@ -26,7 +26,13 @@
                     @else
                         <button type="button" class="btn btn-outline-secondary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#request-{{ $acao }}">{{ $rotulo }}</button>
                     @endif
-                @empty<p class="text-body-secondary mb-0">Nenhuma ação disponível para seu perfil e para a situação atual.</p>@endforelse
+                @empty
+                    @if($registro->situacao === 'aguardando_analise' && (int) $registro->__owner === (int) $acesso->link()->usuario_id)
+                        <p class="text-body-secondary mb-0">Você não pode aprovar, negar ou solicitar ajustes na própria solicitação, mesmo usando o perfil gestor. Outro gestor autorizado da unidade precisa realizar a análise.</p>
+                    @else
+                        <p class="text-body-secondary mb-0">Nenhuma ação disponível para seu perfil e para a situação atual.</p>
+                    @endif
+                @endforelse
             </x-ui.panel>
             <x-ui.panel titulo="Documentos"><x-fleet.attachments :arquivos="$arquivos ?? []" /></x-ui.panel>
         </div>

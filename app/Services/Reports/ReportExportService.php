@@ -18,7 +18,7 @@ use Throwable;
 class ReportExportService
 {
     private const TARGETS = [
-        'requests' => 'solicitacao_id', 'trips' => 'viagem_id', 'vehicles' => 'veiculo_id',
+        'vehicles' => 'veiculo_id',
         'monitoring' => 'posicao_rastreamento_id', 'expenses' => 'despesa_id', 'fines' => 'multa_id',
         'tickets' => 'chamado_id', 'users' => 'usuario_id', 'roles' => 'perfil_id',
         'technical-routes' => 'rota_id', 'audit' => 'auditoria_id',
@@ -34,6 +34,7 @@ class ReportExportService
     /** @param Collection<int, object> $campos */
     public function create(string $codigo, array $selecionados, array $filtros, Collection $campos): int
     {
+        abort_if(in_array($codigo, ['trips', 'requests'], true), 404);
         $tela = $this->leituras->definition($codigo);
         abort_unless(isset(self::TARGETS[$codigo]), 404);
         $vinculo = $this->acesso->link();

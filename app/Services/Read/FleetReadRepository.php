@@ -75,6 +75,9 @@ class FleetReadRepository
 
     public function filtered(string $codigo, array $filtros): Builder
     {
+        if (in_array($codigo, ['trips', 'requests', 'tickets'], true)) {
+            $filtros = array_intersect_key($filtros, array_flip(['q', 'situacao', 'page']));
+        }
         $consulta = $this->query($codigo);
         $tela = $this->definition($codigo);
         if (($filtros['q'] ?? '') !== '') {
@@ -101,7 +104,7 @@ class FleetReadRepository
             $instante = CarbonImmutable::parse($filtros[$chave], config('fleet.timezone'));
             $limite = ($chave === 'de' ? $instante->startOfDay() : $instante->addDay()->startOfDay())->utc()->format('Y-m-d H:i:s.u');
             $operador = $chave === 'de' ? '>=' : '<';
-            if ($codigo === 'trips') {
+            if (in_array($codigo, ['trips', 'requests', 'tickets'], true)) {
                 $consulta->whereRaw('COALESCE(r.saida_real, r.saida_prevista) '.$operador.' ?', [$limite]);
             } else {
                 $consulta->where($tela['date'], $operador, $limite);
@@ -200,6 +203,6 @@ class FleetReadRepository
             return [];
         }
 
-        return $consulta->orderByDesc('a.id')->limit(40)->get(['a.id', 'f.nome_original', 'f.situacao'])->map(fn (stdClass $arquivo) => ['nome' => $arquivo->nome_original, 'situacao' => $arquivo->situacao, 'url' => in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) && $arquivo->situacao === 'disponivel' ? route($codigo.'.download', ['registro' => $id, 'anexo' => $arquivo->id]) : null])->all();
+        return $consulta->orderByDesc('a.id')->limit(40)->get(['a.id', 'f.nome_original', 'f.situacao'])->map(fn (stdClass $arquivo) => ['nome' => $arquivo->nome_original, 'situacao' => $arquivo->situacao, 'url' => $codigo === 'requests' && $arquivo->situacao === 'disponivel' ? route('solicitacoes.download', ['registro' => $id, 'anexo' => $arquivo->id]) : (in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) && $arquivo->situacao === 'disponivel' ? route($codigo.'.download', ['registro' => $id, 'anexo' => $arquivo->id]) : null)])->all();
     }
 }

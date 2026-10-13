@@ -78,3 +78,9 @@ h1{font-size:1.75rem;font-weight:600;line-height:1.4}h2{font-weight:600}
 .gestor-filter-row>button{margin-bottom:16px}
 .gestor-shell .table th,.gestor-shell .table td{padding:14px 16px}
 @media(max-width:767px){.gestor-filter-row{grid-template-columns:1fr}.gestor-filter-row>button{margin-top:-8px}}
+
+.vehicle-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:16px 4px;align-items:start}.vehicle-calendar-day{min-height:34px;padding:8px;border-radius:4px;background:var(--bs-tertiary-bg);font-size:.75rem;min-width:0}.vehicle-calendar-day.has-reservations{background:var(--cor-destaque)}.vehicle-calendar-reservation{display:flex;flex-direction:column;width:100%;text-align:left;background:transparent;border:0;padding:4px 0 0;color:var(--cor-primaria);font:inherit;overflow-wrap:anywhere}.vehicle-calendar-reservation:hover{text-decoration:underline}@media(max-width:575px){.vehicle-calendar-day{padding:6px 4px}.vehicle-calendar-grid{gap:10px 4px}}
+
+.reservation-map-frame{display:block;width:100%;height:500px;border:1px solid var(--cor-borda);border-radius:4px;background:var(--cor-fundo)}@media(max-width:575px){.reservation-map-frame{height:340px}}.vehicle-calendar-reservation:focus-visible{outline:3px solid var(--cor-foco);outline-offset:2px}
+
+.reservation-map-frame.leaflet-container{z-index:0;font-family:inherit}.reservation-map-frame .leaflet-control a{color:#173c71}

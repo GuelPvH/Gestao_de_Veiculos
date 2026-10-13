@@ -102,7 +102,10 @@ class Solicitacao
         $dados->versao = $revisao->versao;
         $dados->necessita_motorista = $revisao->necessita_motorista;
         $dados->veiculo_pretendido_id = $revisao->veiculo_pretendido_id;
-        $dados->observacoes = DB::table('solicitacao_revisoes')->where('id', $revisao->revisao_id)->value('observacoes');
+        $localizacao = DB::table('solicitacao_revisoes')->where('id', $revisao->revisao_id)->first(['observacoes', 'origem_latitude', 'origem_longitude', 'destino_latitude', 'destino_longitude']);
+        foreach (['observacoes', 'origem_latitude', 'origem_longitude', 'destino_latitude', 'destino_longitude'] as $campo) {
+            $dados->{$campo} = $localizacao->{$campo};
+        }
         $dados->nomes_passageiros = DB::table('solicitacao_passageiros')->where('revisao_id', $revisao->revisao_id)->orderBy('id')->pluck('nome')->implode("\n");
         $veiculos = $this->vehicleOptions();
         $motoristas = [];
@@ -115,7 +118,7 @@ class Solicitacao
         return ['registro' => $dados, 'titulo' => $permitidas[$acao], 'veiculosDisponiveis' => $veiculos, 'motoristasDisponiveis' => $motoristas];
     }
 
-    public function create(array $dados): int
+    public function create(array $dados, ?\Illuminate\Http\UploadedFile $anexo = null): int
     {
         $vinculo = $this->acesso->link();
         abort_unless($vinculo && $this->acesso->can('solicitacoes', 'criar', (int) $vinculo->usuario_id, (int) $vinculo->unidade_id), 403);
@@ -126,14 +129,26 @@ class Solicitacao
             throw new \RuntimeException('A criação da solicitação não retornou identificador.');
         }
 
-        $this->save($id, 1, $dados, 'criar');
+        $this->save($id, 1, $dados, 'criar', $anexo);
 
         return $id;
     }
 
-    public function save(int $id, int $versao, array $dados, string $permissao = 'editar'): int
+    public function save(int $id, int $versao, array $dados, string $permissao = 'editar', ?\Illuminate\Http\UploadedFile $anexo = null): int
     {
-        return DB::transaction(function () use ($id, $versao, $dados, $permissao): int {
+        $arquivos = app(\App\Services\Files\PrivateFileService::class);
+        $arquivoId = $anexo ? $arquivos->store($anexo) : null;
+        try {
+            return $this->saveDraft($id, $versao, $dados, $permissao, $arquivoId);
+        } catch (\Throwable $erro) {
+            if ($arquivoId !== null) $arquivos->discardUnlinked($arquivoId);
+            throw $erro;
+        }
+    }
+
+    private function saveDraft(int $id, int $versao, array $dados, string $permissao, ?int $arquivoId): int
+    {
+        return DB::transaction(function () use ($id, $versao, $dados, $permissao, $arquivoId): int {
             $solicitacao = DB::table('solicitacoes')->where('id', $id)->lockForUpdate()->first(['id', 'solicitante_id', 'unidade_id', 'revisao_atual_id', 'situacao', 'versao']);
             if (! $solicitacao) {
                 abort(404);
@@ -160,6 +175,10 @@ class Solicitacao
                 'finalidade' => $dados['finalidade'],
                 'origem' => $dados['origem'],
                 'destino' => $dados['destino'],
+                'origem_latitude' => $dados['origem_latitude'],
+                'origem_longitude' => $dados['origem_longitude'],
+                'destino_latitude' => $dados['destino_latitude'],
+                'destino_longitude' => $dados['destino_longitude'],
                 'saida_prevista' => CarbonImmutable::parse($dados['saida_prevista'], $fuso)->utc()->format('Y-m-d H:i:s.u'),
                 'retorno_previsto' => CarbonImmutable::parse($dados['retorno_previsto'], $fuso)->utc()->format('Y-m-d H:i:s.u'),
                 'trajeto_planejado' => $dados['trajeto_planejado'] ?? null,
@@ -177,6 +196,10 @@ class Solicitacao
             DB::table('solicitacoes')->where('id', $id)->update(['versao' => $versao + 1]);
             $this->procedimentos->call('sp_auditar', [$vinculo, 'rascunho_atualizado', 'solicitacoes', $id, 'Dados da revisão vigente atualizados.']);
 
+            if ($arquivoId !== null) {
+                DB::table('anexos')->insert(['arquivo_id' => $arquivoId, 'revisao_id' => $revisao->id]);
+            }
+
             return $versao + 1;
         });
     }
@@ -193,4 +216,15 @@ class Solicitacao
             default => abort(404),
         };
     }
+    public function attachment(int $id, int $anexoId): stdClass
+    {
+        $this->findById($id);
+        $revisaoId = DB::table('solicitacoes')->where('id', $id)->value('revisao_atual_id');
+        $arquivo = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id')
+            ->where('a.id', $anexoId)->where('a.revisao_id', $revisaoId)->where('f.situacao', 'disponivel')
+            ->first(['f.chave_armazenamento', 'f.nome_original']);
+        abort_unless($arquivo && str_starts_with($arquivo->chave_armazenamento, 'anexos/'), 404);
+        return $arquivo;
+    }
+
 }

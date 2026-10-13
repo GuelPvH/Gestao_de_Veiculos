@@ -82,7 +82,7 @@ class ReportController extends Controller
         abort_unless($vinculo && $acesso->can('relatorios', 'consultar', (int) $vinculo->usuario_id, (int) $vinculo->unidade_id), 403);
         $catalogo = [];
         foreach (config('screens') as $codigo => $tela) {
-            if ($acesso->level($tela['module']) > 0 && ! in_array($codigo, ['fuel', 'maintenance'], true)) {
+            if ($acesso->level($tela['module']) > 0 && ! in_array($codigo, ['fuel', 'maintenance', 'trips', 'requests'], true)) {
                 $catalogo[$codigo] = $tela;
             }
         }

@@ -6,6 +6,8 @@ use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
 use Illuminate\Support\Facades\DB;
 use Mockery;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\Support\ReadFixture;
 use Tests\TestCase;
 
@@ -28,6 +30,10 @@ class RequestWorkflowTest extends TestCase
             'finalidade' => 'Visita técnica',
             'origem' => 'Sede',
             'destino' => 'Unidade operacional',
+            'origem_latitude' => -8.7142,
+            'origem_longitude' => -63.8985,
+            'destino_latitude' => -8.7497,
+            'destino_longitude' => -63.9103,
             'saida_prevista' => '2026-10-10T08:00',
             'retorno_previsto' => '2026-10-10T17:00',
             'trajeto_planejado' => 'Sede e unidade',
@@ -106,8 +112,17 @@ class RequestWorkflowTest extends TestCase
         $procedimentos->shouldReceive('call')->once()->with('sp_auditar', [10, 'rascunho_atualizado', 'solicitacoes', 4, 'Dados da revisão vigente atualizados.'])->andReturn([]);
         app()->instance(ProcedureRunner::class, $procedimentos);
 
-        $this->post(route('solicitacoes.store'), $this->formData())->assertRedirect(route('solicitacoes.show', 4));
+        Storage::fake('local');
+        $this->post(route('solicitacoes.store'), $this->formData(['anexo' => UploadedFile::fake()->create('autorizacao.pdf', 20, 'application/pdf')]))->assertRedirect(route('solicitacoes.show', 4));
+        $anexo = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id')->where('a.revisao_id', 4)->first(['a.id', 'f.chave_armazenamento', 'f.nome_original']);
+        $this->assertNotNull($anexo);
+        Storage::disk('local')->assertExists($anexo->chave_armazenamento);
+        $this->get(route('solicitacoes.download', ['registro' => 4, 'anexo' => $anexo->id]))->assertDownload('autorizacao.pdf');
+        $this->get(route('solicitacoes.download', ['registro' => 1, 'anexo' => $anexo->id]))->assertNotFound();
         $this->assertSame(1, DB::table('solicitacao_revisoes')->where('id', 4)->value('motorista_sugerido_id'));
+        foreach (['origem_latitude', 'origem_longitude', 'destino_latitude', 'destino_longitude'] as $campo) {
+            $this->assertEquals($this->formData()[$campo], DB::table('solicitacao_revisoes')->where('id', 4)->value($campo));
+        }
         $this->assertSame('Visita técnica', DB::table('solicitacao_revisoes')->where('id', 4)->value('finalidade'));
         $this->assertSame('2026-10-10 12:00:00.000000', DB::table('solicitacao_revisoes')->where('id', 4)->value('saida_prevista'));
         $this->assertSame(2, DB::table('solicitacoes')->where('id', 4)->value('versao'));
@@ -164,4 +179,20 @@ class RequestWorkflowTest extends TestCase
         ReadFixture::profile(2);
         $this->post(route('solicitacoes.approve.submit', 1), ['versao' => 1, 'veiculo_confirmado_id' => 1, 'motorista_confirmado_id' => 2, 'justificativa' => 'Teste'])->assertForbidden();
     }
+    public function test_locations_require_coordinates_and_reject_out_of_range_values(): void
+    {
+        $this->post(route('solicitacoes.store'), $this->formData(['origem_latitude' => null, 'destino_longitude' => null]))
+            ->assertSessionHasErrors(['origem_latitude', 'destino_longitude']);
+        $this->post(route('solicitacoes.store'), $this->formData(['origem_latitude' => 91, 'destino_longitude' => -181]))
+            ->assertSessionHasErrors(['origem_latitude', 'destino_longitude']);
+        $this->assertSame(0, DB::table('solicitacoes')->count());
+    }
+
+    public function test_optional_attachment_rejects_unsupported_type_and_oversized_file(): void
+    {
+        $this->post(route('solicitacoes.store'), $this->formData(['anexo' => UploadedFile::fake()->create('programa.exe', 10, 'application/octet-stream')]))->assertSessionHasErrors('anexo');
+        $this->post(route('solicitacoes.store'), $this->formData(['anexo' => UploadedFile::fake()->create('grande.pdf', 10241, 'application/pdf')]))->assertSessionHasErrors('anexo');
+        $this->assertSame(0, DB::table('solicitacoes')->count());
+    }
+
 }
