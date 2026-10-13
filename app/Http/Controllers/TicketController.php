@@ -19,7 +19,7 @@ class TicketController extends Controller
     public function index(Request $requisicao, FleetReadRepository $leituras, TicketService $chamados): View
     {
         $chamados->authorizeList();
-        $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de', 'ordem' => 'nullable|in:recentes,antigos', 'page' => 'nullable|integer|min:1']);
+        $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'page' => 'nullable|integer|min:1']);
         $paginacao = $leituras->page('tickets', $filtros);
 
         return view('tickets.index', [

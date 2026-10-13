@@ -75,7 +75,7 @@ class FleetReadRepository
 
     public function filtered(string $codigo, array $filtros): Builder
     {
-        if (in_array($codigo, ['trips', 'requests'], true)) {
+        if (in_array($codigo, ['trips', 'requests', 'tickets'], true)) {
             $filtros = array_intersect_key($filtros, array_flip(['q', 'situacao', 'page']));
         }
         $consulta = $this->query($codigo);
@@ -104,7 +104,7 @@ class FleetReadRepository
             $instante = CarbonImmutable::parse($filtros[$chave], config('fleet.timezone'));
             $limite = ($chave === 'de' ? $instante->startOfDay() : $instante->addDay()->startOfDay())->utc()->format('Y-m-d H:i:s.u');
             $operador = $chave === 'de' ? '>=' : '<';
-            if (in_array($codigo, ['trips', 'requests'], true)) {
+            if (in_array($codigo, ['trips', 'requests', 'tickets'], true)) {
                 $consulta->whereRaw('COALESCE(r.saida_real, r.saida_prevista) '.$operador.' ?', [$limite]);
             } else {
                 $consulta->where($tela['date'], $operador, $limite);
