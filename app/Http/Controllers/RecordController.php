@@ -30,6 +30,9 @@ class RecordController extends Controller
             return view('monitoring.index', compact('tela'));
         }
         $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de', 'ordem' => 'nullable|in:recentes,antigos', 'page' => 'nullable|integer|min:1']);
+        if ($codigo === 'trips') {
+            $filtros = array_intersect_key($filtros, array_flip(['q', 'situacao', 'page']));
+        }
         $paginacao = $this->leituras->page($codigo, $filtros);
 
         return view('records.index', ['codigo' => $codigo, 'tela' => $tela, 'filtros' => $filtros, 'paginacao' => $paginacao, 'registros' => $this->leituras->rows($codigo, $paginacao->getCollection()), 'podeCriar' => $this->canCreate($codigo, $tela)]);

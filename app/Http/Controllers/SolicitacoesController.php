@@ -22,10 +22,10 @@ class SolicitacoesController extends Controller
 
     public function index(Request $requisicao): View
     {
-        $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de', 'ordem' => 'nullable|in:recentes,antigos', 'page' => 'nullable|integer|min:1']);
+        $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'page' => 'nullable|integer|min:1']);
         $paginacao = $this->model->findAll($filtros);
 
-        return view('gestor.solicitacoes.index', $this->viewData() + ['filtros' => $filtros, 'paginacao' => $paginacao, 'registros' => $this->model->rows($paginacao->getCollection()), 'podeCriar' => $this->model->canCreate(), 'podeExportar' => $this->model->canExport()]);
+        return view('gestor.solicitacoes.index', $this->viewData() + ['filtros' => $filtros, 'paginacao' => $paginacao, 'registros' => $this->model->rows($paginacao->getCollection()), 'podeCriar' => $this->model->canCreate()]);
     }
 
     public function show(int $registro): View
