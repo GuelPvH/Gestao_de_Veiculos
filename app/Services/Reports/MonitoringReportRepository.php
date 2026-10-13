@@ -39,6 +39,9 @@ class MonitoringReportRepository
     {
         $consulta = $this->scope($this->base(), 'consultar');
         $this->scope($consulta, 'ver_localizacao');
+        if (! empty($filtros['veiculo_id'])) {
+            $consulta->where('r.veiculo_id', (int) $filtros['veiculo_id']);
+        }
         if (($filtros['q'] ?? '') !== '') {
             $consulta->where(function (Builder $busca) use ($filtros): void {
                 $busca->where('r.placa', 'like', '%'.$filtros['q'].'%')
@@ -54,6 +57,30 @@ class MonitoringReportRepository
         }
 
         return $consulta;
+    }
+
+    public function vehicleOptions(): array
+    {
+        $consulta = DB::table('veiculos as v');
+        $this->acesso->scope($consulta, 'rastreamento', 'consultar', null, 'v.unidade_id');
+        $this->acesso->scope($consulta, 'rastreamento', 'ver_localizacao', null, 'v.unidade_id');
+        return $consulta->orderBy('v.nome')->get(['v.id', 'v.nome', 'v.placa'])
+            ->mapWithKeys(fn ($v) => [$v->id => $v->nome.' · '.$v->placa])->all();
+    }
+
+    public function approvedRoutes(array $filtros): Collection
+    {
+        $consulta = DB::table('viagens as t')->join('solicitacao_revisoes as sr', 'sr.id', '=', 't.revisao_id')
+            ->join('solicitacoes as s', 's.id', '=', 'sr.solicitacao_id')->join('veiculos as v', 'v.id', '=', 't.veiculo_id')
+            ->where('t.veiculo_id', (int) $filtros['veiculo_id'])->where('t.situacao', '<>', 'cancelada');
+        $this->acesso->scope($consulta, 'rastreamento', 'consultar', 's.solicitante_id', 'v.unidade_id');
+        $this->acesso->scope($consulta, 'rastreamento', 'ver_localizacao', 's.solicitante_id', 'v.unidade_id');
+        // Cada viagem aponta para a revisao confirmada na aprovacao.
+        $inicio = CarbonImmutable::parse($filtros['de'], config('fleet.timezone'))->startOfDay()->utc();
+        $fim = CarbonImmutable::parse($filtros['ate'], config('fleet.timezone'))->addDay()->startOfDay()->utc();
+        return $consulta->where('sr.saida_prevista', '<', $fim->format('Y-m-d H:i:s'))
+            ->where('sr.retorno_previsto', '>=', $inicio->format('Y-m-d H:i:s'))->orderBy('sr.saida_prevista')->limit(501)
+            ->get(['s.id as solicitacao_id', 't.protocolo', 'sr.origem', 'sr.destino', 'sr.origem_latitude', 'sr.origem_longitude', 'sr.destino_latitude', 'sr.destino_longitude', 'sr.polilinha_planejada', 'sr.saida_prevista', 'sr.retorno_previsto']);
     }
 
     public function page(array $filtros, array $campos): LengthAwarePaginator
