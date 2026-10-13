@@ -93,14 +93,36 @@ class Solicitacao
         return $this->referencias->vehicles();
     }
 
+    public function driverOptions(): array
+    {
+        $vinculo = $this->acesso->link();
+        $nivel = $this->acesso->level('frota', 'selecionar');
+        if ($vinculo === null || $nivel === 0) {
+            return [];
+        }
+
+        $consulta = DB::table('motoristas as m')->join('usuarios as u', 'u.id', '=', 'm.usuario_id')
+            ->where('m.ativo', 1)->where('u.ativo', 1);
+        if ($nivel < 3) {
+            $consulta->whereExists(function ($vinculos) use ($vinculo): void {
+                $vinculos->selectRaw('1')->from('vw_vinculos_ativos as va')
+                    ->whereColumn('va.usuario_id', 'm.usuario_id')
+                    ->where('va.unidade_id', (int) $vinculo->unidade_id);
+            });
+        }
+
+        return $consulta->orderBy('u.nome')->limit(100)->pluck('u.nome', 'u.id')->all();
+    }
+
     public function formData(int $id, string $acao): array
     {
         $dados = $this->findById($id);
         $permitidas = $this->allowed($dados);
         abort_unless(isset($permitidas[$acao]), 403);
-        $revisao = DB::table('vw_solicitacoes_atuais')->where('id', $id)->first(['versao', 'revisao_id', 'necessita_motorista', 'veiculo_pretendido_id']);
+        $revisao = DB::table('vw_solicitacoes_atuais')->where('id', $id)->first(['versao', 'revisao_id', 'necessita_motorista', 'motorista_sugerido_id', 'veiculo_pretendido_id']);
         $dados->versao = $revisao->versao;
         $dados->necessita_motorista = $revisao->necessita_motorista;
+        $dados->motorista_sugerido_id = $revisao->motorista_sugerido_id;
         $dados->veiculo_pretendido_id = $revisao->veiculo_pretendido_id;
         $localizacao = DB::table('solicitacao_revisoes')->where('id', $revisao->revisao_id)->first(['observacoes', 'origem_latitude', 'origem_longitude', 'destino_latitude', 'destino_longitude']);
         foreach (['observacoes', 'origem_latitude', 'origem_longitude', 'destino_latitude', 'destino_longitude'] as $campo) {
@@ -108,7 +130,7 @@ class Solicitacao
         }
         $dados->nomes_passageiros = DB::table('solicitacao_passageiros')->where('revisao_id', $revisao->revisao_id)->orderBy('id')->pluck('nome')->implode("\n");
         $veiculos = $this->vehicleOptions();
-        $motoristas = [];
+        $motoristas = $acao === 'edit' ? $this->driverOptions() : [];
         if ($acao === 'approve') {
             $consulta = DB::table('vw_frota as v')->where('v.situacao_cadastro', 'ativo');
             $veiculos = $this->acesso->scope($consulta, 'frota', 'consultar', null, 'v.unidade_id')->orderBy('v.nome')->limit(100)->get(['v.id', 'v.nome', 'v.placa'])->mapWithKeys(fn ($v) => [$v->id => $v->placa.' · '.$v->nome])->all();
@@ -184,7 +206,7 @@ class Solicitacao
                 'trajeto_planejado' => $dados['trajeto_planejado'] ?? null,
                 'quantidade_passageiros' => (int) $dados['quantidade_passageiros'],
                 'necessita_motorista' => (int) $dados['necessita_motorista'],
-                'motorista_sugerido_id' => $this->currentUserId(),
+                'motorista_sugerido_id' => (int) $dados['motorista_sugerido_id'],
                 'veiculo_pretendido_id' => (int) $dados['veiculo_pretendido_id'],
                 'observacoes' => $dados['observacoes'] ?? null,
                 'etapa_atual' => 4,

@@ -17,7 +17,7 @@ class SolicitacoesController extends Controller
 
     private function viewData(): array
     {
-        return ['codigo' => 'requests', 'tela' => $this->model->definition(), 'motoristaSugeridoId' => $this->model->currentUserId()];
+        return ['codigo' => 'requests', 'tela' => $this->model->definition()];
     }
 
     public function index(Request $requisicao): View
@@ -36,8 +36,10 @@ class SolicitacoesController extends Controller
     public function create(): View
     {
         abort_unless($this->model->canCreate(), 403);
+        $motoristas = $this->model->driverOptions();
+        $motoristaAtual = $this->model->currentUserId();
 
-        return view('gestor.solicitacoes.create', $this->viewData() + ['acao' => 'create', 'titulo' => 'Novo registro · Solicitações', 'registro' => null, 'formAction' => route('solicitacoes.store'), 'veiculosDisponiveis' => $this->model->vehicleOptions()]);
+        return view('gestor.solicitacoes.create', $this->viewData() + ['acao' => 'create', 'titulo' => 'Novo registro · Solicitações', 'registro' => null, 'formAction' => route('solicitacoes.store'), 'veiculosDisponiveis' => $this->model->vehicleOptions(), 'motoristasDisponiveis' => $motoristas, 'motoristaSugeridoId' => array_key_exists($motoristaAtual, $motoristas) ? $motoristaAtual : '']);
     }
 
     private function actionPage(int $registro, string $acao): View
@@ -48,6 +50,7 @@ class SolicitacoesController extends Controller
     private function draftData(Request $requisicao, bool $exigirVersao = false): array
     {
         $veiculos = array_keys($this->model->vehicleOptions());
+        $motoristas = array_keys($this->model->driverOptions());
 
         $dados = $requisicao->validate([
             'finalidade' => ['required', 'string', 'max:3000'],
@@ -63,7 +66,7 @@ class SolicitacoesController extends Controller
             'quantidade_passageiros' => ['required', 'integer', 'min:1', 'max:100'],
             'passageiros' => ['nullable', 'string', 'max:16000'],
             'necessita_motorista' => ['required', Rule::in(['0', '1'])],
-            'motorista_sugerido_id' => ['required', 'integer', Rule::in([$this->model->currentUserId()])],
+            'motorista_sugerido_id' => ['required', 'integer', Rule::in($motoristas)],
             'veiculo_pretendido_id' => ['required', 'integer', Rule::in($veiculos)],
             'observacoes' => ['nullable', 'string', 'max:3000'],
             'anexo' => ['nullable', 'file', 'mimes:pdf,png,jpg,jpeg', 'max:10240'],

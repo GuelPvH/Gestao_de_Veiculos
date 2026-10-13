@@ -20,6 +20,14 @@ class RequestWorkflowTest extends TestCase
         ReadFixture::create();
         ReadFixture::profile(1);
         ReadFixture::grant('frota', 'selecionar', 2);
+        DB::table('motoristas')->insert([
+            ['usuario_id' => 1, 'numero_cnh' => 'QA-REQUEST-1', 'categoria_cnh' => 'B', 'categorias_autorizadas' => 'B', 'validade_cnh' => '2030-01-01', 'ativo' => 1],
+            ['usuario_id' => 2, 'numero_cnh' => 'QA-REQUEST-2', 'categoria_cnh' => 'B', 'categorias_autorizadas' => 'B', 'validade_cnh' => '2030-01-01', 'ativo' => 1],
+        ]);
+        DB::table('vw_vinculos_ativos')->insert([
+            ['vinculo_id' => 10, 'usuario_id' => 1, 'perfil_id' => 1, 'unidade_id' => 1, 'vigente_desde' => '2026-01-01 00:00:00', 'vigente_ate' => null],
+            ['vinculo_id' => 11, 'usuario_id' => 2, 'perfil_id' => 1, 'unidade_id' => 1, 'vigente_desde' => '2026-01-01 00:00:00', 'vigente_ate' => null],
+        ]);
         $acesso = app(AccessContext::class);
         $acesso->load($acesso->link());
     }
@@ -113,13 +121,13 @@ class RequestWorkflowTest extends TestCase
         app()->instance(ProcedureRunner::class, $procedimentos);
 
         Storage::fake('local');
-        $this->post(route('solicitacoes.store'), $this->formData(['anexo' => UploadedFile::fake()->create('autorizacao.pdf', 20, 'application/pdf')]))->assertRedirect(route('solicitacoes.show', 4));
+        $this->post(route('solicitacoes.store'), $this->formData(['motorista_sugerido_id' => 2, 'anexo' => UploadedFile::fake()->create('autorizacao.pdf', 20, 'application/pdf')]))->assertRedirect(route('solicitacoes.show', 4));
         $anexo = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id')->where('a.revisao_id', 4)->first(['a.id', 'f.chave_armazenamento', 'f.nome_original']);
         $this->assertNotNull($anexo);
         Storage::disk('local')->assertExists($anexo->chave_armazenamento);
         $this->get(route('solicitacoes.download', ['registro' => 4, 'anexo' => $anexo->id]))->assertDownload('autorizacao.pdf');
         $this->get(route('solicitacoes.download', ['registro' => 1, 'anexo' => $anexo->id]))->assertNotFound();
-        $this->assertSame(1, DB::table('solicitacao_revisoes')->where('id', 4)->value('motorista_sugerido_id'));
+        $this->assertSame(2, DB::table('solicitacao_revisoes')->where('id', 4)->value('motorista_sugerido_id'));
         foreach (['origem_latitude', 'origem_longitude', 'destino_latitude', 'destino_longitude'] as $campo) {
             $this->assertEquals($this->formData()[$campo], DB::table('solicitacao_revisoes')->where('id', 4)->value($campo));
         }
@@ -129,9 +137,17 @@ class RequestWorkflowTest extends TestCase
         $this->assertSame(['Ana', 'Bruno'], DB::table('solicitacao_passageiros')->where('revisao_id', 4)->orderBy('id')->pluck('nome')->all());
     }
 
-    public function test_driver_hidden_field_cannot_impersonate_another_user(): void
+    public function test_unavailable_driver_cannot_be_selected(): void
     {
-        $this->post(route('solicitacoes.store'), $this->formData(['motorista_sugerido_id' => 2]))->assertSessionHasErrors('motorista_sugerido_id');
+        $this->post(route('solicitacoes.store'), $this->formData(['motorista_sugerido_id' => 999]))->assertSessionHasErrors('motorista_sugerido_id');
+        $this->assertSame(0, DB::table('solicitacoes')->count());
+    }
+
+    public function test_creation_without_an_active_driver_does_not_leave_an_empty_draft(): void
+    {
+        DB::table('motoristas')->delete();
+
+        $this->post(route('solicitacoes.store'), $this->formData())->assertSessionHasErrors('motorista_sugerido_id');
         $this->assertSame(0, DB::table('solicitacoes')->count());
     }
 

@@ -2,7 +2,6 @@
     <x-ui.title :titulo="$titulo" subtitulo="Preencha as informações e confira a revisão antes de concluir." />
     <x-ui.panel>
         <form id="operation-form" method="post" enctype="multipart/form-data" action="{{ $formAction }}" data-dirty-form data-review-form="operation-review" novalidate>@csrf
-            <input type="hidden" name="motorista_sugerido_id" value="{{ $motoristaSugeridoId }}">
             @if($acao === 'edit')@method('PATCH')@endif
             @if($registro)<input type="hidden" name="versao" value="{{ $registro->versao }}">@endif
             @if(in_array($acao,['create','edit'],true))
@@ -20,6 +19,8 @@
                     <x-forms.field nome="quantidade_passageiros" rotulo="Quantidade de passageiros" tipo="number" :valor="$registro->passageiros ?? 1" :obrigatorio="true" min="1" max="100" step="1" />
                     <x-forms.field nome="passageiros" rotulo="Nomes dos passageiros" tipo="textarea" :valor="$registro->nomes_passageiros ?? ''" maxlength="16000" nota="Um nome por linha; a lista não pode exceder a quantidade informada." />
                     <x-forms.field nome="necessita_motorista" rotulo="Necessita de motorista?" tipo="select" :valor="$registro->necessita_motorista ?? 1" :obrigatorio="true" :opcoes="['1'=>'Sim','0'=>'Não']" />
+                    <x-forms.field nome="motorista_sugerido_id" rotulo="Motorista sugerido" tipo="select" :valor="$registro->motorista_sugerido_id ?? $motoristaSugeridoId ?? ''" :opcoes="$motoristasDisponiveis ?? []" :obrigatorio="true" nota="Selecione um motorista ativo da unidade. O solicitante só aparece se também estiver cadastrado como motorista." />
+                    @if(empty($motoristasDisponiveis))<x-ui.alert tom="warning">Não há motoristas ativos disponíveis para esta unidade. Solicite o cadastro ou a ativação de um motorista antes de concluir a solicitação.</x-ui.alert>@endif
                 </section>
                 <section class="form-stage" hidden><h2 class="h5" tabindex="-1">Preferências do veículo</h2>
                     <x-forms.field nome="veiculo_pretendido_id" rotulo="Veículo pretendido" tipo="select" :valor="$registro->veiculo_pretendido_id ?? ''" :opcoes="$veiculosDisponiveis ?? []" :obrigatorio="true" nota="A disponibilidade para o período solicitado será conferida na análise." />
