@@ -30,7 +30,8 @@ class ReportController extends Controller
         $validado = $requisicao->validate([
             'campos' => 'nullable|array|min:1', 'campos.*' => ['string', Rule::in($campos->pluck('chave')->all())],
             'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de',
-            'q' => 'nullable|string|max:150', 'page' => 'nullable|integer|min:1',
+            'q' => 'nullable|string|max:150',
+            'formato' => ['nullable', Rule::in(['csv', 'pdf'])], 'page' => 'nullable|integer|min:1',
             'etapa' => ['nullable', Rule::in(['catalogo', 'preparar', 'previa'])],
         ]);
         if ((! empty($validado['de']) || ! empty($validado['ate'])) && ! isset($tela['date'])) {
@@ -44,9 +45,8 @@ class ReportController extends Controller
         $colunas = $campos->filter(fn ($campo) => in_array($campo->chave, $selecionados, true))->pluck('rotulo', 'chave')->all();
         $podeExportar = $acesso->level($tela['module'], 'exportar') > 0;
 
-        $gestor = ($acesso->link()->perfil_codigo ?? '') === 'gestor';
         $etapa = $validado['etapa'] ?? ($requisicao->has('campos') ? 'previa' : ($requisicao->has('modulo') ? 'preparar' : 'catalogo'));
-        return view($gestor ? 'reports.gestor' : 'reports.index', compact('catalogo', 'codigo', 'tela', 'campos', 'selecionados', 'paginacao', 'registros', 'colunas', 'validado', 'podeExportar', 'etapa'));
+        return view('reports.index', compact('catalogo', 'codigo', 'tela', 'campos', 'selecionados', 'paginacao', 'registros', 'colunas', 'validado', 'podeExportar', 'etapa'));
     }
 
     public function export(Request $requisicao, AccessContext $acesso, ReportExportService $exportador): RedirectResponse
@@ -59,10 +59,11 @@ class ReportController extends Controller
             'campos' => 'required|array|min:1|max:30', 'campos.*' => ['required', 'string', 'distinct', Rule::in($campos->pluck('chave')->all())],
             'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de',
             'q' => 'nullable|string|max:150',
+            'formato' => ['nullable', Rule::in(['csv', 'pdf'])],
         ]);
         $id = $exportador->create($codigo, $validado['campos'], $validado, $campos);
 
-        return redirect()->route(($acesso->link()->perfil_codigo ?? '') === 'gestor' ? 'reports.ready' : 'reports.download', $id);
+        return redirect()->route('reports.download', $id);
     }
 
     public function ready(int $exportacao, ReportExportService $exportador): View
