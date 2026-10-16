@@ -193,6 +193,12 @@ class Solicitacao
             }
 
             $fuso = config('fleet.timezone');
+            $motoristaSugeridoId = $this->currentUserId();
+            if (($this->acesso->link()?->perfil_codigo ?? '') === 'servidor'
+                && ! DB::table('motoristas as m')->join('usuarios as u', 'u.id', '=', 'm.usuario_id')
+                    ->where('m.usuario_id', $motoristaSugeridoId)->where('m.ativo', 1)->where('u.ativo', 1)->exists()) {
+                $motoristaSugeridoId = null;
+            }
             DB::table('solicitacao_revisoes')->where('id', $revisao->id)->update([
                 'finalidade' => $dados['finalidade'],
                 'origem' => $dados['origem'],
@@ -206,7 +212,7 @@ class Solicitacao
                 'trajeto_planejado' => $dados['trajeto_planejado'] ?? null,
                 'quantidade_passageiros' => (int) $dados['quantidade_passageiros'],
                 'necessita_motorista' => (int) $dados['necessita_motorista'],
-                'motorista_sugerido_id' => (int) $dados['motorista_sugerido_id'],
+                'motorista_sugerido_id' => $motoristaSugeridoId,
                 'veiculo_pretendido_id' => (int) $dados['veiculo_pretendido_id'],
                 'observacoes' => $dados['observacoes'] ?? null,
                 'etapa_atual' => 4,

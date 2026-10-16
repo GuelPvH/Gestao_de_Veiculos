@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Solicitacao;
+use App\Services\Authorization\AccessContext;
 use Illuminate\View\View;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -20,9 +21,18 @@ class SolicitacoesController extends Controller
         return ['codigo' => 'requests', 'tela' => $this->model->definition()];
     }
 
-    public function index(Request $requisicao): View
+    public function index(Request $requisicao, AccessContext $acesso): View
     {
-        $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'page' => 'nullable|integer|min:1']);
+        $regras = [
+            'q' => ['nullable', 'string', 'max:150'],
+            'situacao' => ['nullable', 'string', 'max:60'],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ];
+        if (($acesso->link()?->perfil_codigo ?? '') === 'servidor') {
+            $regras['de'] = ['nullable', 'date_format:Y-m-d'];
+            $regras['ate'] = ['nullable', 'date_format:Y-m-d', 'after_or_equal:de'];
+        }
+        $filtros = $requisicao->validate($regras);
         $paginacao = $this->model->findAll($filtros);
 
         return view('gestor.solicitacoes.index', $this->viewData() + ['filtros' => $filtros, 'paginacao' => $paginacao, 'registros' => $this->model->rows($paginacao->getCollection()), 'podeCriar' => $this->model->canCreate()]);

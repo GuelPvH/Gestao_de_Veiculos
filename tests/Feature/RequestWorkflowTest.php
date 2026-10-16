@@ -72,6 +72,39 @@ class RequestWorkflowTest extends TestCase
         $this->assertSame(1, DB::table('solicitacoes')->where('id', 1)->value('versao'));
     }
 
+    public function test_server_date_filters_use_actual_departure_or_planned_fallback(): void
+    {
+        DB::table('vw_solicitacoes_atuais')->where('id', 1)->update([
+            'saida_prevista' => '2026-10-06 12:00:00',
+        ]);
+        DB::table('viagens')->insert([
+            'id' => 100,
+            'revisao_id' => 1,
+            'saida_real' => '2026-10-07 12:00:00',
+        ]);
+
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-07', 'ate' => '2026-10-07']))
+            ->assertOk()
+            ->assertSee(route('solicitacoes.show', 1), false)
+            ->assertSee('Saída da viagem a partir de')
+            ->assertSee('Saída da viagem até')
+            ->assertSee('name="de" type="date" value="2026-10-07"', false)
+            ->assertSee('name="ate" type="date" value="2026-10-07"', false);
+
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-06', 'ate' => '2026-10-06']))
+            ->assertOk()
+            ->assertDontSee(route('solicitacoes.show', 1), false);
+
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-05', 'ate' => '2026-10-05']))
+            ->assertOk()
+            ->assertSee(route('solicitacoes.show', 2), false);
+
+        ReadFixture::profile(2);
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-07', 'ate' => '2026-10-07']))
+            ->assertOk()
+            ->assertSee(route('solicitacoes.show', 1), false);
+    }
+
     public function test_decisions_use_modals_and_cancel_routes_are_removed(): void
     {
         ReadFixture::profile(2);
@@ -109,6 +142,7 @@ class RequestWorkflowTest extends TestCase
 
     public function test_create_uses_canonical_procedure_and_persists_draft_fields(): void
     {
+        DB::table('motoristas')->where('usuario_id', 1)->delete();
         $procedimentos = Mockery::mock(ProcedureRunner::class);
         $procedimentos->shouldReceive('call')->once()->with('sp_criar_solicitacao', [10])->andReturnUsing(function (): array {
             DB::table('solicitacoes')->insert(['id' => 4, 'protocolo' => 'SOL-00000004', 'solicitante_id' => 1, 'unidade_id' => 1, 'revisao_atual_id' => 4, 'situacao' => 'rascunho', 'versao' => 1]);
@@ -127,7 +161,7 @@ class RequestWorkflowTest extends TestCase
         Storage::disk('local')->assertExists($anexo->chave_armazenamento);
         $this->get(route('solicitacoes.download', ['registro' => 4, 'anexo' => $anexo->id]))->assertDownload('autorizacao.pdf');
         $this->get(route('solicitacoes.download', ['registro' => 1, 'anexo' => $anexo->id]))->assertNotFound();
-        $this->assertSame(2, DB::table('solicitacao_revisoes')->where('id', 4)->value('motorista_sugerido_id'));
+        $this->assertNull(DB::table('solicitacao_revisoes')->where('id', 4)->value('motorista_sugerido_id'));
         foreach (['origem_latitude', 'origem_longitude', 'destino_latitude', 'destino_longitude'] as $campo) {
             $this->assertEquals($this->formData()[$campo], DB::table('solicitacao_revisoes')->where('id', 4)->value($campo));
         }

@@ -75,11 +75,18 @@ class FleetReadRepository
 
     public function filtered(string $codigo, array $filtros): Builder
     {
-        if (in_array($codigo, ['trips', 'requests', 'tickets'], true)) {
+        if ($codigo === 'requests' && $this->acesso->link()?->perfil_codigo === 'servidor') {
+            $filtros = array_intersect_key($filtros, array_flip(['q', 'situacao', 'page', 'de', 'ate']));
+        } elseif (in_array($codigo, ['trips', 'requests', 'tickets'], true)) {
             $filtros = array_intersect_key($filtros, array_flip(['q', 'situacao', 'page']));
         }
         $consulta = $this->query($codigo);
         $tela = $this->definition($codigo);
+        $filtrarDataRealizada = $codigo === 'requests' && $this->acesso->link()?->perfil_codigo === 'servidor';
+        if ($filtrarDataRealizada && (! empty($filtros['de']) || ! empty($filtros['ate']))) {
+            $consulta->leftJoin('viagens as viagem_filtro', 'viagem_filtro.revisao_id', '=', 'r.revisao_id');
+        }
+        $colunaData = $tela['date'] ?? null;
         if (($filtros['q'] ?? '') !== '') {
             $consulta->where(function (Builder $busca) use ($tela, $filtros): void {
                 foreach ($tela['columns'] as $chave => $campo) {
@@ -93,21 +100,23 @@ class FleetReadRepository
             $consulta->where($tela['columns']['situacao'][0], $filtros['situacao']);
         }
         foreach (['de', 'ate'] as $chave) {
-            if (empty($filtros[$chave]) || empty($tela['date'])) {
+            if (empty($filtros[$chave]) || (! $filtrarDataRealizada && empty($colunaData))) {
                 continue;
             }
             if ($tela['dateOnly'] ?? false) {
-                $consulta->where($tela['date'], $chave === 'de' ? '>=' : '<=', $filtros[$chave]);
+                $consulta->where($colunaData, $chave === 'de' ? '>=' : '<=', $filtros[$chave]);
 
                 continue;
             }
             $instante = CarbonImmutable::parse($filtros[$chave], config('fleet.timezone'));
             $limite = ($chave === 'de' ? $instante->startOfDay() : $instante->addDay()->startOfDay())->utc()->format('Y-m-d H:i:s.u');
             $operador = $chave === 'de' ? '>=' : '<';
-            if (in_array($codigo, ['trips', 'requests', 'tickets'], true)) {
+            if ($codigo === 'trips') {
                 $consulta->whereRaw('COALESCE(r.saida_real, r.saida_prevista) '.$operador.' ?', [$limite]);
+            } elseif ($filtrarDataRealizada) {
+                $consulta->whereRaw('COALESCE(viagem_filtro.saida_real, r.saida_prevista) '.$operador.' ?', [$limite]);
             } else {
-                $consulta->where($tela['date'], $operador, $limite);
+                $consulta->where($colunaData, $operador, $limite);
             }
         }
 

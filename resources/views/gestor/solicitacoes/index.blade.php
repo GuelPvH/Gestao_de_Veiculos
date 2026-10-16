@@ -14,8 +14,8 @@
         </form>
         @if(isset($tela['date']))
             <form method="get" class="row g-3 mb-4">@foreach(['q','situacao','ordem'] as $campo)<input type="hidden" name="{{ $campo }}" value="{{ $filtros[$campo] ?? '' }}">@endforeach
-                <div class="col-md-4"><x-forms.field nome="de" rotulo="A partir de" tipo="date" :valor="$filtros['de'] ?? ''" /></div>
-                <div class="col-md-4"><x-forms.field nome="ate" rotulo="Até" tipo="date" :valor="$filtros['ate'] ?? ''" /></div>
+                <div class="col-md-4"><x-forms.field nome="de" :rotulo="($vinculoAtual->perfil_codigo ?? '') === 'servidor' ? 'De' : 'A partir de'" tipo="date" :valor="$filtros['de'] ?? ''" /></div>
+                <div class="col-md-4"><x-forms.field nome="ate" :rotulo="($vinculoAtual->perfil_codigo ?? '') === 'servidor' ? 'Até' : 'Até'" tipo="date" :valor="$filtros['ate'] ?? ''" /></div>
                 <div class="col-md-4 align-self-center"><button class="btn btn-outline-secondary" type="submit">Aplicar período</button></div>
             </form>
         @endif
