@@ -43,8 +43,12 @@ async function login(page, role) {
   await page.goto(new URL('/entrar', base).toString());
   await page.locator('[name=identificador]').fill(config.users[role].identificador);
   await page.locator('[name=senha]').fill(config.users[role].senha);
-  await Promise.all([page.waitForURL('**/painel'), page.getByRole('button', { name: 'Acessar' }).click()]);
-  assert.match(await page.locator('main').innerText(), new RegExp(role === 'servidor' ? 'Servidor' : 'Gestor'));
+  const submitted = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/entrar');
+  await page.getByRole('button', { name: 'Acessar' }).click();
+  assert.equal((await submitted).status(), 302, 'O login real deve redirecionar após validar a identidade.');
+  await page.waitForURL('**/painel');
+  assert.match(await page.locator('#fleet-menu a[href$="/selecionar-perfil"]').innerText(), new RegExp(role === 'gestor' ? 'Gestor' : 'Servidor'));
+  if (config.users[role].nome) assert.match(await page.locator('.account-button').innerText(), new RegExp(config.users[role].nome));
 }
 
 async function reviewAndConfirm(page) {
@@ -81,12 +85,20 @@ try {
   assert.match(await manager.locator('main').innerText(), /Veículo cadastrado/);
 
   await login(server, 'servidor');
+  // O cenário local seleciona sugestões reais da interface sem depender da rede externa.
+  await server.route('https://photon.komoot.io/**', async route => {
+    const name = new URL(route.request().url()).searchParams.get('q');
+    await route.fulfill({ json: { features: [{ geometry: { type: 'Point', coordinates: [-63.90, -8.76] }, properties: { name, city: 'Porto Velho', state: 'Rondônia', countrycode: 'BR' } }] } });
+  });
   await server.goto(new URL('/solicitacoes/novo', base).toString());
   const destination = `Unidade QA ${Date.now()}`;
   for (const [field, value] of Object.entries({
     finalidade: 'Inspeção de homologação isolada', origem: 'Sede', destino: destination,
     saida_prevista: localDate(-120), retorno_previsto: localDate(120),
   })) await server.locator(`[name=${field}]`).fill(value);
+  for (const field of ['origem', 'destino']) {
+    await server.locator(`#location-results-${field}`).getByRole('option').first().click();
+  }
   await server.getByRole('button', { name: 'Continuar', exact: true }).click();
   await server.getByRole('button', { name: 'Continuar', exact: true }).click();
   await server.locator('[name=veiculo_pretendido_id]').selectOption({ label: await server.locator(`[name=veiculo_pretendido_id] option:has-text("${plate}")`).innerText() });
@@ -98,59 +110,65 @@ try {
   await server.reload();
   assert.match(await server.locator('main').innerText(), /Rascunho/);
 
-  await server.getByRole('link', { name: 'Revisar envio' }).click();
-  await reviewAndConfirm(server);
+  await server.getByRole('button', { name: 'Revisar envio', exact: true }).click();
+  await Promise.all([server.waitForNavigation(), server.locator('#request-send').getByRole('button', { name: 'Confirmar', exact: true }).click()]);
   assert.match(await server.locator('main').innerText(), /Solicitação enviada para análise/);
   await server.reload();
   assert.match(await server.locator('main').innerText(), /Aguardando análise/);
 
   await manager.goto(new URL(`/solicitacoes/${requestId}`, base).toString());
   assert.match(await manager.locator('main').innerText(), new RegExp(destination));
-  await manager.getByRole('link', { name: 'Aprovar solicitação' }).click();
+  await manager.getByRole('button', { name: 'Aprovar solicitação', exact: true }).click();
   await manager.locator('[name=veiculo_confirmado_id]').selectOption({ label: await manager.locator(`[name=veiculo_confirmado_id] option:has-text("${plate}")`).innerText() });
-  await manager.locator('[name=motorista_confirmado_id]').selectOption({ label: await manager.locator('[name=motorista_confirmado_id] option').filter({ hasText: config.users.servidor.nome }).innerText() });
-  await manager.locator('[name=justificativa]').fill('Agenda e habilitação conferidas no ambiente isolado.');
-  await reviewAndConfirm(manager);
+  await manager.locator('[name=motorista_confirmado_id]').selectOption({ label: await manager.locator('[name=motorista_confirmado_id] option').filter({ hasText: (config.users.motorista || config.users.servidor).nome }).innerText() });
+  await manager.locator('#request-approve [name=justificativa]').fill('Agenda e habilitação conferidas no ambiente isolado.');
+  await Promise.all([manager.waitForNavigation(), manager.locator('#request-approve').getByRole('button', { name: 'Confirmar aprovação', exact: true }).click()]);
   assert.match(await manager.locator('main').innerText(), /viagem programada/);
   await manager.reload();
   assert.match(await manager.locator('main').innerText(), /Aprovada/);
 
-  await server.goto(new URL('/viagens', base).toString());
-  const tripLink = server.locator('main a[href*="/viagens/"]').first();
+  const driverContext = config.users.motorista ? await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' }) : context;
+  const driver = config.users.motorista ? await driverContext.newPage() : server;
+  if (config.users.motorista) {
+    driver.on('pageerror', error => errors.push({ page: 'motorista', message: error.message }));
+    await login(driver, 'motorista');
+  }
+  await driver.goto(new URL('/viagens', base).toString());
+  const tripLink = driver.locator('main a[href*="/viagens/"]').first();
   await tripLink.click();
-  assert.match(await server.locator('main').innerText(), new RegExp(destination));
-  const tripId = Number(new URL(server.url()).pathname.match(/^\/viagens\/(\d+)$/)?.[1]);
+  assert.match(await driver.locator('main').innerText(), new RegExp(destination));
+  const tripId = Number(new URL(driver.url()).pathname.match(/^\/viagens\/(\d+)$/)?.[1]);
   assert.ok(tripId > 0);
-  assert.match(await server.locator('main').innerText(), /Programada/);
+  assert.match(await driver.locator('main').innerText(), /Programada/);
   const departureKm = 25000 + tripId * 20;
 
-  await server.getByRole('link', { name: 'Registrar saída' }).click();
-  await server.locator('[name=data_registro]').fill(localDate(-30));
-  await server.locator('[name=quilometragem]').fill(`${departureKm}.0`);
-  await server.locator('[name^=item_]').evaluateAll(nodes => nodes.forEach(node => { node.value = 'ok'; node.dispatchEvent(new Event('change', { bubbles: true })); }));
-  await reviewAndConfirm(server);
-  assert.match(await server.locator('main').innerText(), /Em andamento/);
-  await server.reload();
-  assert.match(await server.locator('main').innerText(), /Saída registrada/);
+  await driver.getByRole('link', { name: 'Registrar saída' }).click();
+  await driver.locator('[name=data_registro]').fill(localDate(-30));
+  await driver.locator('[name=quilometragem]').fill(`${departureKm}.0`);
+  await driver.locator('[name^=item_]').evaluateAll(nodes => nodes.forEach(node => { node.value = 'ok'; node.dispatchEvent(new Event('change', { bubbles: true })); }));
+  await reviewAndConfirm(driver);
+  assert.match(await driver.locator('main').innerText(), /Em andamento/);
+  await driver.reload();
+  assert.match(await driver.locator('main').innerText(), /Saída registrada/);
 
-  await server.getByRole('link', { name: /Registrar ocorrência/ }).click();
-  await server.locator('[name=tipo]').selectOption('atraso');
-  await server.locator('[name=ocorrido_em]').fill(localDate(-15));
-  await server.locator('[name=descricao]').fill('Ocorrência sintética após a saída.');
-  await reviewAndConfirm(server);
-  assert.match(await server.locator('main').innerText(), /Ocorrência sintética/);
+  await driver.getByRole('link', { name: /Registrar ocorrência/ }).click();
+  await driver.locator('[name=tipo]').selectOption('atraso');
+  await driver.locator('[name=ocorrido_em]').fill(localDate(-15));
+  await driver.locator('[name=descricao]').fill('Ocorrência sintética após a saída.');
+  await reviewAndConfirm(driver);
+  assert.match(await driver.locator('main').innerText(), /Ocorrência sintética/);
 
-  await server.getByRole('link', { name: 'Registrar retorno' }).click();
-  await server.locator('[name=data_registro]').fill(localDate(-5));
-  await server.locator('[name=quilometragem]').fill(`${departureKm + 12}.0`);
-  await server.locator('[name^=item_]').evaluateAll(nodes => nodes.forEach(node => { node.value = 'ok'; node.dispatchEvent(new Event('change', { bubbles: true })); }));
-  await reviewAndConfirm(server);
-  await server.reload();
-  assert.match(await server.locator('main').innerText(), /Concluída/);
+  await driver.getByRole('link', { name: 'Registrar retorno' }).click();
+  await driver.locator('[name=data_registro]').fill(localDate(-5));
+  await driver.locator('[name=quilometragem]').fill(`${departureKm + 12}.0`);
+  await driver.locator('[name^=item_]').evaluateAll(nodes => nodes.forEach(node => { node.value = 'ok'; node.dispatchEvent(new Event('change', { bubbles: true })); }));
+  await reviewAndConfirm(driver);
+  await driver.reload();
+  assert.match(await driver.locator('main').innerText(), /Concluída/);
 
   const targets = [
     { name: 'painel-servidor', page: server, url: '/painel' },
-    { name: 'viagem-concluida', page: server, url: `/viagens/${tripId}` },
+    { name: 'viagem-concluida', page: driver, url: `/viagens/${tripId}` },
     { name: 'solicitacao-gestor', page: manager, url: `/solicitacoes/${requestId}` },
     { name: 'relatorios-gestor', page: manager, url: '/relatorios' },
   ];
@@ -180,12 +198,14 @@ try {
     accessibility.push({ screen: target.name, violations: analysis.violations.map(item => ({ id: item.id, targets: item.nodes.map(node => node.target) })) });
   }
   const report = { environment: 'Compose local, MySQL disposable, HTTP real', browser: browser.version(), requestId, tripId,
+    separateRequesterAndDriver: Boolean(config.users.motorista),
     flows: ['login', 'create request', 'review/confirm', 'send', 'approve', 'departure/checklist', 'occurrence', 'return'],
     checks, accessibility, errors };
   await fs.writeFile(path.join(reportDir, 'browser-real-report.json'), JSON.stringify(report, null, 2));
   const failures = checks.filter(item => item.theme !== item.expectedTheme || item.overflow || item.brokenImages || item.duplicateIds).length + accessibility.filter(item => item.violations.length).length + errors.length;
   console.log(JSON.stringify({ requestId, tripId, realFlows: report.flows.length, visualChecks: checks.length, axeChecks: accessibility.length, failures }));
   if (failures) process.exitCode = 1;
+  if (driverContext !== context) await driverContext.close();
   await managerContext.close();
 } finally {
   await browser.close();
