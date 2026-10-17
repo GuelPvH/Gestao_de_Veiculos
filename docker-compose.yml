@@ -1,141 +1,168 @@
 name: gestao-de-veiculos
 
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runtime
-    image: gestao-de-veiculos:local
-    env_file:
-      - path: .env
-        required: true
-    environment: &app_environment
-      APP_ENV: "${APP_ENV:-local}"
-      APP_DEBUG: "${APP_DEBUG:-false}"
-      APP_URL: "${APP_URL:-http://127.0.0.1:8080}"
-      DB_CONNECTION: mysql
-      DB_URL: ""
-      DB_HOST: "${DB_HOST:?Configure DB_HOST no arquivo privado}"
-      DB_PORT: "${DB_PORT:-3306}"
-      DB_DATABASE: "${DB_DATABASE:?Configure DB_DATABASE no arquivo privado}"
-      DB_USERNAME: "${DB_USERNAME:?Configure DB_USERNAME no arquivo privado}"
-      DB_PASSWORD: "${DB_PASSWORD:?Configure DB_PASSWORD no arquivo privado}"
-      CACHE_STORE: redis
-      SESSION_DRIVER: file
-      QUEUE_CONNECTION: redis
-      FLEET_RECOVERY_QUEUE_CONNECTION: redis
-      REDIS_CLIENT: phpredis
-      REDIS_HOST: redis
-      REDIS_PASSWORD: "${REDIS_PASSWORD:?Configure a senha privada do Redis}"
-      REDIS_QUEUE_RETRY_AFTER: "120"
-      SESSION_ENCRYPT: "true"
-      MAIL_MAILER: "${MAIL_MAILER:-log}"
-      LOG_CHANNEL: stderr
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:${APP_PORT:-8080}:8080"
-    volumes:
-      - app_storage:/var/www/html/storage
-    security_opt:
-      - no-new-privileges:true
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: runtime
+        image: gestao-de-veiculos:local
+        env_file:
+            - path: .env
+              required: true
+        environment: &app_environment
+            APP_ENV: '${APP_ENV:-local}'
+            APP_DEBUG: '${APP_DEBUG:-false}'
+            APP_URL: '${APP_URL:-http://127.0.0.1:8080}'
+            DB_CONNECTION: mysql
+            DB_URL: ''
+            DB_HOST: '${DB_HOST:?Configure DB_HOST no arquivo privado}'
+            DB_PORT: '${DB_PORT:-3306}'
+            DB_DATABASE: '${DB_DATABASE:?Configure DB_DATABASE no arquivo privado}'
+            DB_USERNAME: '${DB_USERNAME:?Configure DB_USERNAME no arquivo privado}'
+            DB_PASSWORD: '${DB_PASSWORD:?Configure DB_PASSWORD no arquivo privado}'
+            CACHE_STORE: redis
+            SESSION_DRIVER: file
+            QUEUE_CONNECTION: redis
+            FLEET_RECOVERY_QUEUE_CONNECTION: redis
+            REDIS_CLIENT: phpredis
+            REDIS_HOST: redis
+            REDIS_PASSWORD: '${REDIS_PASSWORD:?Configure a senha privada do Redis}'
+            REDIS_QUEUE_RETRY_AFTER: '120'
+            SESSION_ENCRYPT: 'true'
+            MAIL_MAILER: '${MAIL_MAILER:-log}'
+            LOG_CHANNEL: stderr
+        depends_on:
+            redis:
+                condition: service_healthy
+        restart: unless-stopped
+        ports:
+            - '127.0.0.1:${APP_PORT:-8080}:8080'
+        volumes:
+            - app_storage:/var/www/html/storage
+        security_opt:
+            - no-new-privileges:true
 
-  redis:
-    image: redis:8.2-alpine
-    user: redis
-    environment:
-      REDIS_PASSWORD: "${REDIS_PASSWORD:?Configure a senha privada do Redis}"
-      REDIS_MAXMEMORY: "${REDIS_MAXMEMORY:-256mb}"
-    command: ["sh", "-c", 'exec redis-server --appendonly yes --appendfsync everysec --maxmemory "$${REDIS_MAXMEMORY}" --maxmemory-policy noeviction --requirepass "$${REDIS_PASSWORD}"']
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    healthcheck:
-      test: ["CMD-SHELL", 'REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli ping | grep -q PONG']
-      interval: 10s
-      timeout: 3s
-      retries: 5
+    redis:
+        image: redis:8.2-alpine
+        user: redis
+        environment:
+            REDIS_PASSWORD: '${REDIS_PASSWORD:?Configure a senha privada do Redis}'
+            REDIS_MAXMEMORY: '${REDIS_MAXMEMORY:-256mb}'
+        command:
+            [
+                'sh',
+                '-c',
+                'exec redis-server --appendonly yes --appendfsync everysec --maxmemory "$${REDIS_MAXMEMORY}" --maxmemory-policy noeviction --requirepass "$${REDIS_PASSWORD}"',
+            ]
+        volumes:
+            - redis_data:/data
+        restart: unless-stopped
+        security_opt:
+            - no-new-privileges:true
+        healthcheck:
+            test: ['CMD-SHELL', 'REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli ping | grep -q PONG']
+            interval: 10s
+            timeout: 3s
+            retries: 5
 
-  worker-auth: &mail_worker
-    image: gestao-de-veiculos:local
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runtime
-    env_file:
-      - path: .env
-        required: true
-    environment: *app_environment
-    command: ["php", "artisan", "queue:work", "redis", "--queue=auth-mails", "--sleep=1", "--tries=3", "--timeout=60", "--max-time=3600"]
-    volumes:
-      - app_storage:/var/www/html/storage
-    depends_on:
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    stop_grace_period: 75s
-    security_opt:
-      - no-new-privileges:true
-    healthcheck:
-      test: ["CMD", "php", "artisan", "fleet:worker-health", "auth-mails"]
-      interval: 30s
-      timeout: 5s
-      start_period: 30s
-      retries: 3
+    worker-auth: &mail_worker
+        image: gestao-de-veiculos:local
+        build:
+            context: .
+            dockerfile: Dockerfile
+            target: runtime
+        env_file:
+            - path: .env
+              required: true
+        environment: *app_environment
+        command:
+            [
+                'php',
+                'artisan',
+                'queue:work',
+                'redis',
+                '--queue=auth-mails',
+                '--sleep=1',
+                '--tries=3',
+                '--timeout=60',
+                '--max-time=3600',
+            ]
+        volumes:
+            - app_storage:/var/www/html/storage
+        depends_on:
+            redis:
+                condition: service_healthy
+        restart: unless-stopped
+        stop_grace_period: 75s
+        security_opt:
+            - no-new-privileges:true
+        healthcheck:
+            test: ['CMD', 'php', 'artisan', 'fleet:worker-health', 'auth-mails']
+            interval: 30s
+            timeout: 5s
+            start_period: 30s
+            retries: 3
 
-  worker-security:
-    <<: *mail_worker
-    command: ["php", "artisan", "queue:work", "redis", "--queue=security-mails", "--sleep=1", "--tries=3", "--timeout=60", "--max-time=3600"]
-    healthcheck:
-      test: ["CMD", "php", "artisan", "fleet:worker-health", "security-mails"]
-      interval: 30s
-      timeout: 5s
-      start_period: 30s
-      retries: 3
+    worker-security:
+        <<: *mail_worker
+        command:
+            [
+                'php',
+                'artisan',
+                'queue:work',
+                'redis',
+                '--queue=security-mails',
+                '--sleep=1',
+                '--tries=3',
+                '--timeout=60',
+                '--max-time=3600',
+            ]
+        healthcheck:
+            test: ['CMD', 'php', 'artisan', 'fleet:worker-health', 'security-mails']
+            interval: 30s
+            timeout: 5s
+            start_period: 30s
+            retries: 3
 
-  scheduler:
-    <<: *mail_worker
-    command: ["php", "artisan", "schedule:work"]
-    healthcheck:
-      test: ["CMD", "php", "artisan", "fleet:worker-health", "scheduler"]
-      interval: 30s
-      timeout: 5s
-      start_period: 90s
-      retries: 3
+    scheduler:
+        <<: *mail_worker
+        command: ['php', 'artisan', 'schedule:work']
+        healthcheck:
+            test: ['CMD', 'php', 'artisan', 'fleet:worker-health', 'scheduler']
+            interval: 30s
+            timeout: 5s
+            start_period: 90s
+            retries: 3
 
-  phpmyadmin:
-    image: phpmyadmin:5.2.3-apache
-    profiles: [admin]
-    environment:
-      PMA_HOST: "${DB_HOST:?Configure DB_HOST}"
-      PMA_PORT: "${DB_PORT:-3306}"
-      PMA_ARBITRARY: "0"
-      UPLOAD_LIMIT: 64M
-    ports:
-      - "127.0.0.1:${PMA_PORT_HTTP:-8081}:80"
-    security_opt:
-      - no-new-privileges:true
+    phpmyadmin:
+        image: phpmyadmin:5.2.3-apache
+        profiles: [admin]
+        environment:
+            PMA_HOST: '${DB_HOST:?Configure DB_HOST}'
+            PMA_PORT: '${DB_PORT:-3306}'
+            PMA_ARBITRARY: '0'
+            UPLOAD_LIMIT: 64M
+        ports:
+            - '127.0.0.1:${PMA_PORT_HTTP:-8081}:80'
+        security_opt:
+            - no-new-privileges:true
 
-  db-tools:
-    build:
-      context: .
-      dockerfile: docker/database/Dockerfile
-    profiles: [tools]
-    working_dir: /project
-    entrypoint: [python3, scripts/database/database.py]
-    environment:
-      FLEET_REMOTE_DB_DATABASE: "${FLEET_REMOTE_DB_DATABASE:-}"
-    volumes:
-      - .:/project:ro
-      - "${FLEET_PRIVATE_DIR:?Defina um diretório privado fora do Git}:/private"
-    security_opt:
-      - no-new-privileges:true
+    db-tools:
+        build:
+            context: .
+            dockerfile: docker/database/Dockerfile
+        profiles: [tools]
+        working_dir: /project
+        entrypoint: [python3, scripts/database/database.py]
+        environment:
+            FLEET_REMOTE_DB_DATABASE: '${FLEET_REMOTE_DB_DATABASE:-}'
+        volumes:
+            - .:/project:ro
+            - '${FLEET_PRIVATE_DIR:?Defina um diretório privado fora do Git}:/private'
+        security_opt:
+            - no-new-privileges:true
 
 volumes:
-  redis_data:
-  app_storage:
+    redis_data:
+    app_storage:

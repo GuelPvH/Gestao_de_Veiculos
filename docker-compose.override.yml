@@ -5,7 +5,7 @@ services:
       target: runtime-development
     image: gestao-de-veiculos:development
     environment:
-      DEBUGBAR_ENABLED: "${DEBUGBAR_ENABLED:-true}"
+      DEBUGBAR_ENABLED: '${DEBUGBAR_ENABLED:-true}'
       VITE_HOT_FILE: /var/www/html/dev-hot/hot
     depends_on:
       vite:
@@ -31,12 +31,12 @@ services:
       target: development-assets
     image: gestao-de-veiculos-vite:local
     environment:
-      APP_URL: "${APP_URL:-http://localhost:8080}"
-      VITE_DOCKER: "1"
-      VITE_PORT: "${VITE_PORT:-5173}"
+      APP_URL: '${APP_URL:-http://localhost:8080}'
+      VITE_DOCKER: '1'
+      VITE_PORT: '${VITE_PORT:-5173}'
       VITE_HOT_FILE: /app/dev-hot/hot
     ports:
-      - "127.0.0.1:${VITE_PORT:-5173}:${VITE_PORT:-5173}"
+      - '127.0.0.1:${VITE_PORT:-5173}:${VITE_PORT:-5173}'
     volumes:
       - ./app:/app/app:ro
       - ./routes:/app/routes:ro
@@ -46,7 +46,13 @@ services:
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+(process.env.VITE_PORT || 5173)+'/@vite/client').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:'+(process.env.VITE_PORT || 5173)+'/@vite/client').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
       interval: 5s
       timeout: 3s
       start_period: 10s

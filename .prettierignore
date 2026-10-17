@@ -1,0 +1,29 @@
+# Dependências, arquivos privados e artefatos gerados.
+node_modules/
+.npm-cache/
+vendor/
+.git/
+.env
+.env.*
+auth.json
+private/
+artifacts/
+coverage/
+playwright-report/
+test-results/
+bootstrap/cache/
+storage/
+public/build/
+public/hot
+public/storage/
+public/fonts-manifest.dev.json
+
+# Arquivos mantidos pelos gerenciadores de pacotes e pelo esquema canônico.
+package-lock.json
+composer.lock
+tests/Support/schema.json
+database/sql/
+
+# PHP é formatado pelo Laravel Pint; templates Blade usam Prettier.
+**/*.php
+!**/*.blade.php

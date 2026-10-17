@@ -5,7 +5,10 @@
             <article class="row-summary">
                 <x-ui.icon nome="bell" />
                 <div class="flex-grow-1">
-                    <strong>{{ $evento->titulo ?: ucfirst(str_replace('_', ' ', $evento->tipo)) }}</strong>
+                    <strong>{{
+                        $evento->titulo ?:
+                            ucfirst(str_replace('_', ' ', $evento->tipo))
+                    }}</strong>
                     @if ($evento->mensagem)
                         <p class="mb-1">{{ $evento->mensagem }}</p>
                     @endif
