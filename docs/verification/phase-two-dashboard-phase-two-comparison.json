@@ -1,0 +1,65 @@
+{
+    "measured_at_utc": "2026-10-12T01:39:36+00:00",
+    "profiles": [
+        {
+            "profile": "administrador",
+            "before": {
+                "ms": 791.18,
+                "queries": 5,
+                "sql_wall_ms": 771.2
+            },
+            "after": {
+                "ms": 333.14,
+                "queries": 2,
+                "sql_wall_ms": 329.88
+            },
+            "visible_results_identical": true,
+            "latency_reduction_percent": 57.9
+        },
+        {
+            "profile": "financeiro",
+            "before": {
+                "ms": 771.56,
+                "queries": 5,
+                "sql_wall_ms": 768.02
+            },
+            "after": {
+                "ms": 316.4,
+                "queries": 2,
+                "sql_wall_ms": 311.79
+            },
+            "visible_results_identical": true,
+            "latency_reduction_percent": 59
+        },
+        {
+            "profile": "gestor",
+            "before": {
+                "ms": 806.4,
+                "queries": 5,
+                "sql_wall_ms": 796.48
+            },
+            "after": {
+                "ms": 482.83,
+                "queries": 3,
+                "sql_wall_ms": 474.34
+            },
+            "visible_results_identical": true,
+            "latency_reduction_percent": 40.1
+        },
+        {
+            "profile": "servidor",
+            "before": {
+                "ms": 652.68,
+                "queries": 4,
+                "sql_wall_ms": 646.47
+            },
+            "after": {
+                "ms": 160.99,
+                "queries": 1,
+                "sql_wall_ms": 159.3
+            },
+            "visible_results_identical": true,
+            "latency_reduction_percent": 75.3
+        }
+    ]
+}
