@@ -1,6 +1,8 @@
 <x-layouts.authenticated titulo="Pneus" :breadcrumbs="[['label'=>'Pneus']]">
     <x-ui.title titulo="Pneus" subtitulo="Acompanhe o estoque, as instalações e o histórico de remoções.">
-        @if($canCreate)<x-slot:acoes><a class="btn btn-primary" href="{{ route('tyres.create') }}">Cadastrar pneu</a></x-slot:acoes>@endif
+        @if($canCreate)
+            <x-slot:acoes><a class="btn btn-primary" href="{{ route('tyres.create') }}">Cadastrar pneu</a></x-slot:acoes>
+        @endif
     </x-ui.title>
     <x-ui.panel>
         <div class="table-responsive" tabindex="0" role="region" aria-label="Lista de pneus"><table class="table">
