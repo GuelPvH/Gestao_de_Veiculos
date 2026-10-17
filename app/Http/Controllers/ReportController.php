@@ -23,7 +23,9 @@ class ReportController extends Controller
         $codigo = (string) $requisicao->query('modulo', array_key_first($catalogo) ?? '');
         abort_unless(isset($catalogo[$codigo]), 403);
         $tela = $catalogo[$codigo];
-        $campos = $this->fields($codigo, $tela, $acesso);
+        $passo = $requisicao->validate(['etapa' => ['nullable', Rule::in(['catalogo', 'preparar', 'previa'])]]);
+        $etapa = $passo['etapa'] ?? ($requisicao->has('campos') ? 'previa' : ($requisicao->has('modulo') ? 'preparar' : 'catalogo'));
+        $campos = $etapa === 'catalogo' && ! $requisicao->has('campos') ? collect() : $this->fields($codigo, $tela, $acesso);
         if ($requisicao->has('carregar')) {
             $requisicao->query->remove('campos');
         }
@@ -38,7 +40,7 @@ class ReportController extends Controller
             throw ValidationException::withMessages(['de' => 'Esta área não possui filtro de período.']);
         }
         $selecionados = $validado['campos'] ?? $campos->pluck('chave')->take(5)->all();
-        $paginacao = $selecionados ? ($codigo === 'monitoring'
+        $paginacao = $selecionados && $etapa === 'previa' ? ($codigo === 'monitoring'
             ? $monitoramento->page($validado, $selecionados)
             : $leituras->page($codigo, $validado, $selecionados)) : null;
         $registros = $paginacao ? $leituras->rows($codigo, $paginacao->getCollection(), $selecionados) : collect();
@@ -46,6 +48,7 @@ class ReportController extends Controller
         $podeExportar = $acesso->level($tela['module'], 'exportar') > 0;
 
         $etapa = $validado['etapa'] ?? ($requisicao->has('campos') ? 'previa' : ($requisicao->has('modulo') ? 'preparar' : 'catalogo'));
+
         return view('reports.index', compact('catalogo', 'codigo', 'tela', 'campos', 'selecionados', 'paginacao', 'registros', 'colunas', 'validado', 'podeExportar', 'etapa'));
     }
 
@@ -69,6 +72,7 @@ class ReportController extends Controller
     public function ready(int $exportacao, ReportExportService $exportador): View
     {
         $arquivo = $exportador->ready($exportacao);
+
         return view('reports.ready', compact('exportacao', 'arquivo'));
     }
 
