@@ -1,3 +1,7 @@
+# Histórico de verificações anteriores
+
+Os resultados abaixo pertencem a entregas anteriores. As referências a banco remoto não conectado ou não alterado descrevem exclusivamente essas rodadas históricas. A aplicação atual, com identidade, WebAuthn, outbox e sessão de 30 minutos, está documentada em [IMPLEMENTATION.md](IMPLEMENTATION.md). O modo remoto padrão e a conferência posterior da conexão da equipe estão em [REMOTE_RUNTIME.md](REMOTE_RUNTIME.md).
+
 # Verificação executada em 06/10/2026
 
 ## Hardening da autenticação nesta entrega
@@ -65,3 +69,5 @@ php artisan route:cache
 Para o navegador real, instale Playwright pelo lock, inicie o Compose local sobre `frota_pf_local` **vazio**, importe o SQL após conferir alvo e provisione identidades sintéticas nesse banco. Mantenha configuração de acesso e resultados fora do Git, com permissões privadas. O script exige `FLEET_BROWSER_CONFIG`, `FLEET_BROWSER_REPORT_DIR` e `FLEET_BROWSER_DISPOSABLE=1`, além de `FLEET_CHROMIUM_PATH` quando usar Chrome do host. A configuração JSON modo 600 contém `url` de loopback, `composeProject` e `users.servidor`/`users.gestor` com `identificador`, `senha` e `users.servidor.nome`; cada execução deve usar um motorista sintético sem reservas conflitantes. O script confere que o container Compose desse projeto aponta para `mysql-local/frota_pf_local` e cria um veículo novo pela UI. `node scripts/qa/browser-real.mjs` grava capturas e relatório no diretório definido.
 
 Para instalar ou atualizar o esquema de uma hospedagem autorizada, siga DATABASE.md. DDL não é revertido por rollback de transação; exigem-se backup completo e restauração comprovada em outra instância antes de qualquer alteração do banco existente.
+
+Na versão atual, `users.motorista` pode definir uma terceira conta sintética, separada do solicitante e do gestor, com `identificador`, `senha` e `nome`. Isso permite testar solicitações feitas por pessoa sem cadastro de motorista. Consulte a evidência atual em IMPLEMENTATION.md.
