@@ -1,0 +1,46 @@
+{
+  "identifier": "dev.frota",
+  "profiles": [
+    {
+      "role": "Gestor",
+      "state": "DASHBOARD_OK"
+    },
+    {
+      "role": "Servidor",
+      "state": "DASHBOARD_OK"
+    },
+    {
+      "role": "Financeiro",
+      "state": "DASHBOARD_OK"
+    },
+    {
+      "role": "Administrador",
+      "state": "DASHBOARD_OK"
+    }
+  ],
+  "adminPages": [
+    {
+      "path": "/administracao/usuarios",
+      "status": 200
+    },
+    {
+      "path": "/administracao/perfis",
+      "status": 200
+    },
+    {
+      "path": "/administracao/rotas",
+      "status": 200
+    },
+    {
+      "path": "/administracao/auditoria",
+      "status": 200
+    },
+    {
+      "path": "/administracao/configuracoes",
+      "status": 200
+    }
+  ],
+  "oldMfaPageRedirect": true,
+  "permissionsPreserved": true,
+  "errors": []
+}
