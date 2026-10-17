@@ -17,11 +17,18 @@ class NotificationController extends Controller
         $usuario = $estados->recipientId();
         $podeEditar = $estados->canEdit();
         $paginacao = DB::table('vw_notificacoes_usuario')->where('usuario_id', $usuario)->whereNull('oculta_em')->orderByDesc('id')->paginate(10, ['id', 'tipo', 'titulo', 'mensagem', 'versao', 'criado_em', 'lida_em', 'solicitacao_id', 'viagem_id', 'multa_id', 'despesa_id', 'chamado_id'])->withQueryString();
-        $registros = $paginacao->getCollection()->map(function ($evento) use ($acesso, $leituras) {
+        $targets = ['requests' => 'solicitacao_id', 'trips' => 'viagem_id', 'fines' => 'multa_id', 'expenses' => 'despesa_id', 'tickets' => 'chamado_id'];
+        $references = [];
+        foreach ($targets as $codigo => $coluna) {
+            if ($acesso->level($leituras->definition($codigo)['module']) > 0) {
+                $references[$codigo] = $paginacao->getCollection()->pluck($coluna)->filter()->map(fn ($id) => (int) $id)->all();
+            }
+        }
+        $authorized = $leituras->authorizedReferences($references);
+        $registros = $paginacao->getCollection()->map(function ($evento) use ($targets, $authorized) {
             $evento->link = null;
-            foreach (['requests' => 'solicitacao_id', 'trips' => 'viagem_id', 'fines' => 'multa_id', 'expenses' => 'despesa_id', 'tickets' => 'chamado_id'] as $codigo => $coluna) {
-                $tela = $leituras->definition($codigo);
-                if ($evento->{$coluna} && $acesso->level($tela['module']) > 0 && $leituras->query($codigo)->where('r.id', $evento->{$coluna})->exists()) {
+            foreach ($targets as $codigo => $coluna) {
+                if ($evento->{$coluna} && isset($authorized[$codigo][(int) $evento->{$coluna}])) {
                     $evento->link = route((config('screens.'.$codigo.'.route') ?? $codigo).'.show', $evento->{$coluna});
                     break;
                 }
