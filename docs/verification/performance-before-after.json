@@ -1,0 +1,148 @@
+{
+  "branch": "correcao-de-tabelas",
+  "baseline_commit": "8a6dc20f209e14e5b49bd1e89fd27050a44445f2",
+  "controller": {
+    "measured_at_utc": "2026-10-11T20:16:32-04:00",
+    "profiles": [
+      {
+        "profile": "administrador",
+        "before": {
+          "ms": 2916.39,
+          "queries": 18,
+          "sql_wall_ms": 2863.79
+        },
+        "after": {
+          "ms": 793.8,
+          "queries": 5,
+          "sql_wall_ms": 789.05
+        },
+        "visible_results_identical": true,
+        "latency_reduction_percent": 72.8
+      },
+      {
+        "profile": "financeiro",
+        "before": {
+          "ms": 2680.47,
+          "queries": 17,
+          "sql_wall_ms": 2664.22
+        },
+        "after": {
+          "ms": 786.99,
+          "queries": 5,
+          "sql_wall_ms": 780.33
+        },
+        "visible_results_identical": true,
+        "latency_reduction_percent": 70.6
+      },
+      {
+        "profile": "gestor",
+        "before": {
+          "ms": 3241.88,
+          "queries": 21,
+          "sql_wall_ms": 3227.51
+        },
+        "after": {
+          "ms": 775.48,
+          "queries": 5,
+          "sql_wall_ms": 772.29
+        },
+        "visible_results_identical": true,
+        "latency_reduction_percent": 76.1
+      },
+      {
+        "profile": "servidor",
+        "before": {
+          "ms": 2496.71,
+          "queries": 16,
+          "sql_wall_ms": 2485.04
+        },
+        "after": {
+          "ms": 633.5,
+          "queries": 4,
+          "sql_wall_ms": 627.37
+        },
+        "visible_results_identical": true,
+        "latency_reduction_percent": 74.6
+      }
+    ]
+  },
+  "http": [
+    {
+      "profile": "Financeiro",
+      "before_ms": [
+        5777.79,
+        5954.12
+      ],
+      "after_ms": [
+        2511.42,
+        2581.75
+      ],
+      "before_mean_ms": 5865.96,
+      "after_mean_ms": 2546.58,
+      "reduction_percent": 56.6
+    },
+    {
+      "profile": "Gestor",
+      "before_ms": [
+        4901.66,
+        6144.49
+      ],
+      "after_ms": [
+        2625.56,
+        3026.84
+      ],
+      "before_mean_ms": 5523.08,
+      "after_mean_ms": 2826.2,
+      "reduction_percent": 48.8
+    },
+    {
+      "profile": "Servidor",
+      "before_ms": [
+        4524.06,
+        4463.89
+      ],
+      "after_ms": [
+        2468.25,
+        2360.6
+      ],
+      "before_mean_ms": 4493.98,
+      "after_mean_ms": 2414.43,
+      "reduction_percent": 46.3
+    }
+  ],
+  "traced_dashboard_before": {
+    "path": "/painel",
+    "status": 200,
+    "total_ms": 6016.042657,
+    "query_count": 33,
+    "sql_wall_ms": 5704.31
+  },
+  "traced_dashboard_after": {
+    "path": "/painel",
+    "status": 200,
+    "total_ms": 2769.830081,
+    "query_count": 14,
+    "sql_wall_ms": 2494.4799999999996
+  },
+  "traced_session_before": {
+    "path": "/sessao/status",
+    "status": 200,
+    "total_ms": 1509.775586,
+    "query_count": 7,
+    "sql_wall_ms": 1259.99
+  },
+  "traced_session_after": {
+    "path": "/sessao/status",
+    "status": 200,
+    "total_ms": 1265.475462,
+    "query_count": 4,
+    "sql_wall_ms": 996.9399999999999
+  },
+  "tests": {
+    "phpunit_tests": 178,
+    "phpunit_assertions": 1227,
+    "phpunit_skipped": 31,
+    "phpstan_errors": 0,
+    "frontend_build": "passed"
+  }
+}
