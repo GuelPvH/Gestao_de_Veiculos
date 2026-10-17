@@ -7,20 +7,32 @@ if (panel) {
     const password = form.querySelector('[name=senha]');
     const error = panel.querySelector('[data-session-error]');
     const submit = document.querySelector('[form=fleet-session-continue]');
-    let remaining = null, anchor = 0, syncing = false, renewing = false, ended = false;
-    let lastSync = -Infinity, latestStatus = null, statusGeneration = 0;
+    let remaining = null,
+        anchor = 0,
+        syncing = false,
+        renewing = false,
+        ended = false;
+    let lastSync = -Infinity,
+        latestStatus = null,
+        statusGeneration = 0;
     const scope = panel.dataset.sessionScope || '';
     const statusKey = `fleet-session-status:${scope}`;
     let channel;
-    try { channel = new BroadcastChannel('fleet-session'); } catch (_) {}
-    const announce = type => {
+    try {
+        channel = new BroadcastChannel('fleet-session');
+    } catch (_) {}
+    const announce = (type) => {
         channel?.postMessage({ type });
-        try { localStorage.setItem('fleet-session-event', JSON.stringify({ type, nonce: Math.random() })); } catch (_) {}
+        try {
+            localStorage.setItem('fleet-session-event', JSON.stringify({ type, nonce: Math.random() }));
+        } catch (_) {}
     };
     const end = (notify = true) => {
         if (ended) return;
         ended = true;
-        try { if (scope) localStorage.removeItem(statusKey); } catch (_) {}
+        try {
+            if (scope) localStorage.removeItem(statusKey);
+        } catch (_) {}
         password.value = '';
         dispatchEvent(new Event('fleet-session-ended'));
         if (notify) announce('ended');
@@ -29,7 +41,10 @@ if (panel) {
     const accept = (state, transit = 0) => {
         statusGeneration++;
         const duration = Date.parse(state.expires_at) - Date.parse(state.server_time);
-        if (!Number.isFinite(duration) || duration <= 0) { end(); return; }
+        if (!Number.isFinite(duration) || duration <= 0) {
+            end();
+            return;
+        }
         remaining = Math.max(0, duration - transit);
         anchor = performance.now();
         error.hidden = true;
@@ -40,10 +55,19 @@ if (panel) {
         latestStatus = { type: 'status', scope, state, transit, receivedAt: Date.now() };
         if (!scope) return;
         channel?.postMessage(latestStatus);
-        try { localStorage.setItem(statusKey, JSON.stringify(latestStatus)); } catch (_) {}
+        try {
+            localStorage.setItem(statusKey, JSON.stringify(latestStatus));
+        } catch (_) {}
     };
     const acceptShared = (snapshot, minimumTime = 0) => {
-        if (!scope || snapshot?.scope !== scope || !snapshot.state || !Number.isFinite(snapshot.receivedAt) || !Number.isFinite(snapshot.transit)) return false;
+        if (
+            !scope ||
+            snapshot?.scope !== scope ||
+            !snapshot.state ||
+            !Number.isFinite(snapshot.receivedAt) ||
+            !Number.isFinite(snapshot.transit)
+        )
+            return false;
         const age = Date.now() - snapshot.receivedAt;
         if (age < 0 || age > 25000 || snapshot.receivedAt < minimumTime) return false;
         latestStatus = snapshot;
@@ -53,7 +77,11 @@ if (panel) {
     };
     const sharedStatus = (minimumTime = 0) => {
         if (acceptShared(latestStatus, minimumTime)) return true;
-        try { return acceptShared(JSON.parse(localStorage.getItem(statusKey)), minimumTime); } catch (_) { return false; }
+        try {
+            return acceptShared(JSON.parse(localStorage.getItem(statusKey)), minimumTime);
+        } catch (_) {
+            return false;
+        }
     };
     const sync = async (force = false) => {
         if (syncing || ended || renewing || document.visibilityState === 'hidden') return;
@@ -65,13 +93,23 @@ if (panel) {
                 if (ended || document.visibilityState === 'hidden' || sharedStatus(requestedAt)) return;
                 const generation = statusGeneration;
                 const started = performance.now();
-                const response = await fetch(panel.dataset.sessionStatus, { headers: { Accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(8000) });
+                const response = await fetch(panel.dataset.sessionStatus, {
+                    headers: { Accept: 'application/json' },
+                    cache: 'no-store',
+                    signal: AbortSignal.timeout(8000),
+                });
                 if (generation !== statusGeneration || renewing || ended) return;
-                if (response.status === 401) { end(); return; }
+                if (response.status === 401) {
+                    end();
+                    return;
+                }
                 if (!response.ok) throw new Error();
                 const state = await response.json();
                 if (generation !== statusGeneration || renewing || ended) return;
-                if (state.state !== 'ACTIVE') { end(); return; }
+                if (state.state !== 'ACTIVE') {
+                    end();
+                    return;
+                }
                 const transit = performance.now() - started;
                 accept(state, transit);
                 if (!ended) shareStatus(state, transit);
@@ -84,18 +122,24 @@ if (panel) {
         } catch (_) {
             error.textContent = 'Não foi possível conferir a sessão. Tente novamente antes do prazo.';
             error.hidden = false;
-        } finally { syncing = false; }
+        } finally {
+            syncing = false;
+        }
     };
     const tick = () => {
         if (remaining === null || ended) return;
         const seconds = Math.max(0, Math.ceil((remaining - (performance.now() - anchor)) / 1000));
-        panel.querySelector('[data-session-countdown]').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+        panel.querySelector('[data-session-countdown]').textContent =
+            `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
         if (seconds <= 60 && seconds > 0) modal.show();
         if (seconds > 60) modal.hide();
-        if (seconds === 0 && !renewing) { password.value = ''; end(); }
+        if (seconds === 0 && !renewing) {
+            password.value = '';
+            end();
+        }
     };
     panel.addEventListener('shown.bs.modal', () => password.focus());
-    form.addEventListener('submit', async event => {
+    form.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (renewing || ended || !form.reportValidity()) return;
         renewing = true;
@@ -105,8 +149,16 @@ if (panel) {
         const body = new FormData(form);
         password.value = '';
         try {
-            const response = await fetch(form.action, { method: 'POST', body, headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
-            if (response.status === 401) { end(); return; }
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body,
+                headers: { Accept: 'application/json' },
+                signal: AbortSignal.timeout(8000),
+            });
+            if (response.status === 401) {
+                end();
+                return;
+            }
             if (response.status === 419) throw new Error('Recarregue a página para confirmar novamente.');
             if (response.status === 429) throw new Error('Muitas tentativas. Aguarde o limite informado pelo sistema.');
             if (response.status === 422) throw new Error('Não foi possível confirmar sua senha.');
@@ -126,22 +178,34 @@ if (panel) {
             tick();
         }
     });
-    const receive = event => {
+    const receive = (event) => {
         if (event?.type === 'ended') end(false);
         if (event?.type === 'status') acceptShared(event);
-        if (event?.type === 'renewed') { password.value = ''; if (!sharedStatus()) sync(true); }
+        if (event?.type === 'renewed') {
+            password.value = '';
+            if (!sharedStatus()) sync(true);
+        }
     };
-    if (channel) channel.onmessage = event => receive(event.data);
-    addEventListener('storage', event => {
+    if (channel) channel.onmessage = (event) => receive(event.data);
+    addEventListener('storage', (event) => {
         if (event.key === 'fleet-session-event') {
-            try { receive(JSON.parse(event.newValue)); } catch (_) {}
+            try {
+                receive(JSON.parse(event.newValue));
+            } catch (_) {}
         }
         if (event.key === statusKey) {
-            try { acceptShared(JSON.parse(event.newValue)); } catch (_) {}
+            try {
+                acceptShared(JSON.parse(event.newValue));
+            } catch (_) {}
         }
     });
-    panel.querySelector('[data-session-logout]').addEventListener('submit', () => { dispatchEvent(new Event('fleet-session-ended')); announce('ended'); });
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') sync(true); });
+    panel.querySelector('[data-session-logout]').addEventListener('submit', () => {
+        dispatchEvent(new Event('fleet-session-ended'));
+        announce('ended');
+    });
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') sync(true);
+    });
     addEventListener('focus', () => sync(true));
     setInterval(tick, 1000);
     setInterval(sync, 30000);
