@@ -15,7 +15,12 @@ class OperationCatalog
         $tela = config('screens.'.$codigo);
         $permitidas = [];
         foreach ($tela['actions'] ?? [] as $acao => $contrato) {
-            if (! $this->acesso->can($tela['module'], $contrato[1], $registro->__owner !== null ? (int) $registro->__owner : null, $registro->__unit !== null ? (int) $registro->__unit : null)) {
+            $dono = $registro->__owner !== null ? (int) $registro->__owner : null;
+            if ($codigo === 'trips' && in_array($acao, ['departure', 'occurrence', 'return'], true)
+                && isset($registro->__driver) && (int) $registro->__driver === (int) ($this->acesso->link()->usuario_id ?? 0)) {
+                $dono = (int) $registro->__driver;
+            }
+            if (! $this->acesso->can($tela['module'], $contrato[1], $dono, $registro->__unit !== null ? (int) $registro->__unit : null)) {
                 continue;
             }
             if (in_array($codigo, ['expenses', 'fuel'], true) && $acao === 'edit'
