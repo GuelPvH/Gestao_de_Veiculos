@@ -1,7 +1,11 @@
 # Carregado automaticamente pelo Docker Compose para desenvolvimento local.
 services:
   app:
+    build:
+      target: runtime-development
+    image: gestao-de-veiculos:development
     environment:
+      DEBUGBAR_ENABLED: "${DEBUGBAR_ENABLED:-true}"
       VITE_HOT_FILE: /var/www/html/dev-hot/hot
     depends_on:
       vite:
