@@ -17,17 +17,17 @@ URL: http://localhost:8080. O comando preserva os dados quando o banco já está
 | Financeiro | teste03 |
 | Administrador | teste04 |
 
-A senha fica somente em `/tmp/frota-private/local-test-login.txt` (chmod 600). As credenciais MySQL ficam em `/tmp/frota-private/local.env`, fora do Git. Para preservar as credenciais após limpar `/tmp`, guarde os dois arquivos em diretório privado persistente e use `FLEET_LOCAL_PRIVATE_DIR` com esse caminho.
+A senha fica somente no diretório selecionado por `FLEET_LOCAL_PRIVATE_DIR`, no arquivo `local-test-login.txt` (chmod 600); o padrão é `/tmp/frota-private`. As credenciais MySQL ficam em `/tmp/frota-private/local.env`, fora do Git. Para preservar as credenciais após limpar `/tmp`, guarde os dois arquivos em diretório privado persistente e use `FLEET_LOCAL_PRIVATE_DIR` com esse caminho.
 
 ## Carga e validação
 
-O script recusa outro host ou banco e não executa carga sobre usuários existentes. Os cadastros principais são inseridos antes dos dependentes. Relações cíclicas usam uma referência inicialmente nula e são concluídas depois. Checks, FKs e triggers permanecem habilitados.
+O script recusa outro host ou banco e não executa carga sobre usuários existentes. A conferência de relações, views e conteúdo dos arquivos roda também na reexecução. Os totais abaixo são da carga inicial; sessões e auditoria aumentam com logins e operações. Os cadastros principais são inseridos antes dos dependentes. Relações cíclicas usam uma referência inicialmente nula e são concluídas depois. Checks, FKs e triggers permanecem habilitados.
 
 Configuração única, versão instalada, módulos, ações, rotas e permissões mantêm os valores canônicos da aplicação; não são completados artificialmente. Catálogos editáveis têm 50 entradas. Tabelas derivadas e históricos podem superar 50 por causa dos relacionamentos.
 
-Há 100 solicitações: 50 aprovadas com viagens e 50 aguardando análise com veículo/motorista indicados e datas futuras. O banco registra revisões adicionais para preparar esses cenários. As 50 viagens estão em andamento; pagamentos e autuações são apenas cenários fictícios. Os 46 perfis adicionais não possuem permissões concedidas. Sessões e recuperações sintéticas estão expiradas.
+Há 100 solicitações: 50 aprovadas com viagens e 50 aguardando análise com veículo/motorista indicados e datas futuras. A carga inicial possui uma revisão por solicitação; a interface registra novas revisões conforme o uso. As 50 viagens estão em andamento; pagamentos e autuações são apenas cenários fictícios. Os 46 perfis adicionais não possuem permissões concedidas. Sessões e recuperações sintéticas estão expiradas. As contas fictícias conservam o estado `legado`, sem inventar prova de e-mail; o MFA administrativo está temporariamente pausado no Compose local a pedido do usuário; reative com `FLEET_LOCAL_MFA_ENABLED=true` e configure HTTPS/WebAuthn para homologação. O Compose local desliga os envios e não herda o transporte SMTP de outra instalação.
 
-Validação: 167 FKs conferidas, 0 referências órfãs, 14 views consultáveis e 50 arquivos conferidos por tamanho e SHA-256.
+Validação: 182 FKs conferidas, 0 referências órfãs, 14 views consultáveis e 50 arquivos conferidos por tamanho e SHA-256.
 
 | Tabela | Registros |
 |---|---|
@@ -82,17 +82,17 @@ Validação: 167 FKs conferidas, 0 referências órfãs, 14 views consultáveis 
 | `rota_permissoes` | 17 |
 | `rotas_sistema` | 16 |
 | `sessoes` | 50 |
-| `solicitacao_eventos` | 200 |
-| `solicitacao_paradas` | 150 |
-| `solicitacao_passageiros` | 150 |
-| `solicitacao_revisoes` | 150 |
+| `solicitacao_eventos` | 100 |
+| `solicitacao_paradas` | 100 |
+| `solicitacao_passageiros` | 100 |
+| `solicitacao_revisoes` | 100 |
 | `solicitacoes` | 100 |
 | `unidades` | 50 |
 | `usuario_perfis` | 50 |
 | `usuarios` | 50 |
 | `veiculo_rastreadores` | 50 |
 | `veiculos` | 50 |
-| `versoes_modelo` | 1 |
+| `versoes_modelo` | 6 |
 | `viagem_checklist_respostas` | 150 |
 | `viagem_checklists` | 50 |
 | `viagem_ocorrencias` | 50 |
