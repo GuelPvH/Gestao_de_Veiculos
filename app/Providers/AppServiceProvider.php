@@ -35,11 +35,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Queue::looping(function (Looping $event): void {
-            if ($event->connectionName !== 'redis' || ! in_array($event->queue, ['auth-mails', 'security-mails'], true)) {
+            if ($event->connectionName !== config('fleet.recovery_queue_connection', 'database') || ! in_array($event->queue, ['auth-mails', 'security-mails'], true)) {
                 return;
             }
             try {
-                Cache::store('redis')->put('fleet:heartbeat:'.$event->queue, time(), 120);
+                Cache::store(Value::string(config('cache.default')))->put('fleet:heartbeat:'.$event->queue, time(), 120);
             } catch (\Throwable) {
                 Log::error('security.worker_heartbeat_unavailable', ['queue' => $event->queue]);
             }

@@ -20,7 +20,7 @@ class WorkerHealth extends Command
             return self::FAILURE;
         }
         try {
-            $heartbeat = Value::integer(Cache::store('redis')->get('fleet:heartbeat:'.$queue, 0));
+            $heartbeat = Value::integer(Cache::store(Value::string(config('cache.default')))->get('fleet:heartbeat:'.$queue, 0));
             if ($heartbeat < time() - 90) {
                 $this->error('Processo sem atividade recente.');
 

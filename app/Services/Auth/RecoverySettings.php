@@ -11,7 +11,7 @@ class RecoverySettings
         if (! config('fleet.recovery_queue_enabled')) {
             return null;
         }
-        $connection = Value::string(config('fleet.recovery_queue_connection', 'redis'));
+        $connection = Value::string(config('fleet.recovery_queue_connection', 'database'));
         $driver = config('queue.connections.'.$connection.'.driver');
 
         return in_array($driver, ['database', 'redis', 'sqs', 'beanstalkd'], true) ? $connection : null;

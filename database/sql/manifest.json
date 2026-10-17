@@ -1,6 +1,6 @@
 {
-    "sha256": "b093f7b047cfbe1990dce656f7d707c91093b6178d2d8d278ca8b095e2af134c",
-    "bytes": 261587,
+    "sha256": "53a264e7074cc5f2743a3b521abc4743d9ba8e9a1c943b3ebc09b863da5569e5",
+    "bytes": 262386,
     "tables": [
         "abastecimentos",
         "acoes",
@@ -8,6 +8,8 @@
         "aprovacoes_mfa",
         "arquivos",
         "auditoria",
+        "cache",
+        "cache_locks",
         "categorias_chamado",
         "categorias_despesa",
         "categorias_veiculo",
@@ -263,7 +265,7 @@
         "tg_vresposta_bi",
         "tg_vresposta_bu"
     ],
-    "schema_version": "1.0.6",
+    "schema_version": "1.0.7",
     "patches": [
         {
             "version": "1.0.3",
@@ -322,6 +324,15 @@
                 {
                     "path": "patches/1.0.6_vehicle_plate.sql",
                     "sha256": "c6c6ec512bd13fa09806641bd230efe1767c9656cdca0219b2e2e2d1e626b81b"
+                }
+            ]
+        },
+        {
+            "version": "1.0.7",
+            "files": [
+                {
+                    "path": "patches/1.0.7_database_cache.sql",
+                    "sha256": "c3ec637c0276658f4eb16b00bd8a2e21695ab63037c0e16bf5138f7200b75de5"
                 }
             ]
         }

@@ -54,38 +54,41 @@ class DeliveryHealth
             $alerts[] = 'outbox_storage_unavailable';
         }
 
-        try {
-            $connection = (string) config('queue.connections.redis.connection', 'default');
-            $memory = $this->info(Redis::connection($connection)->command('info', ['memory']));
-            $persistence = $this->info(Redis::connection($connection)->command('info', ['persistence']));
-            if (! isset($memory['used_memory'], $memory['maxmemory'], $persistence['aof_enabled'], $persistence['aof_last_write_status'], $persistence['aof_last_bgrewrite_status'])) {
-                throw new \RuntimeException('Incomplete measurements.');
+        if (config('queue.connections.'.$this->settings->queueConnection().'.driver') === 'redis'
+            || config('cache.stores.'.config('cache.default').'.driver') === 'redis') {
+            try {
+                $connection = (string) config('queue.connections.redis.connection', 'default');
+                $memory = $this->info(Redis::connection($connection)->command('info', ['memory']));
+                $persistence = $this->info(Redis::connection($connection)->command('info', ['persistence']));
+                if (! isset($memory['used_memory'], $memory['maxmemory'], $persistence['aof_enabled'], $persistence['aof_last_write_status'], $persistence['aof_last_bgrewrite_status'])) {
+                    throw new \RuntimeException('Incomplete measurements.');
+                }
+                $used = max(0, Value::integer($memory['used_memory']));
+                $maximum = max(0, Value::integer($memory['maxmemory']));
+                $redis = [
+                    'used_memory_bytes' => $used,
+                    'maxmemory_bytes' => $maximum,
+                    'memory_percent' => $maximum > 0 ? round($used / $maximum * 100, 2) : null,
+                    'aof_enabled' => Value::integer($persistence['aof_enabled']) === 1,
+                    'aof_write_ok' => $persistence['aof_last_write_status'] === 'ok',
+                    'aof_rewrite_ok' => $persistence['aof_last_bgrewrite_status'] === 'ok',
+                ];
+                if ($maximum === 0) {
+                    $alerts[] = 'redis_memory_unbounded';
+                } elseif ($redis['memory_percent'] >= max(1, min(100, (int) config('identity.health_redis_memory_percent', 85)))) {
+                    $alerts[] = 'redis_memory_pressure';
+                }
+                if (! $redis['aof_enabled'] || ! $redis['aof_write_ok'] || ! $redis['aof_rewrite_ok']) {
+                    $alerts[] = 'redis_persistence_degraded';
+                }
+            } catch (Throwable) {
+                $alerts[] = 'redis_metrics_unavailable';
             }
-            $used = max(0, Value::integer($memory['used_memory']));
-            $maximum = max(0, Value::integer($memory['maxmemory']));
-            $redis = [
-                'used_memory_bytes' => $used,
-                'maxmemory_bytes' => $maximum,
-                'memory_percent' => $maximum > 0 ? round($used / $maximum * 100, 2) : null,
-                'aof_enabled' => Value::integer($persistence['aof_enabled']) === 1,
-                'aof_write_ok' => $persistence['aof_last_write_status'] === 'ok',
-                'aof_rewrite_ok' => $persistence['aof_last_bgrewrite_status'] === 'ok',
-            ];
-            if ($maximum === 0) {
-                $alerts[] = 'redis_memory_unbounded';
-            } elseif ($redis['memory_percent'] >= max(1, min(100, (int) config('identity.health_redis_memory_percent', 85)))) {
-                $alerts[] = 'redis_memory_pressure';
-            }
-            if (! $redis['aof_enabled'] || ! $redis['aof_write_ok'] || ! $redis['aof_rewrite_ok']) {
-                $alerts[] = 'redis_persistence_degraded';
-            }
-        } catch (Throwable) {
-            $alerts[] = 'redis_metrics_unavailable';
         }
 
         foreach (['auth-mails', 'security-mails', 'scheduler'] as $process) {
             try {
-                $heartbeat = Value::integer(Cache::store('redis')->get('fleet:heartbeat:'.$process, 0));
+                $heartbeat = Value::integer(Cache::store(Value::string(config('cache.default')))->get('fleet:heartbeat:'.$process, 0));
                 $age = $heartbeat > 0 ? max(0, Value::integer(now('UTC')->timestamp) - $heartbeat) : null;
                 $heartbeats[$process] = $age;
                 if ($age === null || $age > max(1, (int) config('identity.health_heartbeat_seconds', 90))) {
@@ -116,9 +119,9 @@ class DeliveryHealth
         $key = 'fleet:delivery-health:'.hash('sha256', implode('|', Value::strings($snapshot['alerts'])));
         $ttl = max(60, (int) config('identity.health_alert_ttl_seconds', 900));
         try {
-            $emit = Cache::store('redis')->add($key, true, $ttl);
+            $emit = Cache::store(Value::string(config('cache.default')))->add($key, true, $ttl);
         } catch (Throwable) {
-            // The shared application volume still deduplicates alerts during a Redis outage.
+            // The shared application volume deduplicates alerts during a cache outage.
             try {
                 $emit = Cache::store('file')->add($key, true, $ttl);
             } catch (Throwable) {

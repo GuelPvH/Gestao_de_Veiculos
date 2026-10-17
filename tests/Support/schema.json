@@ -1,5 +1,5 @@
 {
-    "source_sha256": "b093f7b047cfbe1990dce656f7d707c91093b6178d2d8d278ca8b095e2af134c",
+    "source_sha256": "53a264e7074cc5f2743a3b521abc4743d9ba8e9a1c943b3ebc09b863da5569e5",
     "tables": {
         "versoes_modelo": {
             "versao": {
@@ -2882,6 +2882,34 @@
             },
             "aprovada_em": {
                 "type": "TEXT",
+                "default": null
+            }
+        },
+        "cache": {
+            "key": {
+                "type": "TEXT",
+                "default": null
+            },
+            "value": {
+                "type": "TEXT",
+                "default": null
+            },
+            "expiration": {
+                "type": "INTEGER",
+                "default": null
+            }
+        },
+        "cache_locks": {
+            "key": {
+                "type": "TEXT",
+                "default": null
+            },
+            "owner": {
+                "type": "TEXT",
+                "default": null
+            },
+            "expiration": {
+                "type": "INTEGER",
                 "default": null
             }
         }

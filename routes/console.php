@@ -41,9 +41,10 @@ Artisan::command('fleet:create-admin', function (): int {
 })->purpose('Inicializar somente o primeiro administrador, após provisionamento conferido');
 
 Schedule::command('fleet:dispatch-mail --limit=100')->everyMinute()->withoutOverlapping();
-Schedule::call(fn () => Cache::store('redis')->put('fleet:heartbeat:scheduler', time(), 120))
+Schedule::call(fn () => Cache::store(Value::string(config('cache.default')))->put('fleet:heartbeat:scheduler', time(), 120))
     ->name('fleet:scheduler-heartbeat')->everyMinute();
-Schedule::command('queue:monitor redis:auth-mails,redis:security-mails --max=100')
+$mailQueueConnection = config('fleet.recovery_queue_connection', 'database');
+Schedule::command('queue:monitor '.$mailQueueConnection.':auth-mails,'.$mailQueueConnection.':security-mails --max=100')
     ->everyMinute()->withoutOverlapping();
 
 Schedule::command('fleet:delivery-health')->everyFiveMinutes()->withoutOverlapping();
