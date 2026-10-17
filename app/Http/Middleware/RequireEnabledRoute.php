@@ -20,23 +20,22 @@ class RequireEnabledRoute
             ? '/'.config('screens.'.$codigo.'.url')
             : $caminho;
 
+        $rotas = DB::table('rotas_sistema')->where(function ($consulta) use ($area, $caminho, $metodo): void {
+            $consulta->where(function ($areaConsulta) use ($area): void {
+                $areaConsulta->where('caminho', $area)->where('metodo_http', 'GET');
+            })->orWhere(function ($endpoint) use ($caminho, $metodo): void {
+                $endpoint->where('caminho', $caminho)->where('metodo_http', $metodo);
+            });
+        })->get(['caminho', 'metodo_http', 'protegida', 'ativa']);
         // Rotas administrativas protegidas continuam acessíveis para reativar uma área.
-        $protegida = DB::table('rotas_sistema')->where('caminho', $caminho)
-            ->where('metodo_http', $metodo)->where('protegida', 1)->where('ativa', 1)->exists();
+        $protegida = $rotas->contains(fn ($rota) => $rota->caminho === $caminho && $rota->metodo_http === $metodo && (int) $rota->protegida === 1 && (int) $rota->ativa === 1);
         if ($protegida) {
             return $proximo($requisicao);
         }
 
         // A desativação da área (GET) prevalece sobre uma rota específica ativa.
         // A desativação do método exato também vale para acesso direto e URLs parametrizadas.
-        $desativada = DB::table('rotas_sistema')->where('ativa', 0)
-            ->where(function ($consulta) use ($area, $caminho, $metodo): void {
-                $consulta->where(function ($areaDesativada) use ($area): void {
-                    $areaDesativada->where('caminho', $area)->where('metodo_http', 'GET');
-                })->orWhere(function ($endpointDesativado) use ($caminho, $metodo): void {
-                    $endpointDesativado->where('caminho', $caminho)->where('metodo_http', $metodo);
-                });
-            })->exists();
+        $desativada = $rotas->contains(fn ($rota) => (int) $rota->ativa === 0);
         if ($desativada) {
             return response()->view('errors.disabled', [], 403);
         }
