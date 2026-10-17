@@ -1,5 +1,7 @@
 # Auditoria das telas e do tempo de resposta
 
+Atualização de 16/10/2026 à noite: [a rodada seguinte](PERFORMANCE-CONTINUATION.md) reduz mais uma consulta por tela, repete a verificação das 73 rotas nos quatro perfis e registra novas medições. A conferência direta também constatou que a coluna de placa já está ampliada no remoto, apesar do histórico terminar em 1.0.5; há uma divergência separada nas tabelas de rastreamento. Os resultados abaixo preservam a rodada anterior.
+
 Código integrado à `main` `9e186d3`, preservando mapas, agenda mensal, locais e anexos das solicitações, placas com formato informado e relatórios em CSV/PDF. A integração e os testes finais são de outubro de 2026. As amostras anteriores, de 11–12/10, estão identificadas separadamente.
 
 ## Resultado da investigação
