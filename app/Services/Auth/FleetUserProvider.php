@@ -10,6 +10,11 @@ class FleetUserProvider extends EloquentUserProvider
 {
     public function retrieveById($identifier)
     {
+        $request = request();
+        if ($request->hasSession() && $request->routeIs('session.status')) {
+            return app(SessionStatusReader::class)->user($request, (int) $identifier);
+        }
+
         return User::query()->whereKey($identifier)->where('ativo', 1)->first();
     }
 
