@@ -1,0 +1,1 @@
+{"available":false,"sqlstate":"HY000","driver_code":1226,"resource":"max_connections_per_hour","limit":500,"detected_at_utc":"2026-10-12T02:01:39+00:00"}
