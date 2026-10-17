@@ -1,0 +1,16 @@
+# Dependencies and generated runtime files.
+/vendor/
+/node_modules/
+/bootstrap/cache/
+/storage/
+/public/build/
+/public/storage
+/artifacts/
+/playwright-report/
+/test-results/
+
+# Dependency lockfiles and generated verification/database documentation.
+composer.lock
+package-lock.json
+/docs/verification/
+/docs/database-model/

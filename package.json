@@ -4,12 +4,16 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "format": "prettier --write . --ignore-unknown",
+        "format:check": "prettier --check . --ignore-unknown"
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.13.0",
         "@playwright/test": "^1.64.0",
         "laravel-vite-plugin": "^3.1",
+        "prettier": "3.9.10",
+        "prettier-plugin-blade": "3.3.3",
         "vite": "^8.3.4"
     },
     "dependencies": {
