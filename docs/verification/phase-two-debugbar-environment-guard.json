@@ -1,0 +1,17 @@
+[
+  {
+    "environment": "production",
+    "app_debug": true,
+    "debugbar_enabled": false
+  },
+  {
+    "environment": "local",
+    "app_debug": false,
+    "debugbar_enabled": false
+  },
+  {
+    "environment": "local",
+    "app_debug": true,
+    "debugbar_enabled": true
+  }
+]
