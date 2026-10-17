@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\User;
 use App\Services\Auth\FleetSession;
 use App\Services\Authorization\AccessContext;
+use App\Services\Authorization\RequestAccessReader;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,7 +46,7 @@ class ValidateFleetSession
         if ($requisicao->routeIs('session.status')) {
             return $proximo($requisicao);
         }
-        app(AccessContext::class)->load($vinculo);
+        app(RequestAccessReader::class)->load($requisicao, $vinculo, app(AccessContext::class));
         $configuracao = $requisicao->attributes->get('fleet.configuration');
         $fuso = $configuracao ? $configuracao->fuso_horario : DB::table('configuracao_sistema')->where('id', 1)->value('fuso_horario');
         config(['fleet.timezone' => in_array($fuso, timezone_identifiers_list(), true) ? $fuso : 'America/Porto_Velho']);
