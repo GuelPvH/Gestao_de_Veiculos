@@ -51,8 +51,8 @@ class OperationCatalog
             } elseif ($codigo === 'vehicles') {
                 $valida = match ($acao) {
                     'edit' => true,
-                    'block' => DB::table('veiculos')->where('id', $registro->id)->where('situacao_cadastro', 'ativo')->exists(),
-                    'release' => DB::table('reservas as r')->leftJoin('manutencoes as m', 'm.reserva_id', '=', 'r.id')
+                    'block' => isset($registro->__vehicle_active) ? (bool) $registro->__vehicle_active : DB::table('veiculos')->where('id', $registro->id)->where('situacao_cadastro', 'ativo')->exists(),
+                    'release' => isset($registro->__manual_block) ? (bool) $registro->__manual_block : DB::table('reservas as r')->leftJoin('manutencoes as m', 'm.reserva_id', '=', 'r.id')
                         ->where('r.veiculo_id', $registro->id)->where('r.situacao', 'ativa')
                         ->whereIn('r.tipo', ['indisponibilidade', 'manutencao'])->whereNull('m.id')->exists(),
                     default => false,
