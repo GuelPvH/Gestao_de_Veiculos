@@ -16,13 +16,6 @@
                 @forelse($operacoes as $acao=>$rotulo)
                     @if($acao === 'edit')
                         <a class="btn btn-outline-secondary w-100 mb-2" href="{{ route('solicitacoes.edit', $registro->id) }}">{{ $rotulo }}</a>
-                    @elseif($acao === 'approve')
-                        <form data-request-action="approve" id="approve-request" method="post" action="{{ route('solicitacoes.approve.submit', $registro->id) }}">
-                            @csrf
-                            <input type="hidden" name="modal_acao" value="approve">
-                            <input type="hidden" name="versao" value="{{ $registro->versao }}">
-                            <button type="button" class="btn btn-primary w-100 mb-2" data-request-approve>{{ $rotulo }}</button>
-                        </form>
                     @else
                         <button type="button" class="btn btn-outline-secondary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#request-{{ $acao }}">{{ $rotulo }}</button>
                     @endif
@@ -41,22 +34,20 @@
     @foreach($operacoes as $acao=>$rotulo)
         @if($acao !== 'edit')
             <x-ui.modal :id="'request-'.$acao" :titulo="$rotulo">
-                @if($acao === 'approve')
-                    <p>Confirma a aprovação da solicitação {{ $registro->protocolo }}? A aprovação programará a viagem com o veículo e motorista indicados no pedido.</p>
-                    <div class="d-flex justify-content-end gap-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button><button type="submit" class="btn btn-primary" form="approve-request">Confirmar aprovação</button></div>
-                @else
                     <form method="post" action="{{ route('solicitacoes.'.$acao.'.submit', $registro->id) }}">
                         @csrf
                         <input type="hidden" name="modal_acao" value="{{ $acao }}">
                         <input type="hidden" name="versao" value="{{ $registro->versao }}">
-                        @if($acao === 'send')
+                        @if($acao === 'approve')
+                            @include('gestor.solicitacoes.approval-fields')
+                            <x-forms.field nome="justificativa" rotulo="Justificativa da aprovação" tipo="textarea" :obrigatorio="true" maxlength="3000" />
+                        @elseif($acao === 'send')
                             <p>Confirma o envio desta solicitação para análise?</p>
                         @else
                             <x-forms.field :nome="'justificativa'" :id="'justificativa-'.$acao" :rotulo="$acao === 'deny' ? 'Motivo da negativa' : ($acao === 'adjust' ? 'Explique os ajustes necessários' : 'Motivo da nova revisão')" tipo="textarea" :obrigatorio="true" maxlength="3000" />
                         @endif
-                        <div class="d-flex justify-content-end gap-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button><button type="submit" class="btn btn-primary">Confirmar</button></div>
+                        <div class="d-flex justify-content-end gap-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button><button type="submit" class="btn btn-primary">{{ $acao === 'approve' ? 'Confirmar aprovação' : 'Confirmar' }}</button></div>
                     </form>
-                @endif
             </x-ui.modal>
         @endif
     @endforeach
