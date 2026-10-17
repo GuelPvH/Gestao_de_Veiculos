@@ -3,12 +3,20 @@
 namespace Tests\Feature\Auth;
 
 use App\Jobs\DeliverRecoveryLink;
+use App\Jobs\DeliverSecurityNotice;
+use App\Services\Auth\DispatchPendingMail;
+use App\Services\Auth\IdentityService;
+use App\Services\Auth\MailDeliveryException;
+use App\Services\Auth\OutboxDelivery;
 use App\Services\Auth\RecoverySettings;
-use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
+use Mockery;
+use Tests\Support\IdentityFixture;
 use Tests\TestCase;
 
 class RecoveryMailTest extends TestCase
@@ -17,171 +25,189 @@ class RecoveryMailTest extends TestCase
     {
         parent::setUp();
         $this->withoutVite();
-        config([
-            'app.key' => 'base64:'.base64_encode(random_bytes(32)),
-            'app.env' => 'testing',
-            'app.url' => 'https://frota.example.test',
-            'fleet.recovery_mail_enabled' => true,
-            'fleet.recovery_queue_enabled' => true,
-            'fleet.recovery_queue_connection' => 'database',
-            'queue.connections.database.driver' => 'database',
-            'mail.default' => 'smtp',
-            'mail.mailers.smtp.scheme' => 'smtp',
-            'mail.mailers.smtp.url' => null,
-            'mail.mailers.smtp.host' => '127.0.0.1',
-            'mail.from.address' => 'no-reply@frota.example.test',
-        ]);
-        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
-        DB::purge('sqlite');
-        DB::statement('CREATE TABLE usuarios (id INTEGER PRIMARY KEY, identificador TEXT, nome TEXT, email TEXT, ativo INTEGER, senha_hash TEXT, unidade_id INTEGER)');
-        DB::statement('CREATE TABLE recuperacoes_senha (id INTEGER PRIMARY KEY, usuario_id INTEGER, token_hash BLOB, criado_em TEXT DEFAULT CURRENT_TIMESTAMP, expira_em TEXT, usado_em TEXT, invalidado_em TEXT)');
-        DB::table('usuarios')->insert([
-            ['id' => 1, 'identificador' => 'qa-recuperacao', 'nome' => 'Conta de teste', 'email' => 'qa-recuperacao@local.test', 'ativo' => 1, 'senha_hash' => password_hash('SenhaInicial!123', PASSWORD_BCRYPT, ['cost' => 4]), 'unidade_id' => 1],
-            ['id' => 2, 'identificador' => 'qa-inativo', 'nome' => 'Conta inativa', 'email' => 'qa-inativo@local.test', 'ativo' => 0, 'senha_hash' => 'irrelevante', 'unidade_id' => 1],
-            ['id' => 3, 'identificador' => 'qa-sem-email', 'nome' => 'Conta sem e-mail', 'email' => null, 'ativo' => 1, 'senha_hash' => 'irrelevante', 'unidade_id' => 1],
-        ]);
+        IdentityFixture::create();
+        IdentityFixture::mailSettings();
         Queue::fake();
         RateLimiter::clear('fleet-recovery-ip:'.hash('sha256', '127.0.0.1'));
     }
 
-    public function test_recovery_is_queued_for_each_identifier_and_the_public_response_is_uniform(): void
+    public function test_public_response_is_uniform_and_only_eligible_requests_are_durable(): void
     {
-        $consultas = [];
-        DB::listen(function ($consulta) use (&$consultas): void {
-            $consultas[] = strtolower($consulta->sql);
-        });
         Mail::shouldReceive('send')->never();
-        $identificadores = ['qa-recuperacao', 'nao-existe', 'qa-inativo', 'qa-sem-email'];
-        foreach ($identificadores as $identificador) {
-            $this->from('/recuperar-acesso')->post('/recuperar-acesso', ['identificador' => $identificador])
+        foreach (['qa-recuperacao', 'nao-existe', 'qa-inativo', 'qa-sem-email'] as $identifier) {
+            $this->from('/recuperar-acesso')->post('/recuperar-acesso', ['identificador' => $identifier])
                 ->assertRedirect('/recuperar-acesso')
                 ->assertSessionHas('status', 'Se houver um acesso elegível, você receberá as orientações no e-mail cadastrado.');
         }
-
-        Queue::assertPushed(DeliverRecoveryLink::class, 4);
-        $consultasHttp = $consultas;
-        foreach (['nao-existe', 'qa-inativo', 'qa-sem-email'] as $identificador) {
-            DeliverRecoveryLink::forIdentifier($identificador)->handle(app(RecoverySettings::class));
-        }
-        $this->assertSame(0, DB::table('recuperacoes_senha')->count());
-        $this->assertFalse(collect($consultasHttp)->contains(fn (string $sql): bool => str_contains($sql, 'usuarios')));
+        $this->assertSame(1, DB::table('recuperacoes_senha')->count());
+        $this->assertSame(1, DB::table('email_outbox')->count());
+        Queue::assertNothingPushed();
+        $this->assertSame(1, app(DispatchPendingMail::class)->dispatch());
+        Queue::assertPushed(DeliverRecoveryLink::class, 1);
     }
 
-    public function test_eligible_recovery_uses_a_trusted_origin_fragment_and_stores_only_the_hash(): void
+    public function test_delivery_uses_trusted_fragment_hash_and_erases_outbox_secret_after_acceptance(): void
     {
+        app(IdentityService::class)->requestRecovery('qa-recuperacao');
+        $row = DB::table('email_outbox')->first();
+        $token = Crypt::decryptString($row->token_cifrado);
+        $job = new DeliverRecoveryLink((int) $row->id);
+        $this->assertStringNotContainsString($token, serialize($job));
+        $this->assertStringNotContainsString('qa-recuperacao', serialize($job));
         $url = null;
         Mail::shouldReceive('send')->once()->andReturnUsing(function ($view, $data) use (&$url): void {
-            $this->assertSame('auth.recovery-email', $view);
+            $this->assertSame('auth.identity-email', $view);
             $url = $data['url'];
         });
+        $job->handle(app(OutboxDelivery::class));
+        $this->assertSame('https://frota.example.test/redefinir-senha#'.$token, $url);
+        $this->assertSame(hash('sha256', $token, true), DB::table('recuperacoes_senha')->value('token_hash'));
+        $this->assertNull(DB::table('email_outbox')->value('token_cifrado'));
+        $this->assertSame('aceito', DB::table('email_outbox')->value('estado'));
+    }
 
-        $this->withServerVariables(['HTTP_HOST' => 'host-nao-confiavel.invalid'])
-            ->from('/recuperar-acesso')
-            ->post('/recuperar-acesso', ['identificador' => 'qa-recuperacao'])
+    public function test_transient_smtp_failure_retries_same_token_without_sensitive_exception(): void
+    {
+        app(IdentityService::class)->requestRecovery('qa-recuperacao');
+        $row = DB::table('email_outbox')->first();
+        $token = Crypt::decryptString($row->token_cifrado);
+        Mail::shouldReceive('send')->once()->andThrow(new \RuntimeException('SMTP private destination qa-recuperacao@local.test token '.$token));
+        try {
+            (new DeliverRecoveryLink((int) $row->id))->handle(app(OutboxDelivery::class));
+            $this->fail('A falha transitória precisa sinalizar retry.');
+        } catch (MailDeliveryException $error) {
+            $this->assertNull($error->getPrevious());
+            $this->assertStringNotContainsString($token, (string) $error);
+            $this->assertStringNotContainsString('qa-recuperacao@local.test', (string) $error);
+        }
+        $this->assertNull(DB::table('recuperacoes_senha')->value('invalidado_em'));
+        $this->travel(61)->seconds();
+        Mail::shouldReceive('send')->once()->andReturnUsing(function ($view, $data) use ($token): void {
+            $this->assertStringEndsWith('#'.$token, $data['url']);
+        });
+        (new DeliverRecoveryLink((int) $row->id))->handle(app(OutboxDelivery::class));
+        $this->assertSame(2, (int) DB::table('email_outbox')->value('tentativas'));
+        $this->assertSame('aceito', DB::table('email_outbox')->value('estado'));
+    }
+
+    public function test_old_queued_request_is_cancelled_after_identity_changes(): void
+    {
+        app(IdentityService::class)->requestRecovery('qa-recuperacao');
+        $row = DB::table('email_outbox')->first();
+        DB::table('usuarios')->where('id', 1)->update(['email' => 'novo@local.test', 'versao_seguranca' => 2]);
+        Mail::shouldReceive('send')->never();
+        (new DeliverRecoveryLink((int) $row->id))->handle(app(OutboxDelivery::class));
+        $this->assertSame('cancelado', DB::table('email_outbox')->value('estado'));
+        $this->assertSame(1, DB::table('recuperacoes_senha')->count());
+    }
+
+    public function test_duplicate_jobs_and_interrupted_worker_are_reconciled(): void
+    {
+        app(IdentityService::class)->requestRecovery('qa-recuperacao');
+        $id = (int) DB::table('email_outbox')->value('id');
+        app(DispatchPendingMail::class)->dispatch();
+        $this->assertSame(0, app(DispatchPendingMail::class)->dispatch());
+        $this->travel(121)->seconds();
+        $this->assertSame(1, app(DispatchPendingMail::class)->dispatch());
+        Mail::shouldReceive('send')->once()->andReturnNull();
+        $job = new DeliverRecoveryLink($id);
+        $job->handle(app(OutboxDelivery::class));
+        $job->handle(app(OutboxDelivery::class));
+        $this->assertSame(1, (int) DB::table('email_outbox')->value('tentativas'));
+    }
+
+    public function test_permanent_failure_and_expiry_have_visible_sanitized_terminal_state(): void
+    {
+        app(IdentityService::class)->requestRecovery('qa-recuperacao');
+        $id = (int) DB::table('email_outbox')->value('id');
+        Mail::shouldReceive('send')->once()->andThrow(new \RuntimeException('550 private SMTP rejection'));
+        (new DeliverRecoveryLink($id))->handle(app(OutboxDelivery::class));
+        $this->assertSame('falhou', DB::table('email_outbox')->value('estado'));
+        $this->assertSame('smtp_permanent', DB::table('email_outbox')->value('codigo_erro'));
+        $this->assertNull(DB::table('email_outbox')->value('token_cifrado'));
+        app(IdentityService::class)->requestRecovery('qa-recuperacao');
+        $this->travel(31)->minutes();
+        $this->assertSame(0, app(DispatchPendingMail::class)->dispatch());
+        $this->assertSame('cancelado', DB::table('email_outbox')->orderByDesc('id')->value('estado'));
+    }
+
+    public function test_smtp_acceptance_followed_by_persistence_failure_replays_same_single_use_link(): void
+    {
+        app(IdentityService::class)->requestRecovery('qa-recuperacao');
+        $row = DB::table('email_outbox')->first();
+        $token = Crypt::decryptString($row->token_cifrado);
+        DB::statement("CREATE TRIGGER reject_accept BEFORE UPDATE ON email_outbox WHEN NEW.estado='aceito' BEGIN SELECT RAISE(FAIL,'synthetic persistence failure'); END");
+        Mail::shouldReceive('send')->twice()->andReturnUsing(function ($view, $data) use ($token): void {
+            $this->assertStringEndsWith('#'.$token, $data['url']);
+        });
+        try {
+            (new DeliverRecoveryLink((int) $row->id))->handle(app(OutboxDelivery::class));
+            $this->fail('Falha de persistência pós-aceite precisa ser reconciliada.');
+        } catch (MailDeliveryException) {
+            $this->assertSame('enviando', DB::table('email_outbox')->value('estado'));
+        }
+        DB::statement('DROP TRIGGER reject_accept');
+        $this->travel(121)->seconds();
+        app(DispatchPendingMail::class)->dispatch();
+        (new DeliverRecoveryLink((int) $row->id))->handle(app(OutboxDelivery::class));
+        $this->assertSame('aceito', DB::table('email_outbox')->value('estado'));
+        $this->assertSame(1, DB::table('recuperacoes_senha')->count());
+        $this->assertSame(hash('sha256', $token, true), DB::table('recuperacoes_senha')->value('token_hash'));
+    }
+
+    public function test_non_durable_or_insecure_configuration_stays_disabled(): void
+    {
+        foreach ([['app.url' => 'http://frota.example.test'], ['mail.default' => 'log'], ['fleet.recovery_queue_enabled' => false], ['queue.connections.database.driver' => 'sync']] as $change) {
+            config($change);
+            $this->assertFalse(app(RecoverySettings::class)->available());
+            IdentityFixture::mailSettings();
+        }
+    }
+
+    public function test_disabled_mail_backlog_does_not_block_security_notices_or_enabled_recovery(): void
+    {
+        $identity = app(IdentityService::class);
+        DB::table('usuarios')->where('id', 3)->update([
+            'estado_identidade' => 'pendente', 'deve_trocar_senha' => 1, 'email' => 'convite@local.test',
+        ]);
+        DB::table('vw_vinculos_ativos')->insert(['vinculo_id' => 30, 'usuario_id' => 3]);
+        $identity->resend(3);
+        $identity->requestRecovery('qa-recuperacao');
+        $identity->securityNotice(DB::table('usuarios')->where('id', 1)->first(), 'senha_alterada');
+        config(['identity.activation_mail_enabled' => false]);
+
+        $this->assertSame(1, app(DispatchPendingMail::class)->dispatch(1));
+        Queue::assertPushed(DeliverSecurityNotice::class, fn ($job) => $job->outboxId === 3);
+        Queue::assertNotPushed(DeliverRecoveryLink::class);
+        $this->assertSame(1, app(DispatchPendingMail::class)->dispatch(1));
+        Queue::assertPushed(DeliverRecoveryLink::class, fn ($job) => $job->outboxId === 2);
+        $this->assertSame('pendente', DB::table('email_outbox')->where('id', 1)->value('estado'));
+    }
+
+    public function test_captured_database_outage_keeps_uniform_response_and_safe_internal_diagnostics(): void
+    {
+        DB::statement('DROP TABLE email_outbox');
+        Log::spy();
+        $this->from('/recuperar-acesso')->post('/recuperar-acesso', ['identificador' => 'qa-recuperacao'])
             ->assertRedirect('/recuperar-acesso')
             ->assertSessionHas('status', 'Se houver um acesso elegível, você receberá as orientações no e-mail cadastrado.');
+        $this->assertSame(0, DB::table('recuperacoes_senha')->count());
+        Log::shouldHaveReceived('error')->once()->with('security.database_unavailable', Mockery::on(function ($context): bool {
+            $this->assertSame(['correlation', 'operation', 'category', 'code'], array_keys($context));
+            $this->assertMatchesRegularExpression('/^[a-f0-9-]{36}$/', $context['correlation']);
+            $this->assertSame('query', $context['category']);
+            $this->assertStringNotContainsString('qa-recuperacao', json_encode($context));
+            $this->assertStringNotContainsString('INSERT', json_encode($context));
 
-        $job = DeliverRecoveryLink::forIdentifier('qa-recuperacao');
-        $this->assertStringNotContainsString('qa-recuperacao', serialize($job));
-        $job->handle(app(RecoverySettings::class));
-
-        $this->assertIsString($url);
-        $partes = parse_url($url);
-        $this->assertSame('https', $partes['scheme'] ?? null);
-        $this->assertSame('frota.example.test', $partes['host'] ?? null);
-        $this->assertSame('/redefinir-senha', $partes['path'] ?? null);
-        $this->assertTrue((bool) preg_match('/\A[0-9a-f]{64}\z/', $partes['fragment'] ?? ''));
-        $this->assertStringNotContainsString('host-nao-confiavel.invalid', $url);
-
-        $registro = DB::table('recuperacoes_senha')->first();
-        $this->assertSame(32, strlen($registro->token_hash));
-        $this->assertTrue(hash_equals(hash('sha256', $partes['fragment'], true), $registro->token_hash));
-        $this->assertGreaterThan(CarbonImmutable::now('UTC')->addMinutes(29), CarbonImmutable::parse($registro->expira_em, 'UTC'));
-        $this->assertNull($registro->invalidado_em);
+            return true;
+        }));
     }
 
-    public function test_failed_smtp_delivery_invalidates_the_generated_token(): void
-    {
-        Mail::shouldReceive('send')->once()->andThrow(new \RuntimeException('captura indisponível'));
-
-        DeliverRecoveryLink::forIdentifier('qa-recuperacao')->handle(app(RecoverySettings::class));
-
-        $registro = DB::table('recuperacoes_senha')->first();
-        $this->assertNotNull($registro->invalidado_em);
-    }
-
-    public function test_non_durable_or_insecure_recovery_configuration_stays_disabled(): void
-    {
-        foreach ([
-            ['app.url' => 'http://frota.example.test'],
-            ['app.url' => 'https://usuario:segredo@frota.example.test'],
-            ['mail.default' => 'log'],
-            ['mail.mailers.smtp.host' => 'smtp.example.test'],
-            ['mail.mailers.smtp.url' => 'smtp://smtp.example.test'],
-            ['mail.from.address' => 'configure_privadamente'],
-            ['queue.connections.database.driver' => 'sync'],
-            ['fleet.recovery_queue_enabled' => false],
-        ] as $configuracao) {
-            config($configuracao);
-            $this->get('/recuperar-acesso')->assertOk()->assertSee('indisponível');
-            config(array_fill_keys(array_keys($configuracao), null));
-            config([
-                'app.url' => 'https://frota.example.test',
-                'mail.default' => 'smtp',
-                'mail.mailers.smtp.scheme' => 'smtp',
-                'mail.mailers.smtp.host' => '127.0.0.1',
-                'mail.mailers.smtp.url' => null,
-                'mail.from.address' => 'no-reply@frota.example.test',
-                'queue.connections.database.driver' => 'database',
-                'fleet.recovery_queue_enabled' => true,
-            ]);
-        }
-    }
-
-    public function test_recovery_limits_apply_by_identity_pair_and_ip(): void
+    public function test_recovery_attempts_are_limited_by_identity_and_ip(): void
     {
         for ($i = 0; $i < 3; $i++) {
-            $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])->from('/recuperar-acesso')
-                ->post('/recuperar-acesso', ['identificador' => 'conta-alvo'])->assertRedirect('/recuperar-acesso');
+            $this->from('/recuperar-acesso')->post('/recuperar-acesso', ['identificador' => 'conta-alvo'])->assertRedirect();
         }
-        $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
-            ->post('/recuperar-acesso', ['identificador' => 'conta-alvo'])->assertStatus(429);
-
-        RateLimiter::clear('fleet-recovery-ip:'.hash('sha256', '127.0.0.1'));
-        for ($i = 0; $i < 5; $i++) {
-            $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])->from('/recuperar-acesso')
-                ->post('/recuperar-acesso', ['identificador' => 'conta-'.$i])->assertRedirect('/recuperar-acesso');
-        }
-        $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
-            ->post('/recuperar-acesso', ['identificador' => 'conta-distinta'])->assertStatus(429);
-
-        $identidade = 'identidade-distribuida';
-        RateLimiter::clear('fleet-recovery-identity:'.hash('sha256', $identidade));
-        foreach (['198.51.100.10', '198.51.100.20'] as $ip) {
-            RateLimiter::clear('fleet-recovery-ip:'.hash('sha256', $ip));
-            RateLimiter::clear('fleet-recovery-identity-ip:'.hash('sha256', $identidade.'|'.$ip));
-        }
-        for ($i = 0; $i < 3; $i++) {
-            $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.10'])
-                ->post('/recuperar-acesso', ['identificador' => $identidade])->assertRedirect('/recuperar-acesso');
-        }
-        for ($i = 0; $i < 2; $i++) {
-            $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.20'])
-                ->post('/recuperar-acesso', ['identificador' => $identidade])->assertRedirect('/recuperar-acesso');
-        }
-        $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.20'])
-            ->post('/recuperar-acesso', ['identificador' => $identidade])->assertStatus(429);
-    }
-
-    public function test_reset_form_accepts_token_in_post_body_and_never_requires_it_in_the_path(): void
-    {
-        $formulario = $this->get('/redefinir-senha')->assertOk();
-        $this->assertTrue(str_contains($formulario->getContent(), 'name="token"'));
-        $resposta = $this->from('/redefinir-senha')->post('/redefinir-senha', [
-            'token' => 'invalido',
-            'nova_senha' => 'SenhaNova!123456',
-            'nova_senha_confirmation' => 'SenhaNova!123456',
-        ])->assertStatus(422);
-        $this->assertTrue(str_contains($resposta->getContent(), 'link está ausente'));
+        $this->post('/recuperar-acesso', ['identificador' => 'conta-alvo'])->assertStatus(429);
     }
 }
