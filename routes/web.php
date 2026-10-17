@@ -4,21 +4,31 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\IdentityController;
+use App\Http\Controllers\Auth\MfaController;
 use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\Auth\SessionController;
 use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\FineController;
+use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RecordController;
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\SolicitacoesController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SolicitacoesController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\TyreController;
 use App\Http\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/ativar-acesso', [IdentityController::class, 'activate'])->name('identity.activate');
+Route::post('/ativar-acesso', [IdentityController::class, 'consumeActivation'])->name('identity.consumeActivation')->block();
+Route::post('/ativar-acesso/reenviar', [IdentityController::class, 'requestActivation'])->name('identity.requestActivation');
+Route::get('/confirmar-email', [IdentityController::class, 'verifyEmail'])->name('identity.verifyEmail');
+Route::post('/confirmar-email', [IdentityController::class, 'consumeEmail'])->name('identity.consumeEmail')->block();
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/', [AuthController::class, 'login'])->name('access.index');
@@ -30,9 +40,19 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/redefinir-senha', [PasswordController::class, 'consume'])->name('recovery.consume');
 });
 Route::middleware('auth')->group(function (): void {
+    Route::post('/convite/reenviar', [IdentityController::class, 'resend'])->name('identity.resend')->block();
     Route::post('/sair', [AuthController::class, 'logout'])->name('logout');
     Route::get('/acesso-restrito', [AuthController::class, 'restricted'])->name('access.restricted');
     Route::middleware('fleet.session')->group(function (): void {
+        Route::post('/conta/email', [IdentityController::class, 'changeEmail'])->name('identity.changeEmail')->block();
+        Route::get('/sessao/status', [SessionController::class, 'status'])->name('session.status')->block();
+        Route::post('/sessao/reautenticar', [SessionController::class, 'reauthenticate'])->name('session.reauthenticate')->block();
+        Route::get('/seguranca/mfa', [MfaController::class, 'index'])->name('mfa.index');
+        Route::post('/seguranca/mfa/opcoes', [MfaController::class, 'options'])->name('mfa.options')->middleware('throttle:10,1')->block();
+        Route::post('/seguranca/mfa/confirmar', [MfaController::class, 'verify'])->name('mfa.verify')->middleware('throttle:10,1')->block();
+        Route::post('/seguranca/mfa/recuperacoes', [MfaController::class, 'recover'])->name('mfa.recover')->middleware('throttle:5,1')->block();
+        Route::post('/seguranca/mfa/recuperacoes/{recovery}/aprovar', [MfaController::class, 'approve'])->whereNumber('recovery')->name('mfa.approve')->middleware('throttle:5,1')->block();
+
         Route::get('/selecionar-perfil', [AuthController::class, 'profiles'])->name('profiles.index');
         Route::post('/selecionar-perfil', [AuthController::class, 'select'])->name('profiles.select');
         Route::get('/alterar-senha', [PasswordController::class, 'edit'])->name('password.edit');
@@ -40,7 +60,7 @@ Route::middleware('auth')->group(function (): void {
     });
 });
 
-Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->group(function (): void {
+Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.mfa', 'fleet.enabled'])->group(function (): void {
     foreach (['despesas' => 'financeiro/despesas', 'multas' => 'financeiro/multas', 'usuarios' => 'administracao/usuarios', 'perfis' => 'administracao/perfis', 'rotas' => 'administracao/rotas', 'auditoria' => 'administracao/auditoria', 'configuracao' => 'administracao/configuracoes'] as $origem => $destino) {
         Route::redirect('/'.$origem, '/'.$destino);
     }
@@ -92,24 +112,24 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     }
 
     Route::prefix('solicitacoes')->as('solicitacoes.')->controller(SolicitacoesController::class)->group(function (): void {
-            Route::get('', 'index')->defaults('tela', 'requests')->name('index');
-            Route::get('novo', 'create')->defaults('tela', 'requests')->name('create');
-            Route::post('novo', 'store')->defaults('tela', 'requests')->name('store');
-            Route::get('{registro}/anexos/{anexo}', 'download')->whereNumber('registro')->whereNumber('anexo')->defaults('tela', 'requests')->name('download');
-            Route::get('{registro}', 'show')->whereNumber('registro')->defaults('tela', 'requests')->name('show');
-            Route::get('{registro}/edit', 'edit')->whereNumber('registro')->defaults('tela', 'requests')->name('edit');
-            Route::patch('{registro}/edit', 'update')->whereNumber('registro')->defaults('tela', 'requests')->name('update');
-            Route::post('{registro}/send', 'sendSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('send.submit');
-            Route::post('{registro}/revision', 'revisionSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('revision.submit');
-            Route::post('{registro}/approve', 'approveSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('approve.submit');
-            Route::post('{registro}/deny', 'denySubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('deny.submit');
-            Route::post('{registro}/adjust', 'adjustSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('adjust.submit');
-        });
+        Route::get('', 'index')->defaults('tela', 'requests')->name('index');
+        Route::get('novo', 'create')->defaults('tela', 'requests')->name('create');
+        Route::post('novo', 'store')->defaults('tela', 'requests')->name('store');
+        Route::get('{registro}/anexos/{anexo}', 'download')->whereNumber('registro')->whereNumber('anexo')->defaults('tela', 'requests')->name('download');
+        Route::get('{registro}', 'show')->whereNumber('registro')->defaults('tela', 'requests')->name('show');
+        Route::get('{registro}/edit', 'edit')->whereNumber('registro')->defaults('tela', 'requests')->name('edit');
+        Route::patch('{registro}/edit', 'update')->whereNumber('registro')->defaults('tela', 'requests')->name('update');
+        Route::post('{registro}/send', 'sendSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('send.submit');
+        Route::post('{registro}/revision', 'revisionSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('revision.submit');
+        Route::post('{registro}/approve', 'approveSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('approve.submit');
+        Route::post('{registro}/deny', 'denySubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('deny.submit');
+        Route::post('{registro}/adjust', 'adjustSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('adjust.submit');
+    });
 
-    //Rotas Gestor
+    // Rotas Gestor
     // Compartilhadas com outros perfis conforme as permissoes do vinculo ativo.
     Route::get('/painel', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/historico-trajetos', [\App\Http\Controllers\MonitoringController::class, 'history'])->name('history.index');
+    Route::get('/historico-trajetos', [MonitoringController::class, 'history'])->name('history.index');
     Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
     Route::get('/agenda/reservas/{reserva}', [AgendaController::class, 'show'])->whereNumber('reserva')->name('agenda.show');
     Route::get('/conta', [AccountController::class, 'index'])->name('account.index');
