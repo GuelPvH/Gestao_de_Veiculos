@@ -1,0 +1,6 @@
+{
+  "localConfigurationOverridesExternalSettings": true,
+  "blankCredentialLinesAccepted": true,
+  "missingLoginRefusedForPopulatedDatabase": true,
+  "existingLoginPreserved": true
+}
