@@ -46,6 +46,16 @@ class ValidateFleetSession
         if ($requisicao->routeIs('session.status')) {
             return $proximo($requisicao);
         }
+        if ($requisicao->routeIs('session.reauthenticate') && $requisicao->expectsJson()) {
+            if (($usuario->estado_identidade ?? 'legado') === 'pendente') {
+                return response()->json(['state' => 'ACTIVATION_REQUIRED'], 403);
+            }
+            if ($usuario->deve_trocar_senha) {
+                return response()->json(['state' => 'PASSWORD_CHANGE_REQUIRED'], 403);
+            }
+
+            return $proximo($requisicao);
+        }
         app(RequestAccessReader::class)->load($requisicao, $vinculo, app(AccessContext::class));
         $configuracao = $requisicao->attributes->get('fleet.configuration');
         $fuso = $configuracao ? $configuracao->fuso_horario : DB::table('configuracao_sistema')->where('id', 1)->value('fuso_horario');
