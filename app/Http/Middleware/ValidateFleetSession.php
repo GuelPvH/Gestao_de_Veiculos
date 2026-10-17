@@ -21,7 +21,7 @@ class ValidateFleetSession
         $usuario = Auth::user();
         abort_unless($usuario instanceof User && $usuario->ativo, 401);
         try {
-            $vinculo = app(FleetSession::class)->validate($requisicao, $usuario);
+            $vinculo = app(FleetSession::class)->validate($requisicao, $usuario, ! $requisicao->routeIs('session.status', 'session.reauthenticate'));
         } catch (Throwable $erro) {
             if ($erro instanceof \PDOException) {
                 abort(503);
@@ -32,18 +32,29 @@ class ValidateFleetSession
             Auth::logout();
             $requisicao->session()->invalidate();
             $requisicao->session()->regenerateToken();
+            if ($requisicao->expectsJson() && $erro->getStatusCode() === 401) {
+                return response()->json(['state' => 'SESSION_ENDED'], 401);
+            }
             if ($erro->getStatusCode() === 503) {
                 abort(503);
             }
 
             return redirect()->route('login')->with('status', 'Sua sessão terminou ou o acesso foi alterado. Entre novamente.');
         }
+        // Status keeps all session/revocation checks, without loading page presentation data.
+        if ($requisicao->routeIs('session.status')) {
+            return $proximo($requisicao);
+        }
         app(AccessContext::class)->load($vinculo);
-        $fuso = DB::table('configuracao_sistema')->where('id', 1)->value('fuso_horario');
+        $configuracao = $requisicao->attributes->get('fleet.configuration');
+        $fuso = $configuracao ? $configuracao->fuso_horario : DB::table('configuracao_sistema')->where('id', 1)->value('fuso_horario');
         config(['fleet.timezone' => in_array($fuso, timezone_identifiers_list(), true) ? $fuso : 'America/Porto_Velho']);
         View::share(['usuarioAtual' => $usuario, 'vinculoAtual' => $vinculo, 'acesso' => app(AccessContext::class)]);
-        if ($usuario->deve_trocar_senha && ! $requisicao->routeIs('password.*', 'logout')) {
-            return redirect()->route('password.edit');
+        if (($usuario->estado_identidade ?? 'legado') === 'pendente' && ! $requisicao->routeIs('identity.resend', 'logout', 'session.status')) {
+            return $requisicao->expectsJson() ? response()->json(['state' => 'ACTIVATION_REQUIRED'], 403) : redirect()->route('access.restricted')->with('status', 'Conclua a ativação pelo link individual enviado ao e-mail cadastrado.');
+        }
+        if ($usuario->deve_trocar_senha && ! $requisicao->routeIs('password.edit', 'password.update', 'logout', 'session.status')) {
+            return $requisicao->expectsJson() ? response()->json(['state' => 'PASSWORD_CHANGE_REQUIRED'], 403) : redirect()->route('password.edit');
         }
 
         return $proximo($requisicao);
