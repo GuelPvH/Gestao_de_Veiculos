@@ -194,7 +194,13 @@ class VehicleWorkflow
             if (($dados[$campo] ?? null) === null || $dados[$campo] === '') {
                 continue;
             }
-            $consulta = DB::table('veiculos')->where($campo, $dados[$campo]);
+            $consulta = DB::table('veiculos');
+            if ($campo === 'placa') {
+                $normalizada = strtoupper(preg_replace('/[\s-]+/', '', $dados[$campo]));
+                $consulta->whereRaw("REPLACE(REPLACE(UPPER(placa), ' ', ''), '-', '') = ?", [$normalizada]);
+            } else {
+                $consulta->where($campo, $dados[$campo]);
+            }
             if ($except !== null) {
                 $consulta->where('id', '<>', $except);
             }
