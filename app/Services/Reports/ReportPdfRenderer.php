@@ -29,6 +29,7 @@ class ReportPdfRenderer
                     } else {
                         $texto = $this->leituras->format($valor, $contratos[$campo->chave][2] ?? 'text');
                     }
+
                     // Smaller physical rows let Dompdf paginate long descriptions without clipping them.
                     return mb_str_split((string) $texto, 240) ?: [''];
                 })->values();
