@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Services\Auth\IdentityService;
 use App\Services\Auth\PasswordPolicy;
+use App\Support\CurrentUser;
+use App\Support\Value;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,16 +43,17 @@ class IdentityController extends Controller
 
     public function resend(Request $request, IdentityService $identity): RedirectResponse
     {
-        $this->limit($request, 'resend', (string) $request->user()->getAuthIdentifier(), 3);
-        $identity->resend((int) $request->user()->getAuthIdentifier());
+        $this->limit($request, 'resend', Value::string(CurrentUser::get($request)->getAuthIdentifier()), 3);
+        $identity->resend(Value::integer(CurrentUser::get($request)->getAuthIdentifier()));
 
         return back()->with('status', 'Se houver um convite elegível, você receberá as orientações no e-mail cadastrado.');
     }
 
     public function requestActivation(Request $request, IdentityService $identity): RedirectResponse
     {
+        /** @var array<string, mixed> $data */
         $data = $request->validate(['identificador' => ['required', 'string', 'max:100']]);
-        $identifier = mb_strtolower(trim($data['identificador']));
+        $identifier = mb_strtolower(trim(Value::string($data['identificador'])));
         $this->limit($request, 'activation', $identifier, 3);
         try {
             $identity->requestActivation($identifier);
@@ -66,9 +69,10 @@ class IdentityController extends Controller
 
     public function changeEmail(Request $request, IdentityService $identity): RedirectResponse
     {
-        $this->limit($request, 'change-email', (string) $request->user()->getAuthIdentifier(), 5);
+        $this->limit($request, 'change-email', Value::string(CurrentUser::get($request)->getAuthIdentifier()), 5);
+        /** @var array<string, mixed> $data */
         $data = $request->validate(['email' => ['required', 'email:rfc', 'max:254'], 'senha_atual' => ['required', 'string', 'max:256']]);
-        $identity->requestEmailChange((int) $request->user()->getAuthIdentifier(), $data['email'], $data['senha_atual']);
+        $identity->requestEmailChange(Value::integer(CurrentUser::get($request)->getAuthIdentifier()), Value::string($data['email']), Value::string($data['senha_atual']));
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -90,9 +94,9 @@ class IdentityController extends Controller
         $data = $validator->validated();
         try {
             if ($purpose === 'ativacao') {
-                $identity->consumeActivation($data['token'], $data['nova_senha']);
+                $identity->consumeActivation(Value::string($data['token']), Value::string($data['nova_senha']));
             } else {
-                $identity->consumeEmail($data['token']);
+                $identity->consumeEmail(Value::string($data['token']));
             }
         } catch (ValidationException $error) {
             return response()->view('auth.identity-token', ['purpose' => $purpose, 'token' => '', 'errors' => $error->validator->errors()], 422);

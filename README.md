@@ -37,6 +37,12 @@ composer format:check
 npm run format:check
 ```
 
+## Análise estática
+
+Execute `composer analyse` para analisar `app` e `routes` com PHPStan e Larastan.
+O projeto usa o nível máximo (`max`, atualmente 10), com verificação dos tipos de configuração,
+sem baseline ou regras de supressão.
+
 ## Desenvolvimento com banco remoto
 
 O padrão da equipe é usar o banco remoto configurado privadamente no `.env`.

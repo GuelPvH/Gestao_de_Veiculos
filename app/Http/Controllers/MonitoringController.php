@@ -13,6 +13,7 @@ class MonitoringController extends Controller
     public function history(Request $request, MonitoringReportRepository $repository, FleetReadRepository $leituras): View
     {
         $veiculos = $repository->vehicleOptions();
+        /** @var array<string, mixed> $filtros */
         $filtros = $request->validate([
             'veiculo_id' => ['nullable', 'required_with:de,ate', 'integer', Rule::in(array_keys($veiculos))],
             'de' => ['nullable', 'required_with:veiculo_id,ate', 'date_format:Y-m-d'],

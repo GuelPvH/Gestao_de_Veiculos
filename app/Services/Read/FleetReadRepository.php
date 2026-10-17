@@ -3,6 +3,7 @@
 namespace App\Services\Read;
 
 use App\Services\Authorization\AccessContext;
+use App\Support\Value;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -10,13 +11,34 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use stdClass;
 
+/**
+ * @phpstan-type Column array{0: literal-string, 1: string, 2?: string, 3?: string}
+ * @phpstan-type Screen array{title: string, module: string, icon: string, url: string, route?: string, table: literal-string, id?: literal-string, owner: literal-string|null, unit: literal-string|null, date?: literal-string, dateOnly?: bool, columns: array<literal-string, Column>, details: array<literal-string, Column>, reportColumns?: array<literal-string, Column>, states: list<string>, actions: array<string, array{string, string}>, create?: bool, joins?: list<array{literal-string, literal-string, literal-string}>, required?: literal-string}
+ * @phpstan-type Row array{id: mixed, valores: array<string, string>}
+ */
 class FleetReadRepository
 {
+    /**
+     * @return array<array-key, mixed>
+     */
     public function __construct(private AccessContext $acesso) {}
 
+    /** @return array<string, Screen> */
+    public static function definitions(): array
+    {
+        // Screen contracts are authored in config/screens.php, never supplied by a request.
+        /** @var array<string, Screen> $screens */
+        $screens = config('screens');
+
+        return $screens;
+    }
+
+    /**
+     * @return Screen
+     */
     public function definition(string $codigo): array
     {
-        $tela = config('screens.'.$codigo);
+        $tela = self::definitions()[$codigo] ?? null;
         abort_unless(is_array($tela), 404);
 
         return $tela;
@@ -44,18 +66,21 @@ class FleetReadRepository
             abort_unless($vinculo !== null, 403);
 
             return $consulta->where(function (Builder $proprios) use ($vinculo): void {
-                $proprios->where('r.solicitante_id', (int) $vinculo->usuario_id)
-                    ->orWhere('r.motorista_id', (int) $vinculo->usuario_id);
+                $proprios->where('r.solicitante_id', Value::integer($vinculo->usuario_id))
+                    ->orWhere('r.motorista_id', Value::integer($vinculo->usuario_id));
             });
         }
 
         return $this->acesso->scope($consulta, $tela['module'], $acao, $tela['owner'], $tela['unit']);
     }
 
+    /**
+     * @param  array<int, string>|null  $campos
+     */
     public function select(string $codigo, Builder $consulta, ?array $campos = null): Builder
     {
         $tela = $this->definition($codigo);
-        $colunas = $tela['columns'] + ($tela['details'] ?? []) + ($campos !== null ? ($tela['reportColumns'] ?? []) : []);
+        $colunas = $tela['columns'] + $tela['details'] + ($campos !== null ? ($tela['reportColumns'] ?? []) : []);
         $consulta->selectRaw(($tela['id'] ?? 'r.id').' as id');
         $consulta->selectRaw(($tela['owner'] ?? 'NULL').' as __owner, '.($tela['unit'] ?? 'NULL').' as __unit');
         if ($codigo === 'trips') {
@@ -67,7 +92,7 @@ class FleetReadRepository
             }
             if (isset($campo[3])) {
                 $predicado = $this->acesso->visibility($tela['module'], $campo[3], $tela['owner'], $tela['unit']);
-                $consulta->selectRaw('CASE WHEN '.$predicado.' THEN '.$campo[0].' ELSE NULL END AS '.$chave);
+                $consulta->selectRaw('CASE WHEN '.$predicado['sql'].' THEN '.$campo[0].' ELSE NULL END AS '.$chave, $predicado['bindings']);
             } else {
                 $consulta->addSelect($campo[0].' as '.$chave);
             }
@@ -76,6 +101,9 @@ class FleetReadRepository
         return $consulta;
     }
 
+    /**
+     * @param  array<string, mixed>  $filtros
+     */
     public function filtered(string $codigo, array $filtros): Builder
     {
         $consulta = $this->query($codigo);
@@ -84,7 +112,7 @@ class FleetReadRepository
             $consulta->where(function (Builder $busca) use ($tela, $filtros): void {
                 foreach ($tela['columns'] as $chave => $campo) {
                     if (! isset($campo[3]) && ! in_array($campo[2] ?? '', ['money', 'date', 'datetime'], true) && $chave !== 'situacao') {
-                        $busca->orWhere($campo[0], 'like', '%'.$filtros['q'].'%');
+                        $busca->orWhere($campo[0], 'like', '%'.Value::string($filtros['q']).'%');
                     }
                 }
             });
@@ -101,7 +129,7 @@ class FleetReadRepository
 
                 continue;
             }
-            $instante = CarbonImmutable::parse($filtros[$chave], config('fleet.timezone'));
+            $instante = CarbonImmutable::parse(Value::date($filtros[$chave]), config('fleet.timezone'));
             $limite = ($chave === 'de' ? $instante->startOfDay() : $instante->addDay()->startOfDay())->utc()->format('Y-m-d H:i:s.u');
             $operador = $chave === 'de' ? '>=' : '<';
             if ($codigo === 'trips') {
@@ -114,6 +142,11 @@ class FleetReadRepository
         return $consulta;
     }
 
+    /**
+     * @param  array<int, string>|null  $campos
+     * @param  array<string, mixed>  $filtros
+     * @return LengthAwarePaginator<int, stdClass>
+     */
     public function page(string $codigo, array $filtros, ?array $campos = null): LengthAwarePaginator
     {
         $tela = $this->definition($codigo);
@@ -136,8 +169,13 @@ class FleetReadRepository
             $manual = DB::table('reservas as rv')->leftJoin('manutencoes as m', 'm.reserva_id', '=', 'rv.id')->selectRaw('1')
                 ->whereColumn('rv.veiculo_id', 'r.id')->where('rv.situacao', 'ativa')
                 ->whereIn('rv.tipo', ['indisponibilidade', 'manutencao'])->whereNull('m.id');
-            $consulta->selectRaw('EXISTS('.$active->toSql().') AS __vehicle_active', $active->getBindings())
-                ->selectRaw('EXISTS('.$manual->toSql().') AS __manual_block', $manual->getBindings());
+            // Builder-generated SQL retains user data exclusively in its bindings.
+            /** @var non-falsy-string&literal-string $activeSql */
+            $activeSql = 'EXISTS('.$active->toSql().') AS __vehicle_active';
+            /** @var non-falsy-string&literal-string $manualSql */
+            $manualSql = 'EXISTS('.$manual->toSql().') AS __manual_block';
+            $consulta->selectRaw($activeSql, $active->getBindings())
+                ->selectRaw($manualSql, $manual->getBindings());
         }
         if ($codigo === 'fines') {
             $sender = DB::table('multa_comprovantes as c')->join('usuario_perfis as v', 'v.id', '=', 'c.enviado_por_vinculo_id')
@@ -150,6 +188,9 @@ class FleetReadRepository
         return $registro;
     }
 
+    /**
+     * @return array{registro: stdClass, eventos: array<array-key, mixed>, arquivos: array<array-key, mixed>}
+     */
     public function details(string $codigo, int $id): array
     {
         $registro = $this->record($codigo, $id);
@@ -164,18 +205,23 @@ class FleetReadRepository
         }
 
         return match ($tipo) {
-            'money' => 'R$ '.number_format((float) $valor, 2, ',', '.'),
-            'datetime' => CarbonImmutable::parse($valor, 'UTC')->setTimezone(config('fleet.timezone'))->format('d/m/Y H:i'),
-            'date' => CarbonImmutable::parse($valor)->format('d/m/Y'),
-            'bool' => (int) $valor === 1 ? 'Ativo' : 'Inativo',
-            default => str_replace('_', ' ', (string) $valor),
+            'money' => 'R$ '.number_format(Value::number($valor), 2, ',', '.'),
+            'datetime' => CarbonImmutable::parse(Value::date($valor), 'UTC')->setTimezone(config('fleet.timezone'))->format('d/m/Y H:i'),
+            'date' => CarbonImmutable::parse(Value::date($valor))->format('d/m/Y'),
+            'bool' => Value::integer($valor) === 1 ? 'Ativo' : 'Inativo',
+            default => str_replace('_', ' ', Value::string($valor)),
         };
     }
 
+    /**
+     * @param  array<int, string>|null  $campos
+     * @param  Collection<int, stdClass>  $registros
+     * @return Collection<int, Row>
+     */
     public function rows(string $codigo, Collection $registros, ?array $campos = null): Collection
     {
         $tela = $this->definition($codigo);
-        $colunas = $tela['columns'] + ($tela['details'] ?? []) + ($campos !== null ? ($tela['reportColumns'] ?? []) : []);
+        $colunas = $tela['columns'] + $tela['details'] + ($campos !== null ? ($tela['reportColumns'] ?? []) : []);
 
         return $registros->map(function (stdClass $registro) use ($colunas, $campos): array {
             $valores = [];
@@ -190,6 +236,9 @@ class FleetReadRepository
         });
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function history(string $codigo, int $id): array
     {
         if (! in_array($codigo, ['requests', 'fines', 'tickets'], true)) {
@@ -200,7 +249,9 @@ class FleetReadRepository
         return $this->historyForRecord($codigo, $id);
     }
 
-    /** @param array<string,list<int>> $references */
+    /** @param array<string, array<int, int>> $references
+     * @return array<string, array<int, true>>
+     */
     public function authorizedReferences(array $references): array
     {
         $query = null;
@@ -214,13 +265,16 @@ class FleetReadRepository
         $authorized = [];
         if ($query !== null) {
             foreach (DB::query()->fromSub($query, 'referencias')->get() as $record) {
-                $authorized[$record->codigo][(int) $record->id] = true;
+                $authorized[Value::string($record->codigo)][Value::integer($record->id)] = true;
             }
         }
 
         return $authorized;
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     private function historyForRecord(string $codigo, int $id): array
     {
         $contratos = ['requests' => ['solicitacao_eventos', 'solicitacao_id'], 'fines' => ['multa_eventos', 'multa_id'], 'tickets' => ['chamado_eventos', 'chamado_id']];
@@ -229,19 +283,25 @@ class FleetReadRepository
         }
         [$tabela, $coluna] = $contratos[$codigo];
 
-        return DB::table($tabela)->where($coluna, $id)->orderByDesc('id')->limit(40)->get(['tipo', 'criado_em', 'motivo'])->map(fn (stdClass $evento) => ['titulo' => ucfirst(str_replace('_', ' ', $evento->tipo)), 'data' => $this->format($evento->criado_em, 'datetime'), 'descricao' => $evento->motivo ?? ''])->all();
+        return DB::table($tabela)->where($coluna, $id)->orderByDesc('id')->limit(40)->get(['tipo', 'criado_em', 'motivo'])->map(fn (stdClass $evento) => ['titulo' => ucfirst(str_replace('_', ' ', Value::string($evento->tipo))), 'data' => $this->format($evento->criado_em, 'datetime'), 'descricao' => $evento->motivo ?? ''])->all();
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function attachments(string $codigo, int $id): array
     {
         return $this->attachmentsForRecord($codigo, $id, $this->record($codigo, $id));
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     private function attachmentsForRecord(string $codigo, int $id, stdClass $dados): array
     {
         $contratos = ['fines' => 'multa_id', 'expenses' => 'despesa_id', 'fuel' => 'despesa_id', 'maintenance' => 'manutencao_id', 'tickets' => 'chamado_id'];
         if (in_array($codigo, ['expenses', 'fuel', 'maintenance'], true)
-            && ! $this->acesso->can('despesas', 'ver_valores', (int) $dados->__owner, (int) $dados->__unit)) {
+            && ! $this->acesso->can('despesas', 'ver_valores', Value::integer($dados->__owner), Value::integer($dados->__unit))) {
             return [];
         }
         $consulta = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id');

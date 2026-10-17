@@ -12,6 +12,9 @@ class TripActionRequest extends FormRequest
         return in_array($this->route('acao'), ['departure', 'return', 'occurrence', 'cancel'], true);
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         $regras = ['versao' => ['required', 'integer', 'min:1']];

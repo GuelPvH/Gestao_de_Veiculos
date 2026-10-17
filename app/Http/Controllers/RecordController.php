@@ -9,6 +9,7 @@ use App\Services\Read\AdminReadRepository;
 use App\Services\Read\FleetReadRepository;
 use App\Services\Read\OperationalReadRepository;
 use App\Services\Read\OperationCatalog;
+use App\Support\Value;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -29,6 +30,7 @@ class RecordController extends Controller
         if ($codigo === 'monitoring') {
             return view('monitoring.index', compact('tela'));
         }
+        /** @var array<string, mixed> $filtros */
         $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de', 'ordem' => 'nullable|in:recentes,antigos', 'page' => 'nullable|integer|min:1']);
         if ($codigo === 'trips') {
             $filtros = array_intersect_key($filtros, array_flip(['q', 'situacao', 'page']));
@@ -45,10 +47,11 @@ class RecordController extends Controller
             ? app(OperationalReadRepository::class)->details($codigo, $registro)
             : $this->leituras->details($codigo, $registro);
         $dados = $detalhes['registro'];
+        abort_unless($dados instanceof \stdClass, 404);
         $mensagens = collect();
         if ($codigo === 'tickets') {
             $consulta = DB::table('chamado_mensagens as m')->join('usuario_perfis as v', 'v.id', '=', 'm.autor_vinculo_id')->join('usuarios as u', 'u.id', '=', 'v.usuario_id')->where('m.chamado_id', $registro);
-            if (! $this->acesso->can('chamados', 'atender', (int) $dados->__owner, (int) $dados->__unit)) {
+            if (! $this->acesso->can('chamados', 'atender', Value::integer($dados->__owner), Value::integer($dados->__unit))) {
                 $consulta->where('m.interna', 0);
             }
             $mensagens = $consulta->orderBy('m.id')->limit(100)->get(['u.nome as autor', 'm.mensagem', 'm.interna', 'm.criado_em']);
@@ -58,16 +61,16 @@ class RecordController extends Controller
         $conferencias = collect();
         $podeBaixarComprovante = false;
         if ($codigo === 'fines') {
-            $valorPermitido = $this->acesso->can('multas', 'ver_valores', $dados->__owner !== null ? (int) $dados->__owner : null, (int) $dados->__unit);
+            $valorPermitido = $this->acesso->can('multas', 'ver_valores', $dados->__owner !== null ? Value::integer($dados->__owner) : null, Value::integer($dados->__unit));
             $podeBaixarComprovante = $valorPermitido;
             $comprovantes = DB::table('multa_comprovantes as c')->join('arquivos as f', 'f.id', '=', 'c.arquivo_id')->where('c.multa_id', $registro)->orderByDesc('c.numero')->limit(40)->get(['c.id', 'c.numero', 'c.enviado_em', 'f.nome_original', DB::raw($valorPermitido ? 'c.valor_declarado' : 'NULL as valor_declarado')]);
             $conferencias = DB::table('multa_conferencias')->where('multa_id', $registro)->orderByDesc('id')->limit(40)->get(['resultado', 'motivo', 'conferido_em']);
         }
-        if ($codigo === 'monitoring' && $this->acesso->can('rastreamento', 'ver_localizacao', null, (int) $dados->__unit)) {
+        if ($codigo === 'monitoring' && $this->acesso->can('rastreamento', 'ver_localizacao', null, Value::integer($dados->__unit))) {
             $trajeto = DB::table('vw_trajetos_observados')->where('veiculo_id', $registro)->orderByDesc('ocorrido_em')->limit(200)->get(['ocorrido_em', 'fonte', 'latitude', 'longitude']);
         }
 
-        return view('records.show', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->first()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $detalhes['eventos'], 'leituras' => $this->leituras, 'vistoria' => $detalhes['vistoria'] ?? collect(), 'ocorrencias' => $detalhes['ocorrencias'] ?? collect(), 'pneus' => $detalhes['pneus'] ?? collect(), 'trajeto' => $trajeto, 'mensagens' => $mensagens, 'vinculos' => $codigo === 'users' ? app(AdminReadRepository::class)->links($registro) : collect(), 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'arquivos' => $detalhes['arquivos'], 'comprovantes' => $comprovantes, 'conferencias' => $conferencias, 'podeBaixarComprovante' => $podeBaixarComprovante]);
+        return view('records.show', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->sole()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $detalhes['eventos'], 'leituras' => $this->leituras, 'vistoria' => $detalhes['vistoria'] ?? collect(), 'ocorrencias' => $detalhes['ocorrencias'] ?? collect(), 'pneus' => $detalhes['pneus'] ?? collect(), 'trajeto' => $trajeto, 'mensagens' => $mensagens, 'vinculos' => $codigo === 'users' ? app(AdminReadRepository::class)->links($registro) : collect(), 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'arquivos' => $detalhes['arquivos'], 'comprovantes' => $comprovantes, 'conferencias' => $conferencias, 'podeBaixarComprovante' => $podeBaixarComprovante]);
     }
 
     public function create(Request $requisicao): View
@@ -79,17 +82,20 @@ class RecordController extends Controller
         return view('records.form', ['codigo' => $codigo, 'tela' => $tela, 'acao' => 'create', 'titulo' => 'Novo registro · '.$tela['title'], 'registro' => null, 'formAction' => $codigo === 'fines' ? route('fines.store') : null, 'veiculosMulta' => $codigo === 'fines' ? app(FineWorkflow::class)->vehicleOptions() : [], 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix(null) : collect(), 'perfisDisponiveis' => [], 'unidadesDisponiveis' => $codigo === 'users' ? DB::table('unidades')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all() : [], 'modulosDisponiveis' => $codigo === 'technical-routes' ? DB::table('modulos')->where('ativo', 1)->orderBy('ordem')->pluck('nome', 'codigo')->all() : [], 'veiculosDisponiveis' => [], 'categoriasChamado' => $codigo === 'tickets' ? DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all() : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->where('codigo', '<>', 'abastecimento')->pluck('nome', 'id')->all() : []]);
     }
 
+    /**
+     * @param  array<array-key, mixed>  $tela
+     */
     private function canCreate(string $codigo, array $tela): bool
     {
         if (! ($tela['create'] ?? false)) {
             return false;
         }
         if (in_array($codigo, ['roles', 'technical-routes'], true)) {
-            return $this->acesso->can($tela['module'], 'criar');
+            return $this->acesso->can(Value::string($tela['module']), 'criar');
         }
         $vinculo = $this->acesso->link();
 
-        return $vinculo !== null && $this->acesso->can($tela['module'], 'criar', (int) $vinculo->usuario_id, (int) $vinculo->unidade_id);
+        return $vinculo !== null && $this->acesso->can(Value::string($tela['module']), 'criar', Value::integer($vinculo->usuario_id), Value::integer($vinculo->unidade_id));
     }
 
     public function operation(Request $requisicao, int $registro, string $acao): View

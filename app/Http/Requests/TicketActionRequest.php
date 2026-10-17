@@ -16,6 +16,9 @@ class TicketActionRequest extends FormRequest
         return $servico->canAction($chamado, (string) $this->route('acao'));
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         return match ((string) $this->route('acao')) {

@@ -13,6 +13,9 @@ class ConfigurationUpdateRequest extends FormRequest
         return app(AccessContext::class)->can('configuracoes', 'editar');
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         return [

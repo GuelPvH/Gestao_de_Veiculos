@@ -2,6 +2,7 @@
 
 use App\Services\Auth\IdentityService;
 use App\Services\Auth\PasswordPolicy;
+use App\Support\Value;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -28,7 +29,7 @@ Artisan::command('fleet:create-admin', function (): int {
         return 1;
     }
     try {
-        app(IdentityService::class)->createInitialAdministrator($identificador, $nome, $email, $senha);
+        app(IdentityService::class)->createInitialAdministrator(Value::string($identificador), Value::string($nome), Value::string($email), Value::string($senha));
     } catch (Throwable) {
         $this->error('Inicialização recusada. Confira o provisionamento e os privilégios privadamente.');
 

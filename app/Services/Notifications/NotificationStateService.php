@@ -4,6 +4,7 @@ namespace App\Services\Notifications;
 
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
+use App\Support\Value;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use PDOException;
@@ -46,8 +47,8 @@ class NotificationStateService
 
         return $vinculo !== null
             && $usuario !== null
-            && (int) $vinculo->usuario_id === (int) $usuario
-            && $this->acesso->can('notificacoes', $acao, (int) $usuario, (int) $vinculo->unidade_id);
+            && Value::integer($vinculo->usuario_id) === Value::integer($usuario)
+            && $this->acesso->can('notificacoes', $acao, Value::integer($usuario), Value::integer($vinculo->unidade_id));
     }
 
     private function change(int $evento, int $versao, bool $ocultar): bool
@@ -60,7 +61,7 @@ class NotificationStateService
             ->whereNull('oculta_em')
             ->first(['versao', 'lida_em']);
         abort_unless($destinatario !== null, 404);
-        if ((int) $destinatario->versao !== $versao) {
+        if (Value::integer($destinatario->versao) !== $versao) {
             return false;
         }
 

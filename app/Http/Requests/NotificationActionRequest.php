@@ -12,6 +12,9 @@ class NotificationActionRequest extends FormRequest
         return app(NotificationStateService::class)->canEdit();
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         return ['versao' => ['required', 'integer', 'min:1']];

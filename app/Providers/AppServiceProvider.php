@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Services\Auth\FleetUserProvider;
 use App\Services\Authorization\AccessContext;
+use App\Support\Value;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Queue\Events\Looping;
 use Illuminate\Queue\Events\QueueBusy;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($hotFile = config('fleet.vite_hot_file')) {
-            Vite::useHotFile($hotFile);
+            Vite::useHotFile(Value::string($hotFile));
         }
 
         Event::listen(QueueBusy::class, function (QueueBusy $event): void {
@@ -42,6 +45,6 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        Auth::provider('fleet', fn ($app, array $config) => new FleetUserProvider($app['hash'], $config['model']));
+        Auth::provider('fleet', fn (Application $app, array $config) => new FleetUserProvider($app->make(Hasher::class), Value::string($config['model'])));
     }
 }

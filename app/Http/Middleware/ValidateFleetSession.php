@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\Auth\FleetSession;
 use App\Services\Authorization\AccessContext;
 use App\Services\Authorization\RequestAccessReader;
+use App\Support\RequestState;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +18,7 @@ use Throwable;
 
 class ValidateFleetSession
 {
+    /** @param Closure(Request): Response $proximo */
     public function handle(Request $requisicao, Closure $proximo): Response
     {
         $usuario = Auth::user();
@@ -57,7 +59,7 @@ class ValidateFleetSession
             return $proximo($requisicao);
         }
         app(RequestAccessReader::class)->load($requisicao, $vinculo, app(AccessContext::class));
-        $configuracao = $requisicao->attributes->get('fleet.configuration');
+        $configuracao = RequestState::record($requisicao, 'fleet.configuration');
         $fuso = $configuracao ? $configuracao->fuso_horario : DB::table('configuracao_sistema')->where('id', 1)->value('fuso_horario');
         config(['fleet.timezone' => in_array($fuso, timezone_identifiers_list(), true) ? $fuso : 'America/Porto_Velho']);
         View::share(['usuarioAtual' => $usuario, 'vinculoAtual' => $vinculo, 'acesso' => app(AccessContext::class)]);

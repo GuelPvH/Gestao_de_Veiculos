@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Support\Value;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -27,7 +28,7 @@ class SecurityAudit
         }
         if ($request) {
             $agent = mb_scrub((string) $request->userAgent(), 'UTF-8');
-            $context['user_agent'] = mb_substr(preg_replace('/[\x00-\x1F\x7F]/', '', $agent), 0, 160);
+            $context['user_agent'] = mb_substr(Value::string(preg_replace('/[\x00-\x1F\x7F]/', '', $agent)), 0, 160);
         }
         DB::table('auditoria')->insert([
             'ator_usuario_id' => $userId, 'evento' => $event, 'entidade' => $entity, 'entidade_id' => $entityId,
@@ -46,6 +47,6 @@ class SecurityAudit
 
     private function pseudonym(string $identifier): string
     {
-        return hash_hmac('sha256', mb_strtolower(trim($identifier)), (string) config('app.key'));
+        return hash_hmac('sha256', mb_strtolower(trim($identifier)), Value::string(config('app.key')));
     }
 }

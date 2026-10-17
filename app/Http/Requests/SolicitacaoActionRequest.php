@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Services\Requests\RequestReadRepository;
+use App\Support\Value;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,7 +11,7 @@ class SolicitacaoActionRequest extends FormRequest
 {
     public function action(): string
     {
-        return match ($this->route()->getActionMethod()) {
+        return match ($this->route()?->getActionMethod()) {
             'sendSubmit' => 'send', 'approveSubmit' => 'approve', 'denySubmit' => 'deny',
             'adjustSubmit' => 'adjust', 'revisionSubmit' => 'revision', default => '',
         };
@@ -23,6 +24,9 @@ class SolicitacaoActionRequest extends FormRequest
         return isset($leituras->allowed($leituras->findById((int) $this->route('registro')))[$this->action()]);
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         $regras = ['versao' => ['required', 'integer', 'min:1']];
@@ -32,8 +36,8 @@ class SolicitacaoActionRequest extends FormRequest
         if ($this->action() === 'approve') {
             $opcoes = app(RequestReadRepository::class)->approvalOptions((int) $this->route('registro'));
             $regras += [
-                'veiculo_confirmado_id' => ['required', 'integer', Rule::in(array_keys($opcoes['veiculosDisponiveis']))],
-                'motorista_confirmado_id' => ['required', 'integer', Rule::in(array_keys($opcoes['motoristasDisponiveis']))],
+                'veiculo_confirmado_id' => ['required', 'integer', Rule::in(array_keys(Value::array($opcoes['veiculosDisponiveis'])))],
+                'motorista_confirmado_id' => ['required', 'integer', Rule::in(array_keys(Value::array($opcoes['motoristasDisponiveis'])))],
             ];
         }
 

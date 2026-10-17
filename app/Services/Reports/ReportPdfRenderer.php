@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Services\Authorization\AccessContext;
 use App\Services\Read\FleetReadRepository;
+use App\Support\Value;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Support\Collection;
@@ -13,10 +14,15 @@ class ReportPdfRenderer
 {
     public function __construct(private AccessContext $acesso, private FleetReadRepository $leituras) {}
 
+    /**
+     * @param  Collection<int, ReportColumn>  $campos
+     * @param  array<string, mixed>  $filtros
+     * @param  Collection<int, array<string, mixed>>  $registros
+     */
     public function render(int $id, string $codigo, Collection $campos, Collection $registros, array $filtros): string
     {
         $tela = $this->leituras->definition($codigo);
-        $contratos = $tela['columns'] + ($tela['details'] ?? []) + ($tela['reportColumns'] ?? []);
+        $contratos = $tela['columns'] + $tela['details'] + ($tela['reportColumns'] ?? []);
         $secoes = $campos->chunk(6)->map(function ($grupo) use ($registros, $contratos): array {
             $linhas = [];
             foreach ($registros as $indice => $registro) {
@@ -31,7 +37,7 @@ class ReportPdfRenderer
                     }
 
                     // Smaller physical rows let Dompdf paginate long descriptions without clipping them.
-                    return mb_str_split((string) $texto, 240) ?: [''];
+                    return mb_str_split(Value::string($texto), 240) ?: [''];
                 })->values();
                 $partes = $celulas->map(fn ($celula) => count($celula))->max();
                 for ($parte = 0; $parte < $partes; $parte++) {
@@ -43,11 +49,11 @@ class ReportPdfRenderer
                 'descricao', 'mensagem' => 4, 'assunto', 'nome', 'destino' => 3,
                 'situacao', 'categoria' => 1.3, default => 1.6,
             });
-            $larguras = $pesos->map(fn ($peso) => 96 * $peso / $pesos->sum())->values();
+            $larguras = $pesos->map(fn ($peso) => 96 * $peso / Value::number($pesos->sum()))->values();
 
             return ['campos' => $grupo, 'linhas' => $linhas, 'larguras' => $larguras];
         });
-        $vinculo = $this->acesso->link();
+        $vinculo = $this->acesso->requireLink();
         $autor = DB::table('usuarios')->where('id', $vinculo->usuario_id)->value('nome');
         $unidade = DB::table('unidades')->where('id', $vinculo->unidade_id)->value('nome');
         $emitido = now(config('fleet.timezone'))->format('d/m/Y H:i');
@@ -71,7 +77,7 @@ class ReportPdfRenderer
         $canvas = $pdf->getCanvas();
         $fonte = $pdf->getFontMetrics()->getFont('DejaVu Sans', 'normal');
         $canvas->page_text($canvas->get_width() - 115, $canvas->get_height() - 30,
-            'Página {PAGE_NUM} de {PAGE_COUNT}', $fonte, 8, [0.38, 0.44, 0.52]);
+            'Página {PAGE_NUM} de {PAGE_COUNT}', Value::string($fonte), 8, [0.38, 0.44, 0.52]);
 
         return $pdf->output();
     }

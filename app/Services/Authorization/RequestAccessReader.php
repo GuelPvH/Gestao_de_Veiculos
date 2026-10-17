@@ -2,8 +2,10 @@
 
 namespace App\Services\Authorization;
 
+use App\Support\Value;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use stdClass;
 
@@ -33,17 +35,18 @@ class RequestAccessReader
 
     public function routeEnabled(Request $request): bool
     {
+        /** @var Collection<int, stdClass> $routes */
         $routes = $request->attributes->get('fleet.enabled_routes')
             ?? $this->routesQuery($request)->get(['caminho', 'metodo_http', 'protegida', 'ativa']);
         [$path, $method] = $this->endpoint($request);
 
         // Protected administration remains available to re-enable a disabled area.
-        if ($routes->contains(fn ($route) => $route->caminho === $path && $route->metodo_http === $method && (int) $route->protegida === 1 && (int) $route->ativa === 1)) {
+        if ($routes->contains(fn ($route) => $route->caminho === $path && $route->metodo_http === $method && Value::integer($route->protegida) === 1 && Value::integer($route->ativa) === 1)) {
             return true;
         }
 
         // A disabled area or exact method still blocks direct and parameterized URLs.
-        return ! $routes->contains(fn ($route) => (int) $route->ativa === 0);
+        return ! $routes->contains(fn ($route) => Value::integer($route->ativa) === 0);
     }
 
     private function routesQuery(Request $request): Builder
@@ -51,13 +54,13 @@ class RequestAccessReader
         [$path, $method] = $this->endpoint($request);
         $screen = $request->route('tela');
         $area = is_string($screen) && is_array(config('screens.'.$screen))
-            ? '/'.config('screens.'.$screen.'.url')
+            ? '/'.Value::string(config('screens.'.$screen.'.url'))
             : $path;
 
-        return DB::table('rotas_sistema')->where(function ($query) use ($area, $path, $method): void {
-            $query->where(function ($areaQuery) use ($area): void {
+        return DB::table('rotas_sistema')->where(function (Builder $query) use ($area, $path, $method): void {
+            $query->where(function (Builder $areaQuery) use ($area): void {
                 $areaQuery->where('caminho', $area)->where('metodo_http', 'GET');
-            })->orWhere(function ($endpoint) use ($path, $method): void {
+            })->orWhere(function (Builder $endpoint) use ($path, $method): void {
                 $endpoint->where('caminho', $path)->where('metodo_http', $method);
             });
         });

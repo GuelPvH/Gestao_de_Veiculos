@@ -12,6 +12,9 @@ class VehicleBlockRequest extends FormRequest
         return in_array($this->route('acao'), ['block', 'release'], true);
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         $regras = ['versao' => ['required', 'integer', 'min:1']];

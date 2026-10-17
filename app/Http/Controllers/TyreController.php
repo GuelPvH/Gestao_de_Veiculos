@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\TyreActionRequest;
 use App\Services\Authorization\AccessContext;
 use App\Services\Finance\FinanceService;
+use App\Support\Value;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -15,21 +17,21 @@ class TyreController extends Controller
     {
         $records = $access->scope(
             DB::table('pneus as p')->join('despesas as d', 'd.id', '=', 'p.despesa_aquisicao_id')
-                ->leftJoin('pneu_instalacoes as i', function ($join): void {
+                ->leftJoin('pneu_instalacoes as i', function (JoinClause $join): void {
                     $join->on('i.pneu_id', '=', 'p.id')->whereNull('i.removido_em');
                 })->leftJoin('veiculos as v', 'v.id', '=', 'i.veiculo_id'),
             'despesas', 'consultar', 'd.criado_por', 'd.unidade_id',
         )->orderByDesc('p.id')->paginate(15, ['p.id', 'p.codigo', 'p.medida', 'p.situacao', 'v.placa']);
-        $link = $access->link();
-        $canCreate = $access->can('despesas', 'criar', (int) $link->usuario_id, (int) $link->unidade_id);
+        $link = $access->requireLink();
+        $canCreate = $access->can('despesas', 'criar', Value::integer($link->usuario_id), Value::integer($link->unidade_id));
 
         return view('finance.tyres.index', compact('records', 'canCreate'));
     }
 
     public function create(AccessContext $access): View
     {
-        $link = $access->link();
-        abort_unless($access->can('despesas', 'criar', (int) $link->usuario_id, (int) $link->unidade_id), 403);
+        $link = $access->requireLink();
+        abort_unless($access->can('despesas', 'criar', Value::integer($link->usuario_id), Value::integer($link->unidade_id)), 403);
         $query = DB::table('despesas as d')->join('categorias_despesa as c', 'c.id', '=', 'd.categoria_id')
             ->where('c.codigo', 'pneus')->where('d.situacao', '<>', 'cancelada');
         $query = $access->scope($query, 'despesas', 'consultar', 'd.criado_por', 'd.unidade_id');
@@ -56,8 +58,8 @@ class TyreController extends Controller
         $installations = DB::table('pneu_instalacoes as i')->join('veiculos as v', 'v.id', '=', 'i.veiculo_id')
             ->where('i.pneu_id', $registro)->orderByDesc('i.id')->limit(50)
             ->get(['i.id', 'i.posicao', 'i.instalado_em', 'i.removido_em', 'i.quilometragem_instalacao', 'i.quilometragem_remocao', 'i.motivo_remocao', 'v.placa']);
-        $canEdit = $access->can('despesas', 'editar', (int) $record->criado_por, (int) $record->unidade_id);
-        $canDiscard = $access->can('despesas', 'cancelar', (int) $record->criado_por, (int) $record->unidade_id);
+        $canEdit = $access->can('despesas', 'editar', Value::integer($record->criado_por), Value::integer($record->unidade_id));
+        $canDiscard = $access->can('despesas', 'cancelar', Value::integer($record->criado_por), Value::integer($record->unidade_id));
 
         return view('finance.tyres.show', compact('record', 'installations', 'canEdit', 'canDiscard'));
     }
@@ -78,7 +80,7 @@ class TyreController extends Controller
 
     public function discard(TyreActionRequest $request, FinanceService $finance, int $registro): RedirectResponse
     {
-        $finance->discardTyre($registro, $request->validated('justificativa'));
+        $finance->discardTyre($registro, Value::string($request->validated('justificativa')));
 
         return redirect()->route('tyres.show', $registro)->with('status', 'Pneu descartado com justificativa.');
     }

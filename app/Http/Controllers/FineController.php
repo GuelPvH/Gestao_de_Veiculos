@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\FineActionRequest;
 use App\Services\Fines\FineWorkflow;
+use App\Support\Value;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -36,8 +37,8 @@ class FineController extends Controller
     public function download(int $registro, int $comprovante, FineWorkflow $multas): StreamedResponse
     {
         $arquivo = $multas->receipt($registro, $comprovante);
-        abort_unless(Storage::disk('local')->exists($arquivo->chave_armazenamento), 404);
+        abort_unless(Storage::disk('local')->exists(Value::string($arquivo->chave_armazenamento)), 404);
 
-        return Storage::disk('local')->download($arquivo->chave_armazenamento, $arquivo->nome_original, ['Content-Type' => 'application/octet-stream']);
+        return Storage::disk('local')->download(Value::string($arquivo->chave_armazenamento), Value::nullableString($arquivo->nome_original), ['Content-Type' => 'application/octet-stream']);
     }
 }
