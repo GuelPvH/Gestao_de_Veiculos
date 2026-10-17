@@ -1,0 +1,99 @@
+{
+  "checked_at_utc": "2026-10-17T02:55:14.124705+00:00",
+  "base_main": "9e186d3082cb503947cac4e531337e50296117e5",
+  "phpunit": {
+    "passed": true,
+    "tests": 196,
+    "assertions": 1501,
+    "skipped_without_external_services": 31,
+    "runtime": "PHP 8.5.4"
+  },
+  "mysql_contract": {
+    "exit_code": 0,
+    "stages": [
+      "backup_restore_objects_data_checksums",
+      "controlled_partial_import_and_recovery",
+      "inventário canônico",
+      "versioned_patch_preserves_data_and_signatures",
+      "protected_upgrade_plan_and_partial_failure_recovery",
+      "versioned_plate_upgrade_preserves_existing_records_and_accepts_format",
+      "auth_hardening_patch_preserves_data_and_contract",
+      "ddl_privilege_denied",
+      "redis_private_authenticated_persistent_noeviction",
+      "native_advisory_lock_excludes_concurrent_maintenance"
+    ],
+    "plate_preservation_test_executed": true,
+    "tests": 31,
+    "assertions": 505
+  },
+  "mariadb_plate": {
+    "engine": "11.8.9-MariaDB-ubu2404",
+    "database": "isolated disposable fixture",
+    "passed": true,
+    "old_format_rejected_hyphen": true,
+    "existing_value_preserved": true,
+    "hyphen_accepted_after_patch": true,
+    "version_registered": true,
+    "integer_session_setting_accepted": true
+  },
+  "maintenance_unit_tests": {
+    "passed": true,
+    "tests": 61,
+    "skipped_without_native_service": 6,
+    "native_protections_executed_by_mysql_contract": true
+  },
+  "phpstan": {
+    "passed": true,
+    "errors": 0
+  },
+  "pint": {
+    "passed": true,
+    "files": 160
+  },
+  "composer": {
+    "strict_validation": true,
+    "audit_findings": 0
+  },
+  "npm": {
+    "audit_findings": 0,
+    "build_passed": true
+  },
+  "container": {
+    "production_build_passed": true,
+    "production_debugbar_installed": false,
+    "pdf_installed": true,
+    "assets_built": true,
+    "runtime_user": "www-data",
+    "http_port": 8080,
+    "default_stage": "runtime",
+    "development_image_built_and_used_for_browser_checks": true
+  },
+  "browser": {
+    "debugbar_after_main": true,
+    "profiles_checked": [
+      "Gestor",
+      "Financeiro",
+      "Servidor"
+    ],
+    "session_queries_per_profile": 1,
+    "session_transactions": 0,
+    "query_parameters_exposed": 0,
+    "javascript_errors": 0,
+    "administrator_mfa_not_bypassed": true,
+    "full_mutating_browser_workflow_executed": false,
+    "local_workflow_browser_script_syntax_checked": true
+  },
+  "page_audit": {
+    "remote_get_requests": 292,
+    "remote_routes_per_profile": 73,
+    "remote_http_500": 0,
+    "controlled_ui_cases": 141,
+    "real_authentication_fixture_cases": 26
+  },
+  "limits": [
+    "No load test or production percentiles.",
+    "Remote kernel audit reuses one diagnostic PDO per role; separate HTTP samples include opening the connection.",
+    "The remote structural schema was not changed; module 1.0.6 was tested only in disposable databases.",
+    "GitHub Actions validation runs after publishing; results are separate from these local checks."
+  ]
+}
