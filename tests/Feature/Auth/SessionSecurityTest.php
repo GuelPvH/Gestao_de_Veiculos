@@ -2,7 +2,10 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
+use App\Services\Auth\PasswordVerifier;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +67,70 @@ class SessionSecurityTest extends TestCase
     {
         $this->travel(30)->minutes();
         $this->postJson('/sessao/reautenticar', ['senha' => SecurityFixture::PASSWORD])->assertStatus(401);
+        $this->assertDatabaseMissing('auditoria', ['evento' => 'reautenticacao']);
+    }
+
+    public function test_password_change_after_provider_read_cannot_renew_or_audit_reauthentication(): void
+    {
+        $deadline = DB::table('sessoes')->value('reautenticar_ate');
+        $this->withSession([Auth::guard()->getName() => 1]);
+        Auth::forgetGuards();
+        $changed = false;
+        $this->mock(PasswordVerifier::class)->shouldReceive('verify')->once()->andReturnUsing(function (string $password, string $hash) use (&$changed): bool {
+            $this->assertTrue(password_verify($password, $hash));
+            DB::table('usuarios')->where('id', 1)->update([
+                'senha_hash' => password_hash('OutraSenhaForte!456', PASSWORD_BCRYPT, ['cost' => 4]),
+                'versao_seguranca' => 2,
+            ]);
+            $changed = true;
+
+            return true;
+        });
+
+        $this->postJson('/sessao/reautenticar', ['senha' => SecurityFixture::PASSWORD])->assertStatus(401);
+
+        $this->assertTrue($changed);
+        $this->assertSame($deadline, DB::table('sessoes')->value('reautenticar_ate'));
+        $this->assertSame(hash('sha256', SecurityFixture::TOKEN, true), DB::table('sessoes')->value('token_hash'));
+        $this->assertDatabaseMissing('auditoria', ['evento' => 'reautenticacao']);
+    }
+
+    public function test_reauthentication_keeps_lock_reads_without_page_data_or_redundant_identity_and_session_reads(): void
+    {
+        $queries = [];
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = preg_replace('/[`"]/', '', strtolower($query->sql));
+        });
+
+        $this->postJson('/sessao/reautenticar', ['senha' => SecurityFixture::PASSWORD])
+            ->assertOk()->assertJsonPath('mfa_required', true);
+
+        // actingAs loads the identity before measurement; both remaining reads belong to validation locks.
+        $this->assertCount(2, array_filter($queries, fn ($sql) => str_starts_with($sql, 'select ') && str_contains($sql, 'from usuarios')));
+        $this->assertCount(2, array_filter($queries, fn ($sql) => str_starts_with($sql, 'select ') && str_contains($sql, 'from sessoes')));
+        $this->assertCount(0, array_filter($queries, fn ($sql) => str_contains($sql, 'vw_permissoes_efetivas') || str_contains($sql, 'fuso_horario') || str_contains($sql, 'from usuario_perfis')));
+        $this->assertDatabaseHas('auditoria', ['evento' => 'reautenticacao']);
+    }
+
+    public function test_reauthentication_short_path_still_rejects_pending_identity(): void
+    {
+        DB::table('usuarios')->where('id', 1)->update(['estado_identidade' => 'pendente']);
+        $this->actingAs(User::findOrFail(1));
+
+        $this->postJson('/sessao/reautenticar', ['senha' => SecurityFixture::PASSWORD])
+            ->assertForbidden()->assertJsonPath('state', 'ACTIVATION_REQUIRED');
+
+        $this->assertDatabaseMissing('auditoria', ['evento' => 'reautenticacao']);
+    }
+
+    public function test_reauthentication_short_path_still_rejects_required_password_change(): void
+    {
+        DB::table('usuarios')->where('id', 1)->update(['deve_trocar_senha' => 1]);
+        $this->actingAs(User::findOrFail(1));
+
+        $this->postJson('/sessao/reautenticar', ['senha' => SecurityFixture::PASSWORD])
+            ->assertForbidden()->assertJsonPath('state', 'PASSWORD_CHANGE_REQUIRED');
+
         $this->assertDatabaseMissing('auditoria', ['evento' => 'reautenticacao']);
     }
 
