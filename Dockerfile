@@ -4,10 +4,12 @@ FROM php:8.5-apache-bookworm AS php-base
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        curl libicu-dev libzip-dev \
+        curl libicu-dev libzip-dev libgmp-dev \
     && docker-php-ext-install -j2 \
-        intl pdo_mysql zip \
+        intl pdo_mysql zip pcntl gmp \
     && rm -rf /var/lib/apt/lists/*
+
+RUN pecl install redis-6.3.0 && docker-php-ext-enable redis
 
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
     && a2enmod rewrite headers \
@@ -41,6 +43,13 @@ COPY artisan ./artisan
 
 RUN composer dump-autoload --no-dev --optimize --no-scripts --no-plugins
 
+# Development-only Composer dependencies stay out of the production runtime.
+FROM vendor AS vendor-development
+RUN composer install \
+    --no-scripts --no-plugins \
+    --no-interaction --no-progress --prefer-dist
+RUN composer dump-autoload --optimize --no-scripts --no-plugins
+
 FROM node:26-bookworm-slim AS assets
 
 WORKDIR /app
@@ -58,7 +67,7 @@ USER node
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
-FROM php-base AS runtime
+FROM php-base AS runtime-base
 
 COPY --chown=www-data:www-data . .
 COPY --from=vendor --chown=www-data:www-data /var/www/html/vendor ./vendor
@@ -78,4 +87,12 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
     CMD curl --fail --silent http://127.0.0.1:8080/up || exit 1
 
+ENTRYPOINT ["/var/www/html/docker/app/entrypoint.sh"]
 CMD ["apache2-foreground"]
+
+# Local development image includes require-dev packages such as Laravel Debugbar.
+FROM runtime-base AS runtime-development
+COPY --from=vendor-development --chown=www-data:www-data /var/www/html/vendor ./vendor
+
+# O build sem --target continua produzindo a imagem de produção.
+FROM runtime-base AS runtime
