@@ -27,6 +27,7 @@ class AgendaController extends Controller
 
         return view('agenda.index', compact('inicio', 'dias', 'leituras'));
     }
+
     public function show(int $reserva, AccessContext $acesso, FleetReadRepository $leituras): View
     {
         $consulta = DB::table('reservas as r')
@@ -42,5 +43,4 @@ class AgendaController extends Controller
 
         return view('agenda.show', compact('registro', 'titulo', 'leituras', 'acesso'));
     }
-
 }
