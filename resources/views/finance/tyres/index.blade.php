@@ -1,4 +1,4 @@
-<x-layouts.authenticated titulo="Pneus" :breadcrumbs="[['label'=>'Pneus']]">
+<x-layouts.authenticated titulo="Pneus" :breadcrumbs="[['label' => 'Pneus']]">
     <x-ui.title titulo="Pneus" subtitulo="Acompanhe o estoque, as instalações e o histórico de remoções.">
         @if ($canCreate)
             <x-slot:acoes>

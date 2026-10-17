@@ -1,4 +1,0 @@
-{
-  "freshMySqlHealthUsesAuthenticatedTcp": true,
-  "emptyDatabaseReadyBeforeImport": true
-}
