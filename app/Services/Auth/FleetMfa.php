@@ -33,15 +33,19 @@ class FleetMfa
 
     public function verified(Request $request, stdClass $session): bool
     {
+        if ($session->encerrada_em !== null || $session->mfa_verificada_em === null
+            || (int) $session->mfa_vinculo_id !== (int) $session->vinculo_ativo_id
+            || ! hash_equals((string) $session->mfa_http_hash, hash('sha256', $request->session()->getId(), true))) {
+            return false;
+        }
+        $deadline = min(CarbonImmutable::parse($session->mfa_verificada_em, 'UTC')->addMinutes(30), $this->sessions->deadline($session));
+        if ($deadline->lessThanOrEqualTo(CarbonImmutable::now('UTC'))) {
+            return false;
+        }
         $version = DB::table('usuarios')->where('id', $session->usuario_id)->value('versao_seguranca');
-        $now = CarbonImmutable::now('UTC');
 
-        return $session->encerrada_em === null && $session->mfa_verificada_em !== null
-            && (int) $session->mfa_vinculo_id === (int) $session->vinculo_ativo_id
-            && (int) $session->mfa_versao === (int) $version
-            && hash_equals((string) $session->mfa_http_hash, hash('sha256', $request->session()->getId(), true))
-            && CarbonImmutable::parse($session->mfa_verificada_em, 'UTC')->addMinutes(30)->greaterThan($now)
-            && $this->sessions->deadline($session)->greaterThan($now);
+        return $version !== null && (int) $session->mfa_versao === (int) $version
+            && $deadline->greaterThan(CarbonImmutable::now('UTC'));
     }
 
     public function begin(Request $request, string $purpose): array
