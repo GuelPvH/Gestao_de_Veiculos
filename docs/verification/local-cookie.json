@@ -1,0 +1,6 @@
+{
+  "loginAfterRestart": true,
+  "localCookieDomain": true,
+  "localCookiePath": true,
+  "httpOnlySession": true
+}
