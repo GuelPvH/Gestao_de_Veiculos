@@ -19,32 +19,24 @@ class AdminWorkflowTest extends TestCase
         $this->assertSame('sqlite', DB::connection()->getDriverName());
     }
 
-    public function test_admin_stores_user_calling_procedure(): void
+    public function test_admin_stores_pending_user_in_application_transaction(): void
     {
         $procedimentos = Mockery::mock(ProcedureRunner::class);
-        $procedimentos->shouldReceive('call')->once()
-            ->withArgs(function ($nome, $dados): bool {
-                $this->assertSame('sp_criar_usuario', $nome);
-                $this->assertSame(10, $dados[0]);
-                $this->assertSame(1, $dados[1]);
-                $this->assertSame('novo.usuario', $dados[2]);
-                $this->assertSame('Novo Usuario Silva', $dados[3]);
-                $this->assertSame('novo@example.com', $dados[4]);
-                $this->assertTrue(password_verify('SenhaSegura123!@#', $dados[5]));
-
-                return true;
-            })
-            ->andReturn([['usuario_id' => 15]]);
+        $procedimentos->shouldReceive('call')->twice()
+            ->withArgs(fn ($name): bool => in_array($name, ['sp_exigir_permissao', 'sp_auditar'], true))->andReturn([]);
         app()->instance(ProcedureRunner::class, $procedimentos);
-
-        $this->post(route('users.store'), [
-            'unidade_id' => 1,
-            'identificador' => 'novo.usuario',
-            'nome' => 'Novo Usuario Silva',
-            'email' => 'novo@example.com',
-            'senha_temporaria' => 'SenhaSegura123!@#',
+        $response = $this->post(route('users.store'), [
+            'unidade_id' => 1, 'identificador' => 'novo.usuario', 'nome' => 'Novo Usuario Silva',
+            'email' => 'novo@example.com', 'senha_temporaria' => 'SenhaSegura123!@#',
             'senha_temporaria_confirmation' => 'SenhaSegura123!@#',
-        ])->assertRedirect(route('users.show', 15))->assertSessionHas('status');
+        ]);
+        $user = DB::table('usuarios')->where('identificador', 'novo.usuario')->first();
+        $this->assertNotNull($user);
+        $response->assertRedirect(route('users.show', $user->id))->assertSessionHas('status');
+        $this->assertTrue(password_verify('SenhaSegura123!@#', $user->senha_hash));
+        $this->assertSame('pendente', $user->estado_identidade);
+        $this->assertNotNull($user->senha_temporaria_expira_em);
+        $this->assertSame(0, DB::table('email_outbox')->where('usuario_id', $user->id)->count());
     }
 
     public function test_admin_updates_user_with_concurrency_and_audit(): void
@@ -89,17 +81,8 @@ class AdminWorkflowTest extends TestCase
     public function test_admin_links_profile_and_revokes_link_calling_procedures(): void
     {
         $procedimentos = Mockery::mock(ProcedureRunner::class);
-        $procedimentos->shouldReceive('call')->once()
-            ->withArgs(function ($nome, $dados): bool {
-                $this->assertSame('sp_vincular_perfil', $nome);
-                $this->assertSame(10, $dados[0]);
-                $this->assertSame(2, $dados[1]);
-                $this->assertSame(4, $dados[2]);
-                $this->assertSame(1, $dados[3]);
-
-                return true;
-            })
-            ->andReturn([['vinculo_id' => 99]]);
+        $procedimentos->shouldReceive('call')->twice()
+            ->withArgs(fn ($name): bool => in_array($name, ['sp_exigir_permissao', 'sp_auditar'], true))->andReturn([]);
 
         $procedimentos->shouldReceive('call')->once()
             ->withArgs(function ($nome, $dados): bool {
