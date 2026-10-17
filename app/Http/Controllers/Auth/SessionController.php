@@ -36,8 +36,8 @@ class SessionController extends Controller
             RateLimiter::hit($limitKey, 60);
         }
         $input = $request->validate(['senha' => ['required', 'string', 'max:1024']]);
-        $snapshot = DB::table('usuarios')->where('id', $user->id)->first();
-        if (! $snapshot || ! $passwords->verify($input['senha'], $snapshot->senha_hash)) {
+        $snapshot = clone $user;
+        if (! $passwords->verify($input['senha'], $snapshot->senha_hash)) {
             return response()->json(['state' => 'INVALID_CREDENTIAL', 'message' => 'Não foi possível confirmar sua senha.'], 422);
         }
         $token = bin2hex(random_bytes(32));
@@ -54,17 +54,18 @@ class SessionController extends Controller
             $now = CarbonImmutable::now('UTC');
             $minutes = (int) DB::table('configuracao_sistema')->where('id', 1)->value('sessao_inatividade_minutos');
             abort_unless($minutes > 0, 503);
-            DB::table('sessoes')->where('id', $row->id)->update(['token_hash' => hash('sha256', $token, true), 'autenticada_em' => $now->format('Y-m-d H:i:s.u'), 'reautenticar_ate' => $now->addMinutes(30)->format('Y-m-d H:i:s.u'), 'ultima_atividade_em' => $now->format('Y-m-d H:i:s.u'), 'expira_em' => $now->addMinutes($minutes)->format('Y-m-d H:i:s.u'), 'mfa_verificada_em' => null, 'mfa_vinculo_id' => null, 'mfa_versao' => null, 'mfa_http_hash' => null]);
+            $changes = ['token_hash' => hash('sha256', $token, true), 'autenticada_em' => $now->format('Y-m-d H:i:s.u'), 'reautenticar_ate' => $now->addMinutes(30)->format('Y-m-d H:i:s.u'), 'ultima_atividade_em' => $now->format('Y-m-d H:i:s.u'), 'expira_em' => $now->addMinutes($minutes)->format('Y-m-d H:i:s.u'), 'mfa_verificada_em' => null, 'mfa_vinculo_id' => null, 'mfa_versao' => null, 'mfa_http_hash' => null];
+            DB::table('sessoes')->where('id', $row->id)->update($changes);
             $sessions->audit($row, 'reautenticacao', 'senha_confirmada');
 
-            return DB::table('sessoes')->where('id', $row->id)->first();
+            return (object) array_replace((array) $row, $changes);
         }, 3);
         abort_unless($row !== null, 401, 'SESSION_ENDED');
         $request->session()->put('fleet_session.token', $token);
         $request->session()->migrate(true);
         RateLimiter::clear($ipKey);
 
-        return $this->state($sessions, $row)->setData($this->payload($sessions, $row) + ['mfa_required' => app(FleetMfa::class)->requiredForSession($row)]);
+        return $this->state($sessions, $row)->setData($this->payload($sessions, $row) + ['mfa_required' => app(FleetMfa::class)->requiredForSession($row, $request->attributes->get('fleet.link'))]);
     }
 
     private function state(FleetSession $sessions, \stdClass $row): JsonResponse
