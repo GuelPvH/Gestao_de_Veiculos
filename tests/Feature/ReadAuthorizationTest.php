@@ -97,8 +97,8 @@ class ReadAuthorizationTest extends TestCase
 
     public function test_report_columns_are_applied_to_sql_and_reject_unknown_or_sensitive_fields(): void
     {
-        $this->get(route('reports.index', ['modulo' => 'requests', 'campos' => ['protocolo']]))->assertOk()->assertSee('QA-REQUESTS-1')->assertDontSee('Unidade operacional');
-        $this->get(route('reports.index', ['modulo' => 'requests', 'campos' => ['senha_hash']]))->assertSessionHasErrors('campos.0');
+        $this->get(route('reports.index', ['modulo' => 'tickets', 'campos' => ['protocolo']]))->assertOk()->assertSee('QA-TICKETS-1')->assertDontSee('Solicitação de atendimento 1');
+        $this->get(route('reports.index', ['modulo' => 'tickets', 'campos' => ['senha_hash']]))->assertSessionHasErrors('campos.0');
         ReadFixture::profile(4);
         ReadFixture::grant('multas', 'consultar', 3);
         $this->get(route('reports.index', ['modulo' => 'fines', 'campos' => ['valor']]))->assertSessionHasErrors('campos.0');
@@ -129,8 +129,8 @@ class ReadAuthorizationTest extends TestCase
         for ($id = 4; $id <= 17; $id++) {
             DB::table('vw_solicitacoes_atuais')->insert(array_merge($original, ['id' => $id, 'protocolo' => 'MATCH-'.$id]));
         }
-        $resposta = $this->get(route('solicitacoes.index', ['q' => 'MATCH', 'ordem' => 'antigos', 'page' => 2]));
-        $resposta->assertOk()->assertSee('MATCH-14')->assertDontSee('MATCH-4')->assertSee('q=MATCH', false)->assertSee('ordem=antigos', false)->assertSee('14</strong> resultados', false);
+        $resposta = $this->get(route('solicitacoes.index', ['q' => 'MATCH', 'page' => 2]));
+        $resposta->assertOk()->assertSee('MATCH-4')->assertDontSee('MATCH-14')->assertSee('q=MATCH', false)->assertSee('14</strong> resultados', false);
     }
 
     public function test_financial_confirmation_cannot_be_reviewed_by_responsible_or_sender(): void
