@@ -1,3 +1,5 @@
+import './session';
+import './webauthn';
 import { Modal } from 'bootstrap';
 import 'bootstrap';
 const temaFixo = new URLSearchParams(location.search).get('tema');
@@ -11,6 +13,7 @@ const formularioReset = document.querySelector('[data-recovery-reset-form]');
 if (formularioReset) { const token = location.hash.slice(1), campo = formularioReset.querySelector('[name="token"]'); if (/^[0-9a-f]{64}$/.test(token)) { campo.value = token; formularioReset.querySelector('[data-reset-submit]').disabled = false; history.replaceState(null, '', location.pathname + location.search); } else if (!/^[0-9a-f]{64}$/.test(campo.value)) { formularioReset.querySelector('[data-reset-link-error]').hidden = false; } }
 for (const botao of document.querySelectorAll('[data-password-toggle]')) { botao.addEventListener('click', () => { const campo = document.getElementById(botao.dataset.passwordToggle); campo.type = campo.type === 'password' ? 'text' : 'password'; botao.textContent = campo.type === 'password' ? 'Mostrar' : 'Ocultar'; botao.setAttribute('aria-label', `${botao.textContent} senha`); }); }
 let alterado = false, destinoPendente = null;
+addEventListener('fleet-session-ended', () => { alterado = false; });
 document.querySelectorAll('[data-dirty-form]').forEach(formulario => formulario.addEventListener('input', () => { alterado = true; }));
 addEventListener('beforeunload', evento => { if (alterado) { evento.preventDefault(); evento.returnValue = ''; } });
 document.addEventListener('click', evento => { const link = evento.target.closest('a[href]'); if (!alterado || !link || link.target === '_blank' || link.hasAttribute('download') || link.getAttribute('href').startsWith('#') || evento.ctrlKey || evento.metaKey) return; evento.preventDefault(); destinoPendente = () => location.assign(link.href); Modal.getOrCreateInstance(document.getElementById('discard-changes')).show(link); });
