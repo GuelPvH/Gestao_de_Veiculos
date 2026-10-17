@@ -47,7 +47,7 @@ class MySqlAuthenticationTest extends TestCase
         $this->assertSame('frota_pf_contract_tests', DB::selectOne('SELECT DATABASE() AS banco')->banco);
         $this->senha = 'AcessoPrivado!'.bin2hex(random_bytes(10));
         $this->identificador = 'qa-'.bin2hex(random_bytes(8));
-        $this->usuarioId = DB::table('usuarios')->insertGetId(['unidade_id' => 1, 'identificador' => $this->identificador, 'nome' => 'Conta de teste isolado', 'senha_hash' => password_hash($this->senha, PASSWORD_BCRYPT, ['cost' => 4])]);
+        $this->usuarioId = DB::table('usuarios')->insertGetId(['unidade_id' => 1, 'identificador' => $this->identificador, 'nome' => 'Conta de teste isolado', 'email' => $this->identificador.'@local.test', 'senha_hash' => password_hash($this->senha, PASSWORD_BCRYPT, ['cost' => 4])]);
         $perfil = (int) DB::table('perfis')->where('codigo', 'servidor')->value('id');
         $this->vinculoId = DB::table('usuario_perfis')->insertGetId(['usuario_id' => $this->usuarioId, 'perfil_id' => $perfil, 'unidade_id' => 1, 'vigente_desde' => now('UTC')->subMinute(), 'concedido_por' => $this->usuarioId]);
     }
@@ -66,8 +66,14 @@ class MySqlAuthenticationTest extends TestCase
 
     public function test_real_login_hashes_token_and_logout_closes_session(): void
     {
+        $queries = [];
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = $query->sql;
+        });
         $antes = session()->getId();
-        $this->login();
+        $login = $this->post('/entrar', ['identificador' => $this->identificador, 'senha' => $this->senha])->assertRedirect('/painel');
+        $this->assertCount(1, array_filter($queries, fn ($sql) => str_contains($sql, 'vw_vinculos_ativos')));
+        $this->assertCount(0, array_filter($queries, fn ($sql) => str_starts_with($sql, 'update') && str_contains($sql, 'autenticada_em')));
         $this->assertFalse(hash_equals($antes, session()->getId()));
         $token = session('fleet_session.token');
         $id = session('fleet_session.id');
@@ -75,6 +81,16 @@ class MySqlAuthenticationTest extends TestCase
         $this->assertSame(32, strlen($row->token_hash));
         $this->assertSame(hash('sha256', $token, true), $row->token_hash);
         $this->assertSame($this->vinculoId, (int) $row->vinculo_ativo_id);
+        $this->assertNotNull($row->autenticada_em);
+        $this->assertSame(1800, (int) DB::selectOne('SELECT TIMESTAMPDIFF(SECOND, autenticada_em, reautenticar_ate) AS segundos FROM sessoes WHERE id = ?', [$id])->segundos);
+        $cookie = $login->getCookie(config('session.cookie'))?->getValue();
+        $this->assertNotNull($cookie);
+        Auth::forgetGuards();
+        $queries = [];
+        $this->withCookie(config('session.cookie'), $cookie)->get('/sessao/status')->assertOk()->assertJsonPath('state', 'ACTIVE');
+        $this->assertCount(1, $queries);
+        $this->assertStringContainsString('left join `sessoes`', $queries[0]);
+        $this->assertSame($row->ultima_atividade_em, DB::table('sessoes')->where('id', $id)->value('ultima_atividade_em'));
         $this->post('/sair')->assertRedirect('/entrar');
         $this->assertNotNull(DB::table('sessoes')->where('id', $id)->value('encerrada_em'));
         $this->get('/painel')->assertRedirect('/entrar');
@@ -168,12 +184,20 @@ class MySqlAuthenticationTest extends TestCase
     {
         $this->login();
         $sessao = session('fleet_session.id');
-        $procedimentos = \Mockery::mock(ProcedureRunner::class);
-        $procedimentos->shouldReceive('call')->once()->withArgs(fn (string $nome): bool => $nome === 'sp_registrar_atividade')
-            ->andThrow(new \PDOException('Falha simulada de banco.', 2002));
-        $this->app->instance(ProcedureRunner::class, $procedimentos);
-
-        $this->get('/painel')->assertStatus(503);
+        $before = DB::table('sessoes')->where('id', $sessao)->first();
+        $original = config('database.connections.mysql');
+        config(['database.connections.mysql.host' => '127.0.0.1', 'database.connections.mysql.port' => 9]);
+        DB::purge('mysql');
+        try {
+            $this->get('/painel')->assertStatus(503);
+        } finally {
+            config(['database.connections.mysql' => $original]);
+            DB::purge('mysql');
+        }
+        $after = DB::table('sessoes')->where('id', $sessao)->first();
+        $this->assertSame($before->expira_em, $after->expira_em);
+        $this->assertSame($before->reautenticar_ate, $after->reautenticar_ate);
+        $this->assertSame($before->ultima_atividade_em, $after->ultima_atividade_em);
         $this->assertNull(DB::table('sessoes')->where('id', $sessao)->value('encerrada_em'));
     }
 
@@ -189,6 +213,8 @@ class MySqlAuthenticationTest extends TestCase
         ]);
         $recuperacaoPendente = DB::table('recuperacoes_senha')->insertGetId([
             'usuario_id' => $this->usuarioId,
+            'email_destino' => DB::table('usuarios')->where('id', $this->usuarioId)->value('email'),
+            'versao_seguranca' => DB::table('usuarios')->where('id', $this->usuarioId)->value('versao_seguranca'),
             'token_hash' => random_bytes(32),
             'expira_em' => now('UTC')->addMinutes(30),
         ]);
@@ -245,7 +271,7 @@ class MySqlAuthenticationTest extends TestCase
         $sessao = session('fleet_session.id');
         $token = random_bytes(32);
         $hash = hash('sha256', $token, true);
-        DB::table('recuperacoes_senha')->insert(['usuario_id' => $this->usuarioId, 'token_hash' => $hash, 'expira_em' => now('UTC')->addMinutes(5)]);
+        DB::table('recuperacoes_senha')->insert(['usuario_id' => $this->usuarioId, 'email_destino' => $this->identificador.'@local.test', 'versao_seguranca' => DB::table('usuarios')->where('id', $this->usuarioId)->value('versao_seguranca'), 'token_hash' => $hash, 'expira_em' => now('UTC')->addMinutes(5)]);
         $this->assertSame($hash, DB::table('recuperacoes_senha')->where('usuario_id', $this->usuarioId)->value('token_hash'));
         $novo = password_hash('NovaSenha!'.bin2hex(random_bytes(10)), PASSWORD_BCRYPT, ['cost' => 4]);
         app(ProcedureRunner::class)->call('sp_consumir_recuperacao', [$hash, $novo]);
@@ -259,7 +285,7 @@ class MySqlAuthenticationTest extends TestCase
             $this->assertSame('45000', $erro->getCode());
         }
         $expirado = hash('sha256', random_bytes(32), true);
-        DB::table('recuperacoes_senha')->insert(['usuario_id' => $this->usuarioId, 'token_hash' => $expirado, 'criado_em' => now('UTC')->subHour(), 'expira_em' => now('UTC')->subMinute()]);
+        DB::table('recuperacoes_senha')->insert(['usuario_id' => $this->usuarioId, 'email_destino' => $this->identificador.'@local.test', 'versao_seguranca' => DB::table('usuarios')->where('id', $this->usuarioId)->value('versao_seguranca'), 'token_hash' => $expirado, 'criado_em' => now('UTC')->subHour(), 'expira_em' => now('UTC')->subMinute()]);
         try {
             app(ProcedureRunner::class)->call('sp_consumir_recuperacao', [$expirado, $novo]);
             $this->fail('Token vencido aceito indevidamente.');
@@ -282,6 +308,8 @@ class MySqlAuthenticationTest extends TestCase
         $tokenHash = hash('sha256', random_bytes(32), true);
         DB::table('recuperacoes_senha')->insert([
             'usuario_id' => $this->usuarioId,
+            'email_destino' => DB::table('usuarios')->where('id', $this->usuarioId)->value('email'),
+            'versao_seguranca' => DB::table('usuarios')->where('id', $this->usuarioId)->value('versao_seguranca'),
             'token_hash' => $tokenHash,
             'expira_em' => now('UTC')->addMinutes(5),
         ]);
