@@ -1,0 +1,3798 @@
+[
+  {
+    "id": "R001",
+    "name": "fk_abastecimento_despesa",
+    "child": "abastecimentos",
+    "parent": "despesas",
+    "source": [
+      "despesa_id",
+      "veiculo_id"
+    ],
+    "target": [
+      "id",
+      "veiculo_id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..1",
+    "identifying": false,
+    "optional": false,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R002",
+    "name": "fk_anexo_arquivo",
+    "child": "anexos",
+    "parent": "arquivos",
+    "source": [
+      "arquivo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R003",
+    "name": "fk_anexo_chamado",
+    "child": "anexos",
+    "parent": "chamados",
+    "source": [
+      "chamado_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R004",
+    "name": "fk_anexo_checklist",
+    "child": "anexos",
+    "parent": "viagem_checklists",
+    "source": [
+      "checklist_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R005",
+    "name": "fk_anexo_despesa",
+    "child": "anexos",
+    "parent": "despesas",
+    "source": [
+      "despesa_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R006",
+    "name": "fk_anexo_manutencao",
+    "child": "anexos",
+    "parent": "manutencoes",
+    "source": [
+      "manutencao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R007",
+    "name": "fk_anexo_mensagem",
+    "child": "anexos",
+    "parent": "chamado_mensagens",
+    "source": [
+      "mensagem_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R008",
+    "name": "fk_anexo_multa",
+    "child": "anexos",
+    "parent": "multas",
+    "source": [
+      "multa_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R009",
+    "name": "fk_anexo_ocorrencia",
+    "child": "anexos",
+    "parent": "viagem_ocorrencias",
+    "source": [
+      "ocorrencia_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R010",
+    "name": "fk_anexo_revisao",
+    "child": "anexos",
+    "parent": "solicitacao_revisoes",
+    "source": [
+      "revisao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R011",
+    "name": "fk_aprovacao_mfa_pedido",
+    "child": "aprovacoes_mfa",
+    "parent": "recuperacoes_mfa",
+    "source": [
+      "recuperacao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R012",
+    "name": "fk_aprovacao_mfa_usuario",
+    "child": "aprovacoes_mfa",
+    "parent": "usuarios",
+    "source": [
+      "aprovada_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R013",
+    "name": "fk_aprovacao_mfa_vinculo",
+    "child": "aprovacoes_mfa",
+    "parent": "usuario_perfis",
+    "source": [
+      "vinculo_id",
+      "aprovada_por"
+    ],
+    "target": [
+      "id",
+      "usuario_id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R014",
+    "name": "fk_arquivo_autor",
+    "child": "arquivos",
+    "parent": "usuarios",
+    "source": [
+      "enviado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R015",
+    "name": "fk_auditoria_sessao",
+    "child": "auditoria",
+    "parent": "sessoes",
+    "source": [
+      "sessao_id",
+      "ator_usuario_id"
+    ],
+    "target": [
+      "id",
+      "usuario_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R016",
+    "name": "fk_auditoria_usuario",
+    "child": "auditoria",
+    "parent": "usuarios",
+    "source": [
+      "ator_usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R017",
+    "name": "fk_auditoria_vinculo",
+    "child": "auditoria",
+    "parent": "usuario_perfis",
+    "source": [
+      "ator_vinculo_id",
+      "ator_usuario_id"
+    ],
+    "target": [
+      "id",
+      "usuario_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R018",
+    "name": "fk_chamado_atendente",
+    "child": "chamados",
+    "parent": "usuarios",
+    "source": [
+      "atribuido_a"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R019",
+    "name": "fk_chamado_categoria",
+    "child": "chamados",
+    "parent": "categorias_chamado",
+    "source": [
+      "categoria_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R020",
+    "name": "fk_chamado_perfil",
+    "child": "chamados",
+    "parent": "perfis",
+    "source": [
+      "perfil_contexto_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R021",
+    "name": "fk_chamado_solicitante",
+    "child": "chamados",
+    "parent": "usuarios",
+    "source": [
+      "solicitante_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R022",
+    "name": "fk_chamado_unidade",
+    "child": "chamados",
+    "parent": "unidades",
+    "source": [
+      "unidade_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R023",
+    "name": "fk_ce_chamado",
+    "child": "chamado_eventos",
+    "parent": "chamados",
+    "source": [
+      "chamado_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R024",
+    "name": "fk_ce_vinculo",
+    "child": "chamado_eventos",
+    "parent": "usuario_perfis",
+    "source": [
+      "ator_vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R025",
+    "name": "fk_cm_autor",
+    "child": "chamado_mensagens",
+    "parent": "usuario_perfis",
+    "source": [
+      "autor_vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R026",
+    "name": "fk_cm_chamado",
+    "child": "chamado_mensagens",
+    "parent": "chamados",
+    "source": [
+      "chamado_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R027",
+    "name": "fk_config_logo",
+    "child": "configuracao_sistema",
+    "parent": "arquivos",
+    "source": [
+      "logo_arquivo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R028",
+    "name": "fk_confirmacao_usuario",
+    "child": "confirmacoes_identidade",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R029",
+    "name": "fk_confirmacao_vinculo",
+    "child": "confirmacoes_identidade",
+    "parent": "usuario_perfis",
+    "source": [
+      "vinculo_id",
+      "usuario_id"
+    ],
+    "target": [
+      "id",
+      "usuario_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R030",
+    "name": "fk_cv_perfil",
+    "child": "controle_vinculos",
+    "parent": "perfis",
+    "source": [
+      "perfil_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R031",
+    "name": "fk_cv_unidade",
+    "child": "controle_vinculos",
+    "parent": "unidades",
+    "source": [
+      "unidade_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R032",
+    "name": "fk_cv_usuario",
+    "child": "controle_vinculos",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R033",
+    "name": "fk_cv_vinculo",
+    "child": "controle_vinculos",
+    "parent": "usuario_perfis",
+    "source": [
+      "vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..1",
+    "identifying": true,
+    "optional": false,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R034",
+    "name": "fk_credencial_mfa_usuario",
+    "child": "credenciais_mfa",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R035",
+    "name": "fk_desafio_mfa_sessao",
+    "child": "desafios_mfa",
+    "parent": "sessoes",
+    "source": [
+      "sessao_id",
+      "usuario_id"
+    ],
+    "target": [
+      "id",
+      "usuario_id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R036",
+    "name": "fk_desafio_mfa_usuario",
+    "child": "desafios_mfa",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R037",
+    "name": "fk_desafio_mfa_vinculo",
+    "child": "desafios_mfa",
+    "parent": "usuario_perfis",
+    "source": [
+      "vinculo_id",
+      "usuario_id"
+    ],
+    "target": [
+      "id",
+      "usuario_id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R038",
+    "name": "fk_despesa_autor",
+    "child": "despesas",
+    "parent": "usuarios",
+    "source": [
+      "criado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R039",
+    "name": "fk_despesa_categoria",
+    "child": "despesas",
+    "parent": "categorias_despesa",
+    "source": [
+      "categoria_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R040",
+    "name": "fk_despesa_fornecedor",
+    "child": "despesas",
+    "parent": "fornecedores",
+    "source": [
+      "fornecedor_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R041",
+    "name": "fk_despesa_unidade",
+    "child": "despesas",
+    "parent": "unidades",
+    "source": [
+      "unidade_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R042",
+    "name": "fk_despesa_veiculo",
+    "child": "despesas",
+    "parent": "veiculos",
+    "source": [
+      "veiculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R043",
+    "name": "fk_de_despesa",
+    "child": "despesa_eventos",
+    "parent": "despesas",
+    "source": [
+      "despesa_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R044",
+    "name": "fk_de_vinculo",
+    "child": "despesa_eventos",
+    "parent": "usuario_perfis",
+    "source": [
+      "ator_vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R045",
+    "name": "fk_dv_anterior",
+    "child": "documentos_veiculo",
+    "parent": "documentos_veiculo",
+    "source": [
+      "substitui_documento_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R046",
+    "name": "fk_dv_arquivo",
+    "child": "documentos_veiculo",
+    "parent": "arquivos",
+    "source": [
+      "arquivo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R047",
+    "name": "fk_dv_veiculo",
+    "child": "documentos_veiculo",
+    "parent": "veiculos",
+    "source": [
+      "veiculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R048",
+    "name": "fk_outbox_confirmacao",
+    "child": "email_outbox",
+    "parent": "confirmacoes_identidade",
+    "source": [
+      "confirmacao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R049",
+    "name": "fk_outbox_recuperacao",
+    "child": "email_outbox",
+    "parent": "recuperacoes_senha",
+    "source": [
+      "recuperacao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R050",
+    "name": "fk_outbox_usuario",
+    "child": "email_outbox",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R051",
+    "name": "fk_ec_campo",
+    "child": "exportacao_campos",
+    "parent": "relatorio_campos",
+    "source": [
+      "campo_id",
+      "modulo_codigo"
+    ],
+    "target": [
+      "id",
+      "modulo_codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R052",
+    "name": "fk_ec_exportacao",
+    "child": "exportacao_campos",
+    "parent": "exportacoes",
+    "source": [
+      "exportacao_id",
+      "modulo_codigo"
+    ],
+    "target": [
+      "id",
+      "modulo_codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R053",
+    "name": "fk_er_auditoria",
+    "child": "exportacao_registros",
+    "parent": "auditoria",
+    "source": [
+      "auditoria_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R054",
+    "name": "fk_er_chamado",
+    "child": "exportacao_registros",
+    "parent": "chamados",
+    "source": [
+      "chamado_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R055",
+    "name": "fk_er_despesa",
+    "child": "exportacao_registros",
+    "parent": "despesas",
+    "source": [
+      "despesa_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R056",
+    "name": "fk_er_exportacao",
+    "child": "exportacao_registros",
+    "parent": "exportacoes",
+    "source": [
+      "exportacao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R057",
+    "name": "fk_er_multa",
+    "child": "exportacao_registros",
+    "parent": "multas",
+    "source": [
+      "multa_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R058",
+    "name": "fk_er_perfil",
+    "child": "exportacao_registros",
+    "parent": "perfis",
+    "source": [
+      "perfil_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R059",
+    "name": "fk_er_posicao",
+    "child": "exportacao_registros",
+    "parent": "posicoes_rastreamento",
+    "source": [
+      "posicao_rastreamento_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R060",
+    "name": "fk_er_posicao_manual",
+    "child": "exportacao_registros",
+    "parent": "posicoes_manuais",
+    "source": [
+      "posicao_manual_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R061",
+    "name": "fk_er_rota",
+    "child": "exportacao_registros",
+    "parent": "rotas_sistema",
+    "source": [
+      "rota_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R062",
+    "name": "fk_er_solicitacao",
+    "child": "exportacao_registros",
+    "parent": "solicitacoes",
+    "source": [
+      "solicitacao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R063",
+    "name": "fk_er_usuario",
+    "child": "exportacao_registros",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R064",
+    "name": "fk_er_veiculo",
+    "child": "exportacao_registros",
+    "parent": "veiculos",
+    "source": [
+      "veiculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R065",
+    "name": "fk_er_viagem",
+    "child": "exportacao_registros",
+    "parent": "viagens",
+    "source": [
+      "viagem_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R066",
+    "name": "fk_exportacao_arquivo",
+    "child": "exportacoes",
+    "parent": "arquivos",
+    "source": [
+      "arquivo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R067",
+    "name": "fk_exportacao_modulo",
+    "child": "exportacoes",
+    "parent": "modulos",
+    "source": [
+      "modulo_codigo"
+    ],
+    "target": [
+      "codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R068",
+    "name": "fk_exportacao_unidade",
+    "child": "exportacoes",
+    "parent": "unidades",
+    "source": [
+      "unidade_aplicada_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R069",
+    "name": "fk_exportacao_vinculo",
+    "child": "exportacoes",
+    "parent": "usuario_perfis",
+    "source": [
+      "solicitado_por_vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R070",
+    "name": "fk_mi_manutencao",
+    "child": "manutencao_itens",
+    "parent": "manutencoes",
+    "source": [
+      "manutencao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R071",
+    "name": "fk_manutencao_autor",
+    "child": "manutencoes",
+    "parent": "usuarios",
+    "source": [
+      "criado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R072",
+    "name": "fk_manutencao_despesa",
+    "child": "manutencoes",
+    "parent": "despesas",
+    "source": [
+      "despesa_id",
+      "veiculo_id"
+    ],
+    "target": [
+      "id",
+      "veiculo_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..1",
+    "identifying": false,
+    "optional": true,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R073",
+    "name": "fk_manutencao_fornecedor",
+    "child": "manutencoes",
+    "parent": "fornecedores",
+    "source": [
+      "fornecedor_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R074",
+    "name": "fk_manutencao_reserva",
+    "child": "manutencoes",
+    "parent": "reservas",
+    "source": [
+      "reserva_id",
+      "veiculo_id"
+    ],
+    "target": [
+      "id",
+      "veiculo_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..1",
+    "identifying": false,
+    "optional": true,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R075",
+    "name": "fk_manutencao_veiculo",
+    "child": "manutencoes",
+    "parent": "veiculos",
+    "source": [
+      "veiculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R076",
+    "name": "fk_ma_acao",
+    "child": "modulo_acoes",
+    "parent": "acoes",
+    "source": [
+      "acao_codigo"
+    ],
+    "target": [
+      "codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R077",
+    "name": "fk_ma_modulo",
+    "child": "modulo_acoes",
+    "parent": "modulos",
+    "source": [
+      "modulo_codigo"
+    ],
+    "target": [
+      "codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R078",
+    "name": "fk_motorista_documento",
+    "child": "motoristas",
+    "parent": "arquivos",
+    "source": [
+      "cnh_arquivo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R079",
+    "name": "fk_motorista_usuario",
+    "child": "motoristas",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..1",
+    "identifying": true,
+    "optional": false,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R080",
+    "name": "fk_multa_autor",
+    "child": "multas",
+    "parent": "usuarios",
+    "source": [
+      "criado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R081",
+    "name": "fk_multa_responsabilidade_atual",
+    "child": "multas",
+    "parent": "multa_responsabilidades",
+    "source": [
+      "id",
+      "responsabilidade_atual_id"
+    ],
+    "target": [
+      "multa_id",
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..1",
+    "identifying": false,
+    "optional": true,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R082",
+    "name": "fk_multa_unidade",
+    "child": "multas",
+    "parent": "unidades",
+    "source": [
+      "unidade_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R083",
+    "name": "fk_multa_veiculo",
+    "child": "multas",
+    "parent": "veiculos",
+    "source": [
+      "veiculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R084",
+    "name": "fk_mc_arquivo",
+    "child": "multa_comprovantes",
+    "parent": "arquivos",
+    "source": [
+      "arquivo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R085",
+    "name": "fk_mc_responsabilidade",
+    "child": "multa_comprovantes",
+    "parent": "multa_responsabilidades",
+    "source": [
+      "multa_id",
+      "responsabilidade_id"
+    ],
+    "target": [
+      "multa_id",
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R086",
+    "name": "fk_mc_vinculo",
+    "child": "multa_comprovantes",
+    "parent": "usuario_perfis",
+    "source": [
+      "enviado_por_vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R087",
+    "name": "fk_mcf_comprovante",
+    "child": "multa_conferencias",
+    "parent": "multa_comprovantes",
+    "source": [
+      "multa_id",
+      "comprovante_id"
+    ],
+    "target": [
+      "multa_id",
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..1",
+    "identifying": false,
+    "optional": false,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R088",
+    "name": "fk_mcf_vinculo",
+    "child": "multa_conferencias",
+    "parent": "usuario_perfis",
+    "source": [
+      "conferido_por_vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R089",
+    "name": "fk_me_multa",
+    "child": "multa_eventos",
+    "parent": "multas",
+    "source": [
+      "multa_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R090",
+    "name": "fk_me_vinculo",
+    "child": "multa_eventos",
+    "parent": "usuario_perfis",
+    "source": [
+      "ator_vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R091",
+    "name": "fk_mr_confirmador",
+    "child": "multa_responsabilidades",
+    "parent": "usuario_perfis",
+    "source": [
+      "confirmado_por_vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R092",
+    "name": "fk_mr_multa",
+    "child": "multa_responsabilidades",
+    "parent": "multas",
+    "source": [
+      "multa_id",
+      "veiculo_id"
+    ],
+    "target": [
+      "id",
+      "veiculo_id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R093",
+    "name": "fk_mr_responsavel",
+    "child": "multa_responsabilidades",
+    "parent": "usuarios",
+    "source": [
+      "responsavel_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R094",
+    "name": "fk_mr_viagem",
+    "child": "multa_responsabilidades",
+    "parent": "viagens",
+    "source": [
+      "viagem_id",
+      "veiculo_id",
+      "motorista_id"
+    ],
+    "target": [
+      "id",
+      "veiculo_id",
+      "motorista_id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R095",
+    "name": "fk_nd_evento",
+    "child": "notificacao_destinatarios",
+    "parent": "notificacao_eventos",
+    "source": [
+      "evento_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R096",
+    "name": "fk_nd_usuario",
+    "child": "notificacao_destinatarios",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R097",
+    "name": "fk_ne_chamado",
+    "child": "notificacao_eventos",
+    "parent": "chamados",
+    "source": [
+      "chamado_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R098",
+    "name": "fk_ne_despesa",
+    "child": "notificacao_eventos",
+    "parent": "despesas",
+    "source": [
+      "despesa_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R099",
+    "name": "fk_ne_multa",
+    "child": "notificacao_eventos",
+    "parent": "multas",
+    "source": [
+      "multa_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R100",
+    "name": "fk_ne_solicitacao",
+    "child": "notificacao_eventos",
+    "parent": "solicitacoes",
+    "source": [
+      "solicitacao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R101",
+    "name": "fk_ne_viagem",
+    "child": "notificacao_eventos",
+    "parent": "viagens",
+    "source": [
+      "viagem_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R102",
+    "name": "fk_oa_motorista",
+    "child": "ocupacoes_agenda",
+    "parent": "motoristas",
+    "source": [
+      "motorista_id"
+    ],
+    "target": [
+      "usuario_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R103",
+    "name": "fk_oa_reserva",
+    "child": "ocupacoes_agenda",
+    "parent": "reservas",
+    "source": [
+      "reserva_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..1",
+    "identifying": true,
+    "optional": false,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R104",
+    "name": "fk_oa_veiculo",
+    "child": "ocupacoes_agenda",
+    "parent": "veiculos",
+    "source": [
+      "veiculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R105",
+    "name": "fk_oa_viagem",
+    "child": "ocupacoes_agenda",
+    "parent": "viagens",
+    "source": [
+      "viagem_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R106",
+    "name": "fk_pd_arquivo",
+    "child": "pagamentos_despesa",
+    "parent": "arquivos",
+    "source": [
+      "comprovante_arquivo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R107",
+    "name": "fk_pd_despesa",
+    "child": "pagamentos_despesa",
+    "parent": "despesas",
+    "source": [
+      "despesa_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..1",
+    "identifying": false,
+    "optional": false,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R108",
+    "name": "fk_pd_vinculo",
+    "child": "pagamentos_despesa",
+    "parent": "usuario_perfis",
+    "source": [
+      "confirmado_por_vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R109",
+    "name": "fk_pagamento_multa_conferencia",
+    "child": "pagamentos_multa",
+    "parent": "multa_conferencias",
+    "source": [
+      "multa_id",
+      "conferencia_id"
+    ],
+    "target": [
+      "multa_id",
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..1",
+    "identifying": false,
+    "optional": false,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R110",
+    "name": "fk_pp_autor",
+    "child": "perfil_permissoes",
+    "parent": "usuarios",
+    "source": [
+      "concedido_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R111",
+    "name": "fk_pp_perfil",
+    "child": "perfil_permissoes",
+    "parent": "perfis",
+    "source": [
+      "perfil_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R112",
+    "name": "fk_pp_permissao",
+    "child": "perfil_permissoes",
+    "parent": "permissoes",
+    "source": [
+      "permissao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R113",
+    "name": "fk_perfil_autor",
+    "child": "perfis",
+    "parent": "usuarios",
+    "source": [
+      "criado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R114",
+    "name": "fk_perfil_origem",
+    "child": "perfis",
+    "parent": "perfis",
+    "source": [
+      "perfil_origem_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R115",
+    "name": "fk_permissao_acao",
+    "child": "permissoes",
+    "parent": "acoes",
+    "source": [
+      "acao_codigo"
+    ],
+    "target": [
+      "codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R116",
+    "name": "fk_permissao_combinacao",
+    "child": "permissoes",
+    "parent": "modulo_acoes",
+    "source": [
+      "modulo_codigo",
+      "acao_codigo"
+    ],
+    "target": [
+      "modulo_codigo",
+      "acao_codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R117",
+    "name": "fk_permissao_modulo",
+    "child": "permissoes",
+    "parent": "modulos",
+    "source": [
+      "modulo_codigo"
+    ],
+    "target": [
+      "codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R118",
+    "name": "fk_pneu_despesa",
+    "child": "pneus",
+    "parent": "despesas",
+    "source": [
+      "despesa_aquisicao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R119",
+    "name": "fk_pi_autor",
+    "child": "pneu_instalacoes",
+    "parent": "usuarios",
+    "source": [
+      "registrado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R120",
+    "name": "fk_pi_manutencao",
+    "child": "pneu_instalacoes",
+    "parent": "manutencoes",
+    "source": [
+      "manutencao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R121",
+    "name": "fk_pi_pneu",
+    "child": "pneu_instalacoes",
+    "parent": "pneus",
+    "source": [
+      "pneu_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R122",
+    "name": "fk_pi_veiculo",
+    "child": "pneu_instalacoes",
+    "parent": "veiculos",
+    "source": [
+      "veiculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R123",
+    "name": "fk_pm_autor",
+    "child": "posicoes_manuais",
+    "parent": "usuarios",
+    "source": [
+      "registrado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R124",
+    "name": "fk_pm_viagem",
+    "child": "posicoes_manuais",
+    "parent": "viagens",
+    "source": [
+      "viagem_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R125",
+    "name": "fk_posicao_viagem",
+    "child": "posicoes_rastreamento",
+    "parent": "viagens",
+    "source": [
+      "viagem_id",
+      "veiculo_id"
+    ],
+    "target": [
+      "id",
+      "veiculo_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R126",
+    "name": "fk_preferencia_usuario",
+    "child": "preferencias_usuario",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..1",
+    "identifying": true,
+    "optional": false,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R127",
+    "name": "fk_recuperacao_mfa_solicitante",
+    "child": "recuperacoes_mfa",
+    "parent": "usuarios",
+    "source": [
+      "solicitada_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R128",
+    "name": "fk_recuperacao_mfa_usuario",
+    "child": "recuperacoes_mfa",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R129",
+    "name": "fk_recuperacao_usuario",
+    "child": "recuperacoes_senha",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R130",
+    "name": "fk_rc_acao",
+    "child": "relatorio_campos",
+    "parent": "acoes",
+    "source": [
+      "acao_adicional"
+    ],
+    "target": [
+      "codigo"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R131",
+    "name": "fk_rc_acao_modulo",
+    "child": "relatorio_campos",
+    "parent": "modulo_acoes",
+    "source": [
+      "modulo_codigo",
+      "acao_adicional"
+    ],
+    "target": [
+      "modulo_codigo",
+      "acao_codigo"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R132",
+    "name": "fk_rc_modulo",
+    "child": "relatorio_campos",
+    "parent": "modulos",
+    "source": [
+      "modulo_codigo"
+    ],
+    "target": [
+      "codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R133",
+    "name": "fk_reserva_autor",
+    "child": "reservas",
+    "parent": "usuarios",
+    "source": [
+      "criado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R134",
+    "name": "fk_reserva_motorista",
+    "child": "reservas",
+    "parent": "motoristas",
+    "source": [
+      "motorista_id"
+    ],
+    "target": [
+      "usuario_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R135",
+    "name": "fk_reserva_revisao",
+    "child": "reservas",
+    "parent": "solicitacao_revisoes",
+    "source": [
+      "revisao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..1",
+    "identifying": false,
+    "optional": true,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R136",
+    "name": "fk_reserva_veiculo",
+    "child": "reservas",
+    "parent": "veiculos",
+    "source": [
+      "veiculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R137",
+    "name": "fk_rota_autor",
+    "child": "rotas_sistema",
+    "parent": "usuarios",
+    "source": [
+      "criado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R138",
+    "name": "fk_rota_modulo",
+    "child": "rotas_sistema",
+    "parent": "modulos",
+    "source": [
+      "modulo_codigo"
+    ],
+    "target": [
+      "codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R139",
+    "name": "fk_rp_acao",
+    "child": "rota_permissoes",
+    "parent": "acoes",
+    "source": [
+      "acao_codigo"
+    ],
+    "target": [
+      "codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R140",
+    "name": "fk_rp_combinacao",
+    "child": "rota_permissoes",
+    "parent": "modulo_acoes",
+    "source": [
+      "modulo_codigo",
+      "acao_codigo"
+    ],
+    "target": [
+      "modulo_codigo",
+      "acao_codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R141",
+    "name": "fk_rp_modulo",
+    "child": "rota_permissoes",
+    "parent": "modulos",
+    "source": [
+      "modulo_codigo"
+    ],
+    "target": [
+      "codigo"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R142",
+    "name": "fk_rp_rota",
+    "child": "rota_permissoes",
+    "parent": "rotas_sistema",
+    "source": [
+      "rota_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R143",
+    "name": "fk_sessao_mfa_vinculo",
+    "child": "sessoes",
+    "parent": "usuario_perfis",
+    "source": [
+      "mfa_vinculo_id",
+      "usuario_id"
+    ],
+    "target": [
+      "id",
+      "usuario_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R144",
+    "name": "fk_sessao_usuario",
+    "child": "sessoes",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R145",
+    "name": "fk_sessao_vinculo",
+    "child": "sessoes",
+    "parent": "usuario_perfis",
+    "source": [
+      "vinculo_ativo_id",
+      "usuario_id"
+    ],
+    "target": [
+      "id",
+      "usuario_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R146",
+    "name": "fk_se_motorista",
+    "child": "solicitacao_eventos",
+    "parent": "motoristas",
+    "source": [
+      "motorista_confirmado_id"
+    ],
+    "target": [
+      "usuario_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R147",
+    "name": "fk_se_revisao",
+    "child": "solicitacao_eventos",
+    "parent": "solicitacao_revisoes",
+    "source": [
+      "solicitacao_id",
+      "revisao_id"
+    ],
+    "target": [
+      "solicitacao_id",
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R148",
+    "name": "fk_se_veiculo",
+    "child": "solicitacao_eventos",
+    "parent": "veiculos",
+    "source": [
+      "veiculo_confirmado_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R149",
+    "name": "fk_se_vinculo",
+    "child": "solicitacao_eventos",
+    "parent": "usuario_perfis",
+    "source": [
+      "ator_vinculo_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R150",
+    "name": "fk_parada_revisao",
+    "child": "solicitacao_paradas",
+    "parent": "solicitacao_revisoes",
+    "source": [
+      "revisao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R151",
+    "name": "fk_passageiro_revisao",
+    "child": "solicitacao_passageiros",
+    "parent": "solicitacao_revisoes",
+    "source": [
+      "revisao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R152",
+    "name": "fk_passageiro_usuario",
+    "child": "solicitacao_passageiros",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R153",
+    "name": "fk_revisao_autor",
+    "child": "solicitacao_revisoes",
+    "parent": "usuarios",
+    "source": [
+      "criado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R154",
+    "name": "fk_revisao_motorista",
+    "child": "solicitacao_revisoes",
+    "parent": "motoristas",
+    "source": [
+      "motorista_sugerido_id"
+    ],
+    "target": [
+      "usuario_id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R155",
+    "name": "fk_revisao_solicitacao",
+    "child": "solicitacao_revisoes",
+    "parent": "solicitacoes",
+    "source": [
+      "solicitacao_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R156",
+    "name": "fk_revisao_veiculo",
+    "child": "solicitacao_revisoes",
+    "parent": "veiculos",
+    "source": [
+      "veiculo_pretendido_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R157",
+    "name": "fk_solicitacao_autor",
+    "child": "solicitacoes",
+    "parent": "usuarios",
+    "source": [
+      "solicitante_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R158",
+    "name": "fk_solicitacao_revisao_atual",
+    "child": "solicitacoes",
+    "parent": "solicitacao_revisoes",
+    "source": [
+      "id",
+      "revisao_atual_id"
+    ],
+    "target": [
+      "solicitacao_id",
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..1",
+    "identifying": false,
+    "optional": true,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R159",
+    "name": "fk_solicitacao_unidade",
+    "child": "solicitacoes",
+    "parent": "unidades",
+    "source": [
+      "unidade_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R160",
+    "name": "fk_unidade_superior",
+    "child": "unidades",
+    "parent": "unidades",
+    "source": [
+      "unidade_superior_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R161",
+    "name": "fk_usuario_unidade",
+    "child": "usuarios",
+    "parent": "unidades",
+    "source": [
+      "unidade_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R162",
+    "name": "fk_up_concessor",
+    "child": "usuario_perfis",
+    "parent": "usuarios",
+    "source": [
+      "concedido_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R163",
+    "name": "fk_up_perfil",
+    "child": "usuario_perfis",
+    "parent": "perfis",
+    "source": [
+      "perfil_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R164",
+    "name": "fk_up_revogador",
+    "child": "usuario_perfis",
+    "parent": "usuarios",
+    "source": [
+      "revogado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R165",
+    "name": "fk_up_unidade",
+    "child": "usuario_perfis",
+    "parent": "unidades",
+    "source": [
+      "unidade_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R166",
+    "name": "fk_up_usuario",
+    "child": "usuario_perfis",
+    "parent": "usuarios",
+    "source": [
+      "usuario_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R167",
+    "name": "fk_veiculo_autor",
+    "child": "veiculos",
+    "parent": "usuarios",
+    "source": [
+      "criado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R168",
+    "name": "fk_veiculo_categoria",
+    "child": "veiculos",
+    "parent": "categorias_veiculo",
+    "source": [
+      "categoria_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R169",
+    "name": "fk_veiculo_unidade",
+    "child": "veiculos",
+    "parent": "unidades",
+    "source": [
+      "unidade_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R170",
+    "name": "fk_vc_autor",
+    "child": "viagem_checklists",
+    "parent": "usuarios",
+    "source": [
+      "preenchido_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R171",
+    "name": "fk_vc_viagem",
+    "child": "viagem_checklists",
+    "parent": "viagens",
+    "source": [
+      "viagem_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R172",
+    "name": "fk_vcr_checklist",
+    "child": "viagem_checklist_respostas",
+    "parent": "viagem_checklists",
+    "source": [
+      "checklist_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R173",
+    "name": "fk_vcr_item",
+    "child": "viagem_checklist_respostas",
+    "parent": "checklist_itens",
+    "source": [
+      "item_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": true,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R174",
+    "name": "fk_ocorrencia_autor",
+    "child": "viagem_ocorrencias",
+    "parent": "usuarios",
+    "source": [
+      "registrado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R175",
+    "name": "fk_ocorrencia_viagem",
+    "child": "viagem_ocorrencias",
+    "parent": "viagens",
+    "source": [
+      "viagem_id"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": false,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": false
+  },
+  {
+    "id": "R176",
+    "name": "fk_viagem_reserva",
+    "child": "viagens",
+    "parent": "reservas",
+    "source": [
+      "reserva_id",
+      "veiculo_id",
+      "motorista_id",
+      "revisao_id"
+    ],
+    "target": [
+      "id",
+      "veiculo_id",
+      "motorista_id",
+      "revisao_id"
+    ],
+    "parent_per_child": "1",
+    "children_per_parent": "0..1",
+    "identifying": false,
+    "optional": false,
+    "child_unique": true,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R177",
+    "name": "fk_viagem_retorno_autor",
+    "child": "viagens",
+    "parent": "usuarios",
+    "source": [
+      "retorno_registrado_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  },
+  {
+    "id": "R178",
+    "name": "fk_viagem_saida_autor",
+    "child": "viagens",
+    "parent": "usuarios",
+    "source": [
+      "saida_registrada_por"
+    ],
+    "target": [
+      "id"
+    ],
+    "parent_per_child": "0..1",
+    "children_per_parent": "0..N",
+    "identifying": false,
+    "optional": true,
+    "child_unique": false,
+    "parent_unique": true,
+    "delete": "RESTRICT",
+    "update": "RESTRICT",
+    "external": true
+  }
+]
