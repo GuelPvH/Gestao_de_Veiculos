@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\Authorization\AccessContext;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\ReadFixture;
 use Tests\TestCase;
@@ -65,5 +66,42 @@ class EnabledRouteTest extends TestCase
         DB::table('rotas_sistema')->where('id', 4)->update(['ativa' => 0]);
 
         $this->get(route('technical-routes.index'))->assertOk();
+    }
+
+    public function test_all_profiles_check_permissions_and_route_switches_with_one_read(): void
+    {
+        foreach ([1, 2, 3, 4] as $profile) {
+            ReadFixture::profile($profile);
+            DB::connection()->enableQueryLog();
+            DB::connection()->flushQueryLog();
+
+            $this->get(route('dashboard'))->assertOk();
+
+            $reads = collect(DB::connection()->getQueryLog())->filter(fn ($query) => str_contains($query['query'], 'vw_permissoes_efetivas') || (str_contains($query['query'], 'rotas_sistema') && str_contains($query['query'], 'metodo_http')));
+            DB::connection()->disableQueryLog();
+            $this->assertCount(1, $reads);
+            $this->assertStringContainsString('vw_permissoes_efetivas', $reads->first()['query']);
+            $this->assertStringContainsString('rotas_sistema', $reads->first()['query']);
+        }
+    }
+
+    public function test_permission_revocation_is_visible_on_the_next_request(): void
+    {
+        $this->get(route('vehicles.index'))->assertOk();
+        DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'frota')->delete();
+
+        $this->get(route('vehicles.index'))->assertForbidden();
+
+        ReadFixture::grant('frota', 'consultar', 3);
+        $this->get(route('vehicles.index'))->assertOk();
+    }
+
+    public function test_empty_permissions_do_not_hide_a_disabled_route(): void
+    {
+        DB::table('vw_permissoes_efetivas')->delete();
+        DB::table('rotas_sistema')->where('id', 4)->update(['ativa' => 0]);
+
+        $this->get(route('vehicles.index'))->assertForbidden()->assertViewIs('errors.disabled');
+        $this->assertSame(0, app(AccessContext::class)->level('frota'));
     }
 }
