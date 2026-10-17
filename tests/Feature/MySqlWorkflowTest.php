@@ -2,14 +2,20 @@
 
 namespace Tests\Feature;
 
+use App\Services\Auth\DeliveryHealth;
+use App\Services\Auth\DispatchPendingMail;
 use App\Services\Auth\ProcedureRunner;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\AssertionFailedError;
+use Tests\Support\TestAuthenticator;
 use Tests\TestCase;
 
 class MySqlWorkflowTest extends TestCase
@@ -62,8 +68,10 @@ class MySqlWorkflowTest extends TestCase
 
         $this->login($servidor, $senhaServidor);
         $local = CarbonImmutable::now(config('fleet.timezone'));
-        $this->post(route('requests.store'), [
+        $this->post(route('solicitacoes.store'), [
             'finalidade' => 'Inspeção QA isolada', 'origem' => 'Sede', 'destino' => 'Unidade de teste',
+            'origem_latitude' => -8.76, 'origem_longitude' => -63.90,
+            'destino_latitude' => -8.77, 'destino_longitude' => -63.91,
             'saida_prevista' => $local->subHours(2)->format('Y-m-d\TH:i'),
             'retorno_previsto' => $local->addHours(2)->format('Y-m-d\TH:i'),
             'quantidade_passageiros' => 1, 'necessita_motorista' => '1',
@@ -71,16 +79,17 @@ class MySqlWorkflowTest extends TestCase
         ])->assertSessionHas('status');
         $solicitacao = (int) DB::table('solicitacoes')->where('solicitante_id', $servidor)->orderByDesc('id')->value('id');
         $this->assertGreaterThan(0, $solicitacao);
+        $this->assertEquals(-8.76, DB::table('solicitacao_revisoes')->where('solicitacao_id', $solicitacao)->value('origem_latitude'));
         $this->assertSame('rascunho', DB::table('solicitacoes')->where('id', $solicitacao)->value('situacao'));
-        $this->post(route('requests.perform', ['registro' => $solicitacao, 'acao' => 'send']), ['versao' => 2])
+        $this->post(route('solicitacoes.send.submit', $solicitacao), ['versao' => 2])
             ->assertSessionHas('status');
         $this->assertSame('aguardando_analise', DB::table('solicitacoes')->where('id', $solicitacao)->value('situacao'));
-        $this->post(route('requests.perform', ['registro' => $solicitacao, 'acao' => 'send']), ['versao' => 2])
+        $this->post(route('solicitacoes.send.submit', $solicitacao), ['versao' => 2])
             ->assertForbidden();
 
         $this->post('/sair');
         $this->login($gestor, $senhaGestor);
-        $this->post(route('requests.perform', ['registro' => $solicitacao, 'acao' => 'approve']), [
+        $this->post(route('solicitacoes.approve.submit', $solicitacao), [
             'versao' => 3, 'veiculo_confirmado_id' => $veiculo,
             'motorista_confirmado_id' => $servidor, 'justificativa' => 'Agenda e habilitação conferidas.',
         ])->assertSessionHas('status');
@@ -232,6 +241,18 @@ class MySqlWorkflowTest extends TestCase
         if (getenv('FLEET_TEST_MAILPIT') !== '1') {
             $this->markTestSkipped('Requer Mailpit descartável no contrato de integração.');
         }
+        $redisPath = realpath((string) getenv('FLEET_TEST_REDIS_CONFIG'));
+        if (! $redisPath) {
+            $this->markTestSkipped('Requer Redis descartável com configuração privada.');
+        }
+        if (str_starts_with($redisPath, realpath(base_path()).DIRECTORY_SEPARATOR) || (fileperms($redisPath) & 0077) !== 0) {
+            throw new \RuntimeException('Configuração Redis precisa estar fora Git com chmod 600.');
+        }
+        $redis = json_decode(file_get_contents($redisPath), true, 512, JSON_THROW_ON_ERROR);
+        if (! in_array($redis['host'] ?? '', ['127.0.0.1', 'localhost'], true)) {
+            throw new \RuntimeException('Destino Redis de teste recusado.');
+        }
+        $prefix = 'frota-contract-'.bin2hex(random_bytes(8)).':';
         $smtpPorta = (int) getenv('FLEET_TEST_MAILPIT_SMTP_PORT');
         $apiPorta = (int) getenv('FLEET_TEST_MAILPIT_API_PORT');
         $this->assertGreaterThan(0, $smtpPorta);
@@ -240,14 +261,24 @@ class MySqlWorkflowTest extends TestCase
             'app.env' => 'testing', 'app.url' => 'https://frota.example.test',
             'fleet.recovery_mail_enabled' => true,
             'fleet.recovery_queue_enabled' => true,
-            'fleet.recovery_queue_connection' => 'database',
-            'queue.connections.database.driver' => 'database',
+            'fleet.recovery_queue_connection' => 'redis',
+            'queue.connections.redis.driver' => 'redis', 'queue.connections.redis.connection' => 'default',
+            'queue.connections.redis.retry_after' => 120, 'database.redis.client' => 'phpredis',
+            'database.redis.options.prefix' => $prefix, 'database.redis.default.url' => null,
+            'database.redis.default.host' => $redis['host'], 'database.redis.default.port' => $redis['port'],
+            'database.redis.default.password' => $redis['password'], 'database.redis.default.database' => 0,
+            'database.redis.cache.url' => null, 'database.redis.cache.host' => $redis['host'],
+            'database.redis.cache.port' => $redis['port'], 'database.redis.cache.password' => $redis['password'],
+            'database.redis.cache.database' => 1, 'cache.prefix' => $prefix,
             'mail.default' => 'smtp', 'mail.mailers.smtp.scheme' => 'smtp',
             'mail.mailers.smtp.url' => null, 'mail.mailers.smtp.host' => '127.0.0.1',
             'mail.mailers.smtp.port' => $smtpPorta,
             'mail.from.address' => 'no-reply@frota.example.test',
         ]);
         Mail::purge('smtp');
+        Redis::purge('default');
+        Redis::purge('cache');
+        Cache::forgetDriver('redis');
         [$usuario] = $this->user('servidor');
         $identificador = DB::table('usuarios')->where('id', $usuario)->value('identificador');
         DB::table('usuarios')->where('id', $usuario)->update(['email' => $identificador.'@local.test']);
@@ -262,8 +293,33 @@ class MySqlWorkflowTest extends TestCase
         $this->withServerVariables(['HTTP_HOST' => 'host-nao-confiavel.invalid'])
             ->from('/recuperar-acesso')->post('/recuperar-acesso', ['identificador' => $identificador])
             ->assertSessionHas('status', 'Se houver um acesso elegível, você receberá as orientações no e-mail cadastrado.');
-        $this->assertSame(1, DB::table('jobs')->where('queue', 'default')->count());
-        Artisan::call('queue:work', ['connection' => 'database', '--queue' => 'default', '--once' => true, '--sleep' => 0, '--tries' => 3]);
+        $this->assertSame('pendente', DB::table('email_outbox')->where('usuario_id', $usuario)->where('finalidade', 'recuperacao')->value('estado'));
+        $this->assertSame(0, Queue::connection('redis')->size('auth-mails'));
+        $this->assertSame(1, app(DispatchPendingMail::class)->dispatch());
+        $this->assertSame(1, Queue::connection('redis')->size('auth-mails'));
+        $workerOptions = tempnam(sys_get_temp_dir(), 'frota-mail-worker-');
+        file_put_contents($workerOptions, json_encode(['app_key' => config('app.key'), 'smtp_port' => $smtpPorta, 'prefix' => $prefix], JSON_THROW_ON_ERROR));
+        chmod($workerOptions, 0600);
+        try {
+            $pipes = [];
+            $worker = proc_open([PHP_BINARY, base_path('tests/Support/deliver-outbox-worker.php'),
+                realpath((string) getenv('FLEET_MYSQL_TEST_CONFIG')), $redisPath, $workerOptions],
+                [0 => ['file', '/dev/null', 'r'], 1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes, base_path());
+            $this->assertIsResource($worker);
+            $this->assertSame(0, proc_close($worker));
+        } finally {
+            unlink($workerOptions);
+        }
+        $this->assertSame(0, Artisan::call('fleet:worker-health', ['queue' => 'auth-mails']));
+        $health = app(DeliveryHealth::class)->snapshot();
+        $this->assertTrue($health['redis']['aof_enabled']);
+        $this->assertTrue($health['redis']['aof_write_ok']);
+        $this->assertGreaterThan(0, $health['redis']['maxmemory_bytes']);
+        $this->assertNotContains('heartbeat_stale_auth-mails', $health['alerts']);
+        $this->assertContains('heartbeat_stale_security-mails', $health['alerts']);
+        $this->assertContains('heartbeat_stale_scheduler', $health['alerts']);
+        $this->assertSame('aceito', DB::table('email_outbox')->where('usuario_id', $usuario)->where('finalidade', 'recuperacao')->value('estado'));
+        $this->assertSame(0, Queue::connection('redis')->size('auth-mails'));
         $posteriores = json_decode(file_get_contents($api), true, 512, JSON_THROW_ON_ERROR);
         $this->assertSame($anteriores['total'] + 1, $posteriores['total']);
         $mensagem = json_decode(file_get_contents('http://127.0.0.1:'.$apiPorta.'/api/v1/message/'.$posteriores['messages'][0]['ID']), true, 512, JSON_THROW_ON_ERROR);
@@ -314,6 +370,8 @@ class MySqlWorkflowTest extends TestCase
         $usuario = DB::table('usuarios')->insertGetId([
             'unidade_id' => 1, 'identificador' => 'qa-'.bin2hex(random_bytes(8)),
             'nome' => 'Pessoa de teste isolado',
+            'estado_identidade' => 'ativa', 'email' => 'workflow-'.bin2hex(random_bytes(8)).'@local.test',
+            'email_verificado_em' => now('UTC'),
             'senha_hash' => password_hash($senha, PASSWORD_BCRYPT, ['cost' => 4]),
         ]);
         $perfilId = (int) DB::table('perfis')->where('codigo', $perfil)->value('id');
@@ -329,5 +387,17 @@ class MySqlWorkflowTest extends TestCase
     {
         $identificador = DB::table('usuarios')->where('id', $usuario)->value('identificador');
         $this->post('/entrar', ['identificador' => $identificador, 'senha' => $senha])->assertRedirect('/painel');
+        $this->withCredentials()->withCookie(config('session.cookie'), session()->getId());
+        $admin = DB::table('usuario_perfis as up')->join('perfis as p', 'p.id', '=', 'up.perfil_id')
+            ->where('up.usuario_id', $usuario)->where('p.codigo', 'administrador')->exists();
+        if ($admin) {
+            config(['fleet.mfa.origin' => 'https://fleet.example.test', 'fleet.mfa.rp_id' => 'fleet.example.test']);
+            $authenticator = new TestAuthenticator;
+            $challenge = $this->postJson('/seguranca/mfa/opcoes', ['purpose' => 'registration'])->assertOk()->json();
+            $this->postJson('/seguranca/mfa/confirmar', [
+                'challenge_id' => $challenge['challenge_id'],
+                'credential' => $authenticator->register($challenge['publicKey']),
+            ])->assertOk();
+        }
     }
 }
