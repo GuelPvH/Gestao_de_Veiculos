@@ -2,12 +2,13 @@
 
 namespace App\Services\Admin;
 
+use App\Services\Auth\IdentityService;
+use App\Services\Auth\PasswordVerifier;
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
 use App\Services\Read\FleetReadRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -19,19 +20,38 @@ class AdminWorkflow
         private AccessContext $acesso,
         private FleetReadRepository $leituras,
         private ProcedureRunner $procedimentos,
+        private IdentityService $identidades,
+        private PasswordVerifier $senhas,
     ) {}
 
     public function storeUser(array $dados): int
     {
         $unidade = (int) $dados['unidade_id'];
         abort_unless($this->acesso->can('usuarios', 'criar', null, $unidade), 403);
-        abort_unless(DB::table('unidades')->where('id', $unidade)->where('ativa', 1)->exists(), 422);
-        $retorno = $this->procedimentos->call('sp_criar_usuario', [
-            $this->linkId(), $unidade, trim($dados['identificador']), trim($dados['nome']),
-            ($dados['email'] ?? null) ?: null, Hash::make($dados['senha_temporaria']),
-        ]);
 
-        return $this->resultId($retorno, 'usuario_id');
+        return DB::transaction(function () use ($dados, $unidade): int {
+            $this->lockAdmin();
+            $this->requirePermission('usuarios', 'criar', null, $unidade);
+            abort_unless(DB::table('unidades')->where('id', $unidade)->where('ativa', 1)->exists(), 422);
+            $now = now('UTC');
+            $id = (int) DB::table('usuarios')->insertGetId([
+                'unidade_id' => $unidade, 'identificador' => mb_strtolower(trim($dados['identificador'])),
+                'nome' => trim($dados['nome']), 'email' => ($dados['email'] ?? null) ?: null,
+                'senha_hash' => $this->senhas->make($dados['senha_temporaria'] ?? bin2hex(random_bytes(32))),
+                'deve_trocar_senha' => 1, 'estado_identidade' => 'pendente', 'versao_seguranca' => 1,
+                'senha_temporaria_emitida_em' => $now,
+                'senha_temporaria_expira_em' => $now->copy()->addHours(max(1, min(72, (int) config('identity.temporary_password_hours', 24)))),
+            ]);
+            DB::table('preferencias_usuario')->insert(['usuario_id' => $id]);
+            $this->audit('usuario_criado', 'usuarios', $id, 'Conta pendente; ativação depende de vínculo autorizado e prova individual.');
+            // When the initial grant is supplied, creation + grant + mail intent
+            // share this transaction. No procedure here commits independently.
+            if (isset($dados['perfil_id'])) {
+                $this->grantLink($id, $dados);
+            }
+
+            return $id;
+        });
     }
 
     public function updateUser(int $id, array $dados): void
@@ -39,7 +59,7 @@ class AdminWorkflow
         $this->visible('users', $id);
         DB::transaction(function () use ($id, $dados): void {
             $this->lockAdmin();
-            $usuario = DB::table('usuarios')->where('id', $id)->lockForUpdate()->first(['id', 'unidade_id', 'versao', 'ativo']);
+            $usuario = DB::table('usuarios')->where('id', $id)->lockForUpdate()->first();
             abort_unless($usuario !== null, 404);
             $novaUnidade = (int) $dados['unidade_id'];
             abort_unless($this->acesso->can('usuarios', 'editar', $id, (int) $usuario->unidade_id)
@@ -49,16 +69,24 @@ class AdminWorkflow
             }
             $this->requirePermission('usuarios', 'editar', $id, (int) $usuario->unidade_id);
             $this->requirePermission('usuarios', 'editar', $id, $novaUnidade);
+            $email = ($dados['email'] ?? null) ?: null;
+            $securityChanged = $usuario->email !== $email || $usuario->email_pendente !== null || (int) $usuario->ativo !== (int) $dados['ativo']
+                || $usuario->identificador !== trim($dados['identificador']) || (int) $usuario->unidade_id !== $novaUnidade;
             DB::table('usuarios')->where('id', $id)->update([
                 'unidade_id' => $novaUnidade,
                 'identificador' => trim($dados['identificador']), 'nome' => trim($dados['nome']),
-                'email' => ($dados['email'] ?? null) ?: null, 'telefone' => ($dados['telefone'] ?? null) ?: null,
+                'email' => $email, 'email_pendente' => null,
+                'email_verificado_em' => $usuario->email === $email ? $usuario->email_verificado_em : null,
+                'versao_seguranca' => (int) $usuario->versao_seguranca + ($securityChanged ? 1 : 0), 'telefone' => ($dados['telefone'] ?? null) ?: null,
                 'ativo' => (int) $dados['ativo'], 'versao' => DB::raw('versao + 1'),
             ]);
-            if ((int) $usuario->ativo === 1 && (int) $dados['ativo'] === 0) {
-                DB::table('sessoes')->where('usuario_id', $id)->whereNull('encerrada_em')->update([
-                    'encerrada_em' => now('UTC'), 'motivo_encerramento' => 'revogacao',
-                ]);
+            if ($securityChanged) {
+                $this->identidades->invalidate($id);
+                $fresh = DB::table('usuarios')->where('id', $id)->first();
+                $this->identidades->securityNotice($fresh, 'identidade_alterada', $usuario->email);
+                if ($email && (int) $dados['ativo'] === 1) {
+                    $this->identidades->resend($id);
+                }
             }
             $this->audit('usuario_editado', 'usuarios', $id, $dados['justificativa']);
         });
@@ -67,22 +95,48 @@ class AdminWorkflow
     public function linkUser(int $id, array $dados): int
     {
         $this->visible('users', $id);
-        $unidade = (int) $dados['unidade_id'];
-        abort_unless($this->acesso->can('usuarios', 'delegar', $id, $unidade), 403);
-        foreach (DB::table('perfil_permissoes as pp')->join('permissoes as p', 'p.id', '=', 'pp.permissao_id')
-            ->where('pp.perfil_id', (int) $dados['perfil_id'])->get(['p.modulo_codigo', 'p.acao_codigo', 'p.alcance']) as $permissao) {
-            $nivel = match ($permissao->alcance) {
-                'proprios' => 1, 'unidade' => 2, default => 3,
-            };
-            abort_unless($this->acesso->delegationLevel($permissao->modulo_codigo, $permissao->acao_codigo) >= $nivel, 403);
-        }
-        $inicio = CarbonImmutable::parse($dados['vigente_desde'], config('fleet.timezone'))->utc()->format('Y-m-d H:i:s.u');
-        $fim = empty($dados['vigente_ate']) ? null : CarbonImmutable::parse($dados['vigente_ate'], config('fleet.timezone'))->utc()->format('Y-m-d H:i:s.u');
-        $retorno = $this->procedimentos->call('sp_vincular_perfil', [
-            $this->linkId(), $id, (int) $dados['perfil_id'], $unidade, $inicio, $fim, trim($dados['justificativa']),
-        ]);
 
-        return $this->resultId($retorno, 'vinculo_id');
+        return DB::transaction(function () use ($id, $dados): int {
+            $this->lockAdmin();
+
+            return $this->grantLink($id, $dados);
+        });
+    }
+
+    private function grantLink(int $id, array $dados): int
+    {
+        $unidade = (int) $dados['unidade_id'];
+        $actor = $this->acesso->link();
+        abort_unless($actor && (int) $actor->usuario_id !== $id, 403);
+        $user = DB::table('usuarios')->where('id', $id)->lockForUpdate()->first();
+        abort_unless($user && $user->ativo, 422);
+        $this->requirePermission('usuarios', 'delegar', $id, $unidade);
+        abort_unless(DB::table('perfis')->where('id', (int) $dados['perfil_id'])->where('ativo', 1)->exists(), 422);
+        abort_unless(DB::table('unidades')->where('id', $unidade)->where('ativa', 1)->exists(), 422);
+        abort_unless(mb_strlen(trim($dados['justificativa'] ?? '')) >= 5, 422);
+        $grantLevel = (int) DB::table('vw_permissoes_efetivas')->where('vinculo_id', $this->linkId())
+            ->where('modulo_codigo', 'usuarios')->where('acao_codigo', 'delegar')->max('nivel_alcance');
+        foreach (DB::table('perfil_permissoes as pp')->join('permissoes as p', 'p.id', '=', 'pp.permissao_id')
+            ->where('pp.perfil_id', (int) $dados['perfil_id'])->get(['p.modulo_codigo', 'p.acao_codigo', 'p.alcance']) as $permission) {
+            $level = match ($permission->alcance) {
+                'proprios' => 1, 'unidade' => 2, default => 3
+            };
+            $canDelegate = DB::table('vw_permissoes_efetivas')->where('vinculo_id', $this->linkId())
+                ->where('modulo_codigo', $permission->modulo_codigo)->where('acao_codigo', $permission->acao_codigo)
+                ->where('delegavel', 1)->where('nivel_alcance', '>=', $level)->exists();
+            abort_unless($canDelegate && $level <= $grantLevel, 403);
+        }
+        $inicio = CarbonImmutable::parse($dados['vigente_desde'], config('fleet.timezone'))->utc();
+        $fim = empty($dados['vigente_ate']) ? null : CarbonImmutable::parse($dados['vigente_ate'], config('fleet.timezone'))->utc();
+        abort_if($fim && $fim->lessThanOrEqualTo($inicio), 422);
+        $link = (int) DB::table('usuario_perfis')->insertGetId([
+            'usuario_id' => $id, 'perfil_id' => (int) $dados['perfil_id'], 'unidade_id' => $unidade,
+            'vigente_desde' => $inicio, 'vigente_ate' => $fim, 'concedido_por' => (int) $actor->usuario_id,
+        ]);
+        $this->audit('perfil_atribuido', 'usuario_perfis', $link, trim($dados['justificativa']));
+        $this->identidades->issueActivation($user, $link);
+
+        return $link;
     }
 
     public function revokeLink(int $id, array $dados): void
