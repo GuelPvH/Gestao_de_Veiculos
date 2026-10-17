@@ -131,6 +131,14 @@ class FleetReadRepository
         if ($codigo === 'requests') {
             $consulta->addSelect('r.versao', 'r.revisao_id', 'r.necessita_motorista', 'r.veiculo_pretendido_id');
         }
+        if ($codigo === 'vehicles') {
+            $active = DB::table('veiculos as ov')->selectRaw('1')->whereColumn('ov.id', 'r.id')->where('ov.situacao_cadastro', 'ativo');
+            $manual = DB::table('reservas as rv')->leftJoin('manutencoes as m', 'm.reserva_id', '=', 'rv.id')->selectRaw('1')
+                ->whereColumn('rv.veiculo_id', 'r.id')->where('rv.situacao', 'ativa')
+                ->whereIn('rv.tipo', ['indisponibilidade', 'manutencao'])->whereNull('m.id');
+            $consulta->selectRaw('EXISTS('.$active->toSql().') AS __vehicle_active', $active->getBindings())
+                ->selectRaw('EXISTS('.$manual->toSql().') AS __manual_block', $manual->getBindings());
+        }
         if ($codigo === 'fines') {
             $sender = DB::table('multa_comprovantes as c')->join('usuario_perfis as v', 'v.id', '=', 'c.enviado_por_vinculo_id')
                 ->whereColumn('c.multa_id', 'r.id')->orderByDesc('c.numero')->limit(1)->select('v.usuario_id');
