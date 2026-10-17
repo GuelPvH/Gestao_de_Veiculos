@@ -21,6 +21,9 @@
 <body>
     <a href="#main-content" class="skip-link">Pular para o conteúdo</a>
     {{ $slot }}
+    @auth
+        @if(request()->attributes->has("fleet.session") && ! request()->routeIs("mfa.index"))<x-auth.session-modal />@endif
+    @endauth
     <x-ui.modal id="discard-changes" titulo="Descartar alterações?">
         <p>Você tem alterações ainda não concluídas. Ao sair, elas serão descartadas.</p>
         <div class="d-flex flex-wrap gap-2 justify-content-end">
