@@ -58,6 +58,9 @@ class FleetReadRepository
         $colunas = $tela['columns'] + ($tela['details'] ?? []) + ($campos !== null ? ($tela['reportColumns'] ?? []) : []);
         $consulta->selectRaw(($tela['id'] ?? 'r.id').' as id');
         $consulta->selectRaw(($tela['owner'] ?? 'NULL').' as __owner, '.($tela['unit'] ?? 'NULL').' as __unit');
+        if ($codigo === 'trips') {
+            $consulta->addSelect('r.motorista_id as __driver');
+        }
         foreach ($colunas as $chave => $campo) {
             if ($campos !== null && ! in_array($chave, $campos, true)) {
                 continue;
@@ -75,9 +78,6 @@ class FleetReadRepository
 
     public function filtered(string $codigo, array $filtros): Builder
     {
-        if (in_array($codigo, ['trips', 'requests', 'tickets'], true)) {
-            $filtros = array_intersect_key($filtros, array_flip(['q', 'situacao', 'page']));
-        }
         $consulta = $this->query($codigo);
         $tela = $this->definition($codigo);
         if (($filtros['q'] ?? '') !== '') {
@@ -104,7 +104,7 @@ class FleetReadRepository
             $instante = CarbonImmutable::parse($filtros[$chave], config('fleet.timezone'));
             $limite = ($chave === 'de' ? $instante->startOfDay() : $instante->addDay()->startOfDay())->utc()->format('Y-m-d H:i:s.u');
             $operador = $chave === 'de' ? '>=' : '<';
-            if (in_array($codigo, ['trips', 'requests', 'tickets'], true)) {
+            if ($codigo === 'trips') {
                 $consulta->whereRaw('COALESCE(r.saida_real, r.saida_prevista) '.$operador.' ?', [$limite]);
             } else {
                 $consulta->where($tela['date'], $operador, $limite);
@@ -118,7 +118,7 @@ class FleetReadRepository
     {
         $tela = $this->definition($codigo);
         $ordenacao = $filtros['ordem'] ?? 'recentes';
-        $consulta = $this->select($codigo, $this->filtered($codigo, $filtros), $campos);
+        $consulta = $this->select($codigo, $this->filtered($codigo, $filtros), $campos ?? array_keys($tela['columns']));
         $consulta->orderBy($tela['id'] ?? 'r.id', $ordenacao === 'antigos' ? 'asc' : 'desc');
 
         return $consulta->paginate(10)->withQueryString();
@@ -127,13 +127,26 @@ class FleetReadRepository
     public function record(string $codigo, int $id): stdClass
     {
         $tela = $this->definition($codigo);
-        $registro = $this->select($codigo, $this->query($codigo))->where($tela['id'] ?? 'r.id', $id)->first();
-        abort_unless($registro !== null, 404);
-        if ($codigo === 'fines') {
-            $registro->__sender = DB::table('multa_comprovantes as c')->join('usuario_perfis as v', 'v.id', '=', 'c.enviado_por_vinculo_id')->where('c.multa_id', $id)->orderByDesc('c.numero')->value('v.usuario_id');
+        $consulta = $this->select($codigo, $this->query($codigo))->where($tela['id'] ?? 'r.id', $id);
+        if ($codigo === 'requests') {
+            $consulta->addSelect('r.versao', 'r.revisao_id', 'r.necessita_motorista', 'r.veiculo_pretendido_id');
         }
+        if ($codigo === 'fines') {
+            $sender = DB::table('multa_comprovantes as c')->join('usuario_perfis as v', 'v.id', '=', 'c.enviado_por_vinculo_id')
+                ->whereColumn('c.multa_id', 'r.id')->orderByDesc('c.numero')->limit(1)->select('v.usuario_id');
+            $consulta->selectSub($sender, '__sender');
+        }
+        $registro = $consulta->first();
+        abort_unless($registro !== null, 404);
 
         return $registro;
+    }
+
+    public function details(string $codigo, int $id): array
+    {
+        $registro = $this->record($codigo, $id);
+
+        return ['registro' => $registro, 'eventos' => $this->historyForRecord($codigo, $id), 'arquivos' => $this->attachmentsForRecord($codigo, $id, $registro)];
     }
 
     public function format(mixed $valor, string $tipo = 'text'): string
@@ -171,28 +184,61 @@ class FleetReadRepository
 
     public function history(string $codigo, int $id): array
     {
+        if (! in_array($codigo, ['requests', 'fines', 'tickets'], true)) {
+            return [];
+        }
+        $this->record($codigo, $id);
+
+        return $this->historyForRecord($codigo, $id);
+    }
+
+    /** @param array<string,list<int>> $references */
+    public function authorizedReferences(array $references): array
+    {
+        $query = null;
+        foreach ($references as $code => $ids) {
+            if ($ids === []) {
+                continue;
+            }
+            $part = $this->query($code)->whereIn('r.id', array_unique($ids))->select('r.id')->selectRaw('? AS codigo', [$code]);
+            $query = $query === null ? $part : $query->unionAll($part);
+        }
+        $authorized = [];
+        if ($query !== null) {
+            foreach (DB::query()->fromSub($query, 'referencias')->get() as $record) {
+                $authorized[$record->codigo][(int) $record->id] = true;
+            }
+        }
+
+        return $authorized;
+    }
+
+    private function historyForRecord(string $codigo, int $id): array
+    {
         $contratos = ['requests' => ['solicitacao_eventos', 'solicitacao_id'], 'fines' => ['multa_eventos', 'multa_id'], 'tickets' => ['chamado_eventos', 'chamado_id']];
         if (! isset($contratos[$codigo])) {
             return [];
         }
         [$tabela, $coluna] = $contratos[$codigo];
-        // O registro pai deve ter sido autorizado por record() antes desta leitura.
-        $this->record($codigo, $id);
 
         return DB::table($tabela)->where($coluna, $id)->orderByDesc('id')->limit(40)->get(['tipo', 'criado_em', 'motivo'])->map(fn (stdClass $evento) => ['titulo' => ucfirst(str_replace('_', ' ', $evento->tipo)), 'data' => $this->format($evento->criado_em, 'datetime'), 'descricao' => $evento->motivo ?? ''])->all();
     }
 
     public function attachments(string $codigo, int $id): array
     {
+        return $this->attachmentsForRecord($codigo, $id, $this->record($codigo, $id));
+    }
+
+    private function attachmentsForRecord(string $codigo, int $id, stdClass $dados): array
+    {
         $contratos = ['fines' => 'multa_id', 'expenses' => 'despesa_id', 'fuel' => 'despesa_id', 'maintenance' => 'manutencao_id', 'tickets' => 'chamado_id'];
-        $dados = $this->record($codigo, $id);
         if (in_array($codigo, ['expenses', 'fuel', 'maintenance'], true)
             && ! $this->acesso->can('despesas', 'ver_valores', (int) $dados->__owner, (int) $dados->__unit)) {
             return [];
         }
         $consulta = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id');
         if ($codigo === 'requests') {
-            $revisao = DB::table('solicitacoes')->where('id', $id)->value('revisao_atual_id');
+            $revisao = $dados->revisao_id;
             if (! $revisao) {
                 return [];
             }
