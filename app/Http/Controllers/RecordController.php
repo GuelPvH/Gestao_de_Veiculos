@@ -41,7 +41,9 @@ class RecordController extends Controller
     public function show(Request $requisicao, int $registro): View
     {
         $codigo = $this->screen($requisicao);
-        $detalhes = $this->leituras->details($codigo, $registro);
+        $detalhes = in_array($codigo, ['trips', 'maintenance'], true)
+            ? app(OperationalReadRepository::class)->details($codigo, $registro)
+            : $this->leituras->details($codigo, $registro);
         $dados = $detalhes['registro'];
         $mensagens = collect();
         if ($codigo === 'tickets') {
@@ -65,7 +67,7 @@ class RecordController extends Controller
             $trajeto = DB::table('vw_trajetos_observados')->where('veiculo_id', $registro)->orderByDesc('ocorrido_em')->limit(200)->get(['ocorrido_em', 'fonte', 'latitude', 'longitude']);
         }
 
-        return view('records.show', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->first()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $detalhes['eventos'], 'leituras' => $this->leituras, 'vistoria' => $codigo === 'trips' ? app(OperationalReadRepository::class)->checklist($registro) : collect(), 'ocorrencias' => $codigo === 'trips' ? app(OperationalReadRepository::class)->occurrences($registro) : collect(), 'pneus' => $codigo === 'maintenance' ? app(OperationalReadRepository::class)->tyres($registro) : collect(), 'trajeto' => $trajeto, 'mensagens' => $mensagens, 'vinculos' => $codigo === 'users' ? app(AdminReadRepository::class)->links($registro) : collect(), 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'arquivos' => $detalhes['arquivos'], 'comprovantes' => $comprovantes, 'conferencias' => $conferencias, 'podeBaixarComprovante' => $podeBaixarComprovante]);
+        return view('records.show', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->first()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $detalhes['eventos'], 'leituras' => $this->leituras, 'vistoria' => $detalhes['vistoria'] ?? collect(), 'ocorrencias' => $detalhes['ocorrencias'] ?? collect(), 'pneus' => $detalhes['pneus'] ?? collect(), 'trajeto' => $trajeto, 'mensagens' => $mensagens, 'vinculos' => $codigo === 'users' ? app(AdminReadRepository::class)->links($registro) : collect(), 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'arquivos' => $detalhes['arquivos'], 'comprovantes' => $comprovantes, 'conferencias' => $conferencias, 'podeBaixarComprovante' => $podeBaixarComprovante]);
     }
 
     public function create(Request $requisicao): View
