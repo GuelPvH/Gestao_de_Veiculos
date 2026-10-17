@@ -1,0 +1,24 @@
+{
+  "mysql_contract": "passed",
+  "results": [
+    "backup_restore_objects_data_checksums",
+    "controlled_partial_import_and_recovery",
+    {
+      "tables": 74,
+      "views": 14,
+      "procedures": 42,
+      "triggers": 124
+    },
+    "versioned_patch_preserves_data_and_signatures",
+    "protected_upgrade_plan_and_partial_failure_recovery",
+    "auth_hardening_patch_preserves_data_and_contract",
+    "ddl_privilege_denied",
+    "redis_private_authenticated_persistent_noeviction",
+    "native_advisory_lock_excludes_concurrent_maintenance"
+  ],
+  "application_tests": 31,
+  "assertions": 494,
+  "maintenance_guard_tests": 20,
+  "php": "8.5.4",
+  "mysql": "8.4"
+}
