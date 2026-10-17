@@ -3,6 +3,7 @@
 namespace App\Services\Authorization;
 
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use stdClass;
 
@@ -14,7 +15,8 @@ class AccessContext
 
     private array $delegacoes = [];
 
-    public function load(?stdClass $vinculo): void
+    /** @param Collection<int,stdClass>|null $permissoes */
+    public function load(?stdClass $vinculo, ?Collection $permissoes = null): void
     {
         $this->vinculo = $vinculo;
         $this->niveis = [];
@@ -22,7 +24,8 @@ class AccessContext
         if (! $vinculo) {
             return;
         }
-        foreach (DB::table('vw_permissoes_efetivas')->where('vinculo_id', $vinculo->vinculo_id)->get(['modulo_codigo', 'acao_codigo', 'nivel_alcance', 'delegavel']) as $permissao) {
+        $permissoes ??= DB::table('vw_permissoes_efetivas')->where('vinculo_id', $vinculo->vinculo_id)->get(['modulo_codigo', 'acao_codigo', 'nivel_alcance', 'delegavel']);
+        foreach ($permissoes as $permissao) {
             $chave = $permissao->modulo_codigo.'.'.$permissao->acao_codigo;
             $this->niveis[$chave] = max($this->niveis[$chave] ?? 0, (int) $permissao->nivel_alcance);
             if ($permissao->delegavel) {
