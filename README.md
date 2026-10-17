@@ -18,6 +18,24 @@ Siga [docs/SETUP.md](docs/SETUP.md) para dependências, configuração privada e
 
 Nas verificações históricas descritas em [docs/VERIFICATION.md](docs/VERIFICATION.md), o banco remoto foi preservado. O modo de desenvolvimento remoto atual e sua conferência estão em [docs/REMOTE_RUNTIME.md](docs/REMOTE_RUNTIME.md). O repositório contém somente exemplos de configuração, sem credenciais reais. A integração MySQL descartável é executada por `python3 scripts/qa/mysql-contract.py`, com dois containers criados exclusivamente pelo próprio comando.
 
+## Formatação do código
+
+Use o Laravel Pint para PHP e o Prettier para Blade, JavaScript, CSS, JSON, YAML e Markdown.
+As configurações respeitam o `.editorconfig`; dependências, caches, arquivos gerados e lockfiles ficam fora do Prettier.
+
+```bash
+composer format
+npm run format
+```
+
+Nos componentes `approved-route-map` e `reservation-map`, a formatação automática do JavaScript embutido fica desativada para preservar as expressões Blade e evitar mudanças de indentação a cada execução. O restante dos templates continua sendo formatado.
+
+Para conferir sem alterar arquivos:
+
+```bash
+composer format:check
+npm run format:check
+```
 
 ## Desenvolvimento com banco remoto
 

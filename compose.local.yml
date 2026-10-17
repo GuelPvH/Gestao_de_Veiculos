@@ -1,79 +1,83 @@
 services:
-  app:
-    build:
-      target: runtime-development
-    environment: &local_application
-      APP_ENV: local
-      APP_DEBUG: "${FLEET_LOCAL_APP_DEBUG:-true}"
-      DEBUGBAR_ENABLED: "${FLEET_LOCAL_DEBUGBAR_ENABLED:-true}"
-      DEBUGBAR_OPTIONS_WITH_PARAMS: "false"
-      APP_URL: "${FLEET_LOCAL_APP_URL:-http://localhost:${APP_PORT:-8080}}"
-      SESSION_SECURE_COOKIE: "${FLEET_LOCAL_SECURE_COOKIE:-false}"
-      SESSION_COOKIE: "${FLEET_LOCAL_SESSION_COOKIE:-frota_validacao_local_session}"
-      SESSION_DOMAIN: ""
-      SESSION_PATH: /
-      DB_HOST: mysql-local
-      DB_PORT: 3306
-      DB_DATABASE: frota_pf_local
-      DB_USERNAME: frota_local
-      DB_PASSWORD: "${LOCAL_DB_PASSWORD:?Configure LOCAL_DB_PASSWORD}"
-      # Local fixtures never use the deployment SMTP transport or identity origin.
-      MAIL_MAILER: log
-      MAIL_URL: ""
-      FLEET_RECOVERY_MAIL_ENABLED: "false"
-      FLEET_RECOVERY_QUEUE_ENABLED: "false"
-      FLEET_ACTIVATION_MAIL_ENABLED: "false"
-      FLEET_VERIFICATION_MAIL_ENABLED: "false"
-      FLEET_SECURITY_MAIL_ENABLED: "false"
-      # Temporariamente desligado para desenvolvimento. Reative com true.
-      FLEET_MFA_ENABLED: "${FLEET_LOCAL_MFA_ENABLED:-false}"
-      FLEET_MFA_ORIGIN: "${FLEET_LOCAL_MFA_ORIGIN:-}"
-      FLEET_MFA_RP_ID: "${FLEET_LOCAL_MFA_RP_ID:-}"
-    depends_on:
-      mysql-local:
-        condition: service_healthy
-  worker-auth:
-    build:
-      target: runtime-development
-    environment: *local_application
-    depends_on:
-      mysql-local:
-        condition: service_healthy
-  worker-security:
-    build:
-      target: runtime-development
-    environment: *local_application
-    depends_on:
-      mysql-local:
-        condition: service_healthy
-  scheduler:
-    build:
-      target: runtime-development
-    environment: *local_application
-    depends_on:
-      mysql-local:
-        condition: service_healthy
-  vite:
-    environment:
-      APP_URL: "${FLEET_LOCAL_APP_URL:-http://localhost:${APP_PORT:-8080}}"
-  phpmyadmin:
-    environment:
-      PMA_HOST: mysql-local
-      PMA_PORT: 3306
-  mysql-local:
-    image: mysql:8.4
-    environment:
-      MYSQL_DATABASE: frota_pf_local
-      MYSQL_USER: frota_local
-      MYSQL_PASSWORD: "${LOCAL_DB_PASSWORD:?Configure LOCAL_DB_PASSWORD}"
-      MYSQL_ROOT_PASSWORD: "${LOCAL_DB_ROOT_PASSWORD:?Configure LOCAL_DB_ROOT_PASSWORD}"
-      TZ: UTC
-    command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --default-time-zone=+00:00]
-    volumes:
-      - local_mysql:/var/lib/mysql
-    healthcheck:
-      test: [CMD-SHELL, 'MYSQL_PWD="$${MYSQL_PASSWORD}" mysql --protocol=TCP -h127.0.0.1 -u"$${MYSQL_USER}" "$${MYSQL_DATABASE}" --batch --skip-column-names -e "SELECT 1" | grep -qx 1']
-      interval: 5s
-      retries: 30
+    app:
+        build:
+            target: runtime-development
+        environment: &local_application
+            APP_ENV: local
+            APP_DEBUG: '${FLEET_LOCAL_APP_DEBUG:-true}'
+            DEBUGBAR_ENABLED: '${FLEET_LOCAL_DEBUGBAR_ENABLED:-true}'
+            DEBUGBAR_OPTIONS_WITH_PARAMS: 'false'
+            APP_URL: '${FLEET_LOCAL_APP_URL:-http://localhost:${APP_PORT:-8080}}'
+            SESSION_SECURE_COOKIE: '${FLEET_LOCAL_SECURE_COOKIE:-false}'
+            SESSION_COOKIE: '${FLEET_LOCAL_SESSION_COOKIE:-frota_validacao_local_session}'
+            SESSION_DOMAIN: ''
+            SESSION_PATH: /
+            DB_HOST: mysql-local
+            DB_PORT: 3306
+            DB_DATABASE: frota_pf_local
+            DB_USERNAME: frota_local
+            DB_PASSWORD: '${LOCAL_DB_PASSWORD:?Configure LOCAL_DB_PASSWORD}'
+            # Local fixtures never use the deployment SMTP transport or identity origin.
+            MAIL_MAILER: log
+            MAIL_URL: ''
+            FLEET_RECOVERY_MAIL_ENABLED: 'false'
+            FLEET_RECOVERY_QUEUE_ENABLED: 'false'
+            FLEET_ACTIVATION_MAIL_ENABLED: 'false'
+            FLEET_VERIFICATION_MAIL_ENABLED: 'false'
+            FLEET_SECURITY_MAIL_ENABLED: 'false'
+            # Temporariamente desligado para desenvolvimento. Reative com true.
+            FLEET_MFA_ENABLED: '${FLEET_LOCAL_MFA_ENABLED:-false}'
+            FLEET_MFA_ORIGIN: '${FLEET_LOCAL_MFA_ORIGIN:-}'
+            FLEET_MFA_RP_ID: '${FLEET_LOCAL_MFA_RP_ID:-}'
+        depends_on:
+            mysql-local:
+                condition: service_healthy
+    worker-auth:
+        build:
+            target: runtime-development
+        environment: *local_application
+        depends_on:
+            mysql-local:
+                condition: service_healthy
+    worker-security:
+        build:
+            target: runtime-development
+        environment: *local_application
+        depends_on:
+            mysql-local:
+                condition: service_healthy
+    scheduler:
+        build:
+            target: runtime-development
+        environment: *local_application
+        depends_on:
+            mysql-local:
+                condition: service_healthy
+    vite:
+        environment:
+            APP_URL: '${FLEET_LOCAL_APP_URL:-http://localhost:${APP_PORT:-8080}}'
+    phpmyadmin:
+        environment:
+            PMA_HOST: mysql-local
+            PMA_PORT: 3306
+    mysql-local:
+        image: mysql:8.4
+        environment:
+            MYSQL_DATABASE: frota_pf_local
+            MYSQL_USER: frota_local
+            MYSQL_PASSWORD: '${LOCAL_DB_PASSWORD:?Configure LOCAL_DB_PASSWORD}'
+            MYSQL_ROOT_PASSWORD: '${LOCAL_DB_ROOT_PASSWORD:?Configure LOCAL_DB_ROOT_PASSWORD}'
+            TZ: UTC
+        command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --default-time-zone=+00:00]
+        volumes:
+            - local_mysql:/var/lib/mysql
+        healthcheck:
+            test:
+                [
+                    CMD-SHELL,
+                    'MYSQL_PWD="$${MYSQL_PASSWORD}" mysql --protocol=TCP -h127.0.0.1 -u"$${MYSQL_USER}" "$${MYSQL_DATABASE}" --batch --skip-column-names -e "SELECT 1" | grep -qx 1',
+                ]
+            interval: 5s
+            retries: 30
 volumes:
-  local_mysql:
+    local_mysql:

@@ -19,13 +19,13 @@
                         @unless ($evento->lida_em)
                             <form method="POST" action="{{ route('notifications.read', $evento->id) }}">
                                 @csrf
-                                <input type="hidden" name="versao" value="{{ $evento->versao }}">
+                                <input type="hidden" name="versao" value="{{ $evento->versao }}" />
                                 <button type="submit" class="btn btn-outline-primary">Marcar como lida</button>
                             </form>
                         @endunless
                         <form method="POST" action="{{ route('notifications.hide', $evento->id) }}">
                             @csrf
-                            <input type="hidden" name="versao" value="{{ $evento->versao }}">
+                            <input type="hidden" name="versao" value="{{ $evento->versao }}" />
                             <button type="submit" class="btn btn-outline-secondary">Ocultar</button>
                         </form>
                     @endif

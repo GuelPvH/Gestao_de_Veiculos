@@ -21,12 +21,12 @@ A coordenação entre abas usa um identificador HMAC de sessão que não serve p
 
 Comparação dos controllers antigos e novos, executados com os mesmos dados e escopos:
 
-| Perfil | Consultas antes → depois | Tempo antes → depois | Redução |
-| --- | --- | --- | --- |
-| Gestor | 21 → 5 | 3,242 s → 0,775 s | 76,1% |
-| Financeiro | 17 → 5 | 2,680 s → 0,787 s | 70,6% |
-| Administrador | 18 → 5 | 2,916 s → 0,794 s | 72,8% |
-| Servidor | 16 → 4 | 2,497 s → 0,634 s | 74,6% |
+| Perfil        | Consultas antes → depois | Tempo antes → depois | Redução |
+| ------------- | ------------------------ | -------------------- | ------- |
+| Gestor        | 21 → 5                   | 3,242 s → 0,775 s    | 76,1%   |
+| Financeiro    | 17 → 5                   | 2,680 s → 0,787 s    | 70,6%   |
+| Administrador | 18 → 5                   | 2,916 s → 0,794 s    | 72,8%   |
+| Servidor      | 16 → 4                   | 2,497 s → 0,634 s    | 74,6%   |
 
 **Os resultados visíveis coincidiram nos quatro perfis:** indicadores, gráficos, listas e posições autorizadas.
 

@@ -2,7 +2,6 @@
 
 > Versão do esquema canônico: **1.0.6** (sessão compatível desde 1.0.5). A sequência 1.0.3/1.0.4/1.0.5 e a operação protegida `upgrade` estão em [SECURITY_ROLLOUT.md](SECURITY_ROLLOUT.md). Os tópicos 1.0.0–1.0.2 abaixo descrevem etapas históricas; não habilite a nova aplicação antes de aplicar todos os módulos.
 
-
 Instalação nova em banco vazio: `database/sql/frota_pf_mysql.sql`, versão **1.0.6**, 261587 bytes e SHA-256 `b093f7b047cfbe1990dce656f7d707c91093b6178d2d8d278ca8b095e2af134c`. O manifesto e `tests/Support/schema.json` acompanham esses bytes. Inventário: 74 tabelas, 14 views, 42 procedures, 124 triggers, 182 FKs e 95 checks nomeados; InnoDB e utf8mb4_unicode_ci. A integração desta entrega foi executada no MySQL 8.4. Não execute migrations padrão nem `migrate:fresh`.
 
 O baseline histórico 1.0.0 está em `database/sql/baselines/1.0.0.sql` (230522 bytes; SHA-256 `b1d6fccbc8b69148da612e9d1f1f20f41c61120798a3937644c99ef2cad151d6`). Instalações existentes nessa versão aplicam primeiro `1.0.1-admin-procedures.sql` e depois `1.0.2-auth-hardening.sql`. A versão 1.0.2 cria as tabelas Laravel `jobs`/`failed_jobs`, adiciona `sp_expirar_sessao` e atualiza `sp_consumir_recuperacao` para bloquear primeiro a identidade. Não adiciona colunas às tabelas de sessão/recuperação: `sessoes.criado_em` sustenta o prazo absoluto. Os patches contêm DDL não transacional e exigem backup e restauração testada.

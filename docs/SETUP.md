@@ -2,7 +2,6 @@
 
 > Esta versão exige esquema **1.0.5**, Redis com senha privada e os serviços `worker-auth`, `worker-security` e `scheduler`. Configure também a origem HTTPS e RP ID antes de acesso administrativo. Consulte [SECURITY_ROLLOUT.md](SECURITY_ROLLOUT.md) antes de iniciar uma instalação existente; o entrypoint recusa um banco desatualizado e não o modifica.
 
-
 ## Desenvolvimento com Docker e banco remoto (padrão da equipe)
 
 Execute os comandos no Linux ou Ubuntu/WSL, dentro da pasta do projeto. Requisitos: Docker com Compose v2 instalado e em execução. O Docker instala as dependências PHP e JavaScript durante o build; não é necessário instalar PHP, Composer ou Node na máquina.
@@ -94,13 +93,13 @@ docker compose --profile admin stop
 
 ### Alterações durante o desenvolvimento
 
-| Alteração | Ação necessária |
-| --- | --- |
-| PHP, Controllers, Models, configuração, rotas e Blade | Atualize a página; os arquivos locais são montados diretamente no container. |
-| CSS e JavaScript em `resources` | O Vite detecta as alterações e atualiza o navegador. |
-| Dependências PHP/JavaScript ou Dockerfile | Execute `scripts/dev-remote.sh --build` com os argumentos do alvo remoto. |
-| Valores do `.env` | Execute `scripts/dev-remote.sh` com os argumentos do alvo remoto; a conferência acontece antes de recriar os serviços afetados. |
-| Arquivos fora das pastas montadas pelo override | Confira `docker-compose.override.yml`; pode ser necessário reconstruir a imagem. |
+| Alteração                                             | Ação necessária                                                                                                                 |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| PHP, Controllers, Models, configuração, rotas e Blade | Atualize a página; os arquivos locais são montados diretamente no container.                                                    |
+| CSS e JavaScript em `resources`                       | O Vite detecta as alterações e atualiza o navegador.                                                                            |
+| Dependências PHP/JavaScript ou Dockerfile             | Execute `scripts/dev-remote.sh --build` com os argumentos do alvo remoto.                                                       |
+| Valores do `.env`                                     | Execute `scripts/dev-remote.sh` com os argumentos do alvo remoto; a conferência acontece antes de recriar os serviços afetados. |
+| Arquivos fora das pastas montadas pelo override       | Confira `docker-compose.override.yml`; pode ser necessário reconstruir a imagem.                                                |
 
 Se houver caches criados manualmente, limpe-os com `docker compose exec app php artisan optimize:clear`. O desenvolvimento usa polling no Vite para detectar edições feitas pelo Windows no projeto WSL.
 

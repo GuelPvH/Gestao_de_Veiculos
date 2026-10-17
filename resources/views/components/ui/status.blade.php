@@ -1,4 +1,4 @@
-@props(['valor'])
+@props (['valor'])
 @php
     $valor = match((string)$valor){'1'=>'ativo','0'=>'inativo',default=>(string)$valor};
     $valor = array_key_exists(str_replace(' ', '_', mb_strtolower($valor)), config('statuses')) ? str_replace(' ', '_', mb_strtolower($valor)) : $valor;

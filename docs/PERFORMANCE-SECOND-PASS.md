@@ -21,12 +21,12 @@ Esse limite conta novas conexões por hora, separado do número de consultas e d
 
 Comparação de leitura, com o mesmo usuário, banco e escopos. Estes tempos são do controller, sem autenticação, middleware, HTML, arquivos de interface ou transporte HTTP.
 
-| Perfil | Consultas antes → depois | Tempo antes → depois | Redução |
-| --- | --- | --- | --- |
-| Administrador | 5 → 2 | 791 → 333 ms | 57,9% |
-| Financeiro | 5 → 2 | 772 → 316 ms | 59,0% |
-| Gestor | 5 → 3 | 806 → 483 ms | 40,1% |
-| Servidor | 4 → 1 | 653 → 161 ms | 75,3% |
+| Perfil        | Consultas antes → depois | Tempo antes → depois | Redução |
+| ------------- | ------------------------ | -------------------- | ------- |
+| Administrador | 5 → 2                    | 791 → 333 ms         | 57,9%   |
+| Financeiro    | 5 → 2                    | 772 → 316 ms         | 59,0%   |
+| Gestor        | 5 → 3                    | 806 → 483 ms         | 40,1%   |
+| Servidor      | 4 → 1                    | 653 → 161 ms         | 75,3%   |
 
 Os resultados visíveis coincidiram em todos os perfis. O Administrador foi medido por leitura isolada do controller; o acesso HTTP continuou redirecionando para MFA, sem contornar a proteção.
 

@@ -1,5 +1,10 @@
-@props(['trajetos', 'consultado' => false])
-<div id="approved-route-map" class="reservation-map-frame" role="region" aria-label="Percursos planejados das solicitações aprovadas"></div>
+@props (['trajetos', 'consultado' => false])
+<div
+    id="approved-route-map"
+    class="reservation-map-frame"
+    role="region"
+    aria-label="Percursos planejados das solicitações aprovadas"
+></div>
 <p class="small text-body-secondary mt-3" id="approved-route-status" role="status">{{ ! $consultado ? 'Selecione o veículo e o período e clique em Consultar.' : ($trajetos->isEmpty() ? 'Nenhuma viagem aprovada para esse veículo no período.' : 'Percursos das solicitações aprovadas.') }}</p>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>

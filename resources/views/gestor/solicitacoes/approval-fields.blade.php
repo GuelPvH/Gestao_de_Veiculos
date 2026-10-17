@@ -1,5 +1,19 @@
-@if($acao==='approve')
-    <x-forms.field nome="veiculo_confirmado_id" rotulo="Veículo confirmado" tipo="select" :opcoes="$veiculosDisponiveis ?? []" :obrigatorio="true" nota="A aprovação exige disponibilidade para todo o período solicitado." />
-    <x-forms.field nome="motorista_confirmado_id" rotulo="Motorista confirmado" tipo="select" :opcoes="$motoristasDisponiveis ?? []" :obrigatorio="true" nota="A habilitação e a agenda do condutor devem atender ao veículo e a todo o período da viagem." />
+@if ($acao==='approve')
+    <x-forms.field
+        nome="veiculo_confirmado_id"
+        rotulo="Veículo confirmado"
+        tipo="select"
+        :opcoes="$veiculosDisponiveis ?? []"
+        :obrigatorio="true"
+        nota="A aprovação exige disponibilidade para todo o período solicitado."
+    />
+    <x-forms.field
+        nome="motorista_confirmado_id"
+        rotulo="Motorista confirmado"
+        tipo="select"
+        :opcoes="$motoristasDisponiveis ?? []"
+        :obrigatorio="true"
+        nota="A habilitação e a agenda do condutor devem atender ao veículo e a todo o período da viagem."
+    />
     <x-ui.alert tom="info">A aprovação programa a viagem. O registro de saída ocorre em uma etapa própria.</x-ui.alert>
 @endif

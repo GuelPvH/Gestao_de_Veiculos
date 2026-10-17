@@ -2,16 +2,16 @@
 
 O trabalho parte de `origin/main` em `4f3df65f4b8ce4e867609ee2518e5924983d5fe9`, atualizado com `git fetch --prune` antes das alterações. O checkout principal tinha mudanças do usuário em testes e foi preservado. A implementação foi feita em worktree isolado e distribuída como branches lineares, uma por assunto:
 
-| Branch | Commit | Base |
-|---|---|---|
-| `fix/database-manifest` | `115d50e` | `origin/main` |
-| `fix/phpstan-types` | `11e84dd` | `fix/database-manifest` |
-| `fix/reports-monitoring` | `68545ac` | `fix/phpstan-types` |
-| `fix/route-enforcement` | `741efe9` | `fix/reports-monitoring` |
-| `test/mysql-workflows` | `edb9931` | `fix/route-enforcement` |
-| `chore/container-runtime` | `12e4d06` | `test/mysql-workflows` |
-| `test/browser-flows` | `b7ac139` | `chore/container-runtime` |
-| `docs/final-delivery` | HEAD de entrega (SHA disponível no histórico Git) | `test/browser-flows` |
+| Branch                    | Commit                                            | Base                      |
+| ------------------------- | ------------------------------------------------- | ------------------------- |
+| `fix/database-manifest`   | `115d50e`                                         | `origin/main`             |
+| `fix/phpstan-types`       | `11e84dd`                                         | `fix/database-manifest`   |
+| `fix/reports-monitoring`  | `68545ac`                                         | `fix/phpstan-types`       |
+| `fix/route-enforcement`   | `741efe9`                                         | `fix/reports-monitoring`  |
+| `test/mysql-workflows`    | `edb9931`                                         | `fix/route-enforcement`   |
+| `chore/container-runtime` | `12e4d06`                                         | `test/mysql-workflows`    |
+| `test/browser-flows`      | `b7ac139`                                         | `chore/container-runtime` |
+| `docs/final-delivery`     | HEAD de entrega (SHA disponível no histórico Git) | `test/browser-flows`      |
 
 Todos os novos commits usam Miguel Carrilho `<miguelcleiton25@outlook.com>` como autor e committer. Não há coautoria ou trailer de ferramenta. Os testes e limites constam em VERIFICATION.md e FINALIZATION.md.
 

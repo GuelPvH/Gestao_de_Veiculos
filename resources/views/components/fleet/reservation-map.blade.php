@@ -1,4 +1,4 @@
-@props(['registro'])
+@props (['registro'])
 @php
     $coordenadas = [$registro->origem_latitude, $registro->origem_longitude, $registro->destino_latitude, $registro->destino_longitude];
     $temCoordenadas = collect($coordenadas)->every(fn ($valor) => $valor !== null && is_numeric($valor));
@@ -6,25 +6,38 @@
 @endphp
 <div class="reservation-map">
     <dl class="detail-grid mb-3">
-        <div><dt>Partida do percurso</dt><dd>{{ $registro->origem ?? '—' }}</dd></div>
-        <div><dt>Destino do percurso</dt><dd>{{ $registro->destino ?? '—' }}</dd></div>
+        <div>
+            <dt>Partida do percurso</dt>
+            <dd>{{ $registro->origem ?? '—' }}</dd>
+        </div>
+        <div>
+            <dt>Destino do percurso</dt>
+            <dd>{{ $registro->destino ?? '—' }}</dd>
+        </div>
     </dl>
-    @if($temCoordenadas)
-    <div id="reservation-public-route" class="reservation-map-frame" role="region" aria-label="Mapa do percurso da solicitação"></div>
-    <div class="d-flex flex-wrap justify-content-between gap-2 mt-3">
-        <p class="small text-body-secondary mb-0" id="reservation-route-status" role="status">Calculando percurso pelas ruas…</p>
-        <a class="small" href="{{ $percursoUrl }}" target="_blank" rel="noopener noreferrer">Abrir percurso ampliado</a>
-    </div>
-    <noscript><p>Ative o JavaScript para visualizar o percurso ou abra o mapa ampliado.</p></noscript>
+    @if ($temCoordenadas)
+        <div
+            id="reservation-public-route"
+            class="reservation-map-frame"
+            role="region"
+            aria-label="Mapa do percurso da solicitação"
+        ></div>
+        <div class="d-flex flex-wrap justify-content-between gap-2 mt-3">
+            <p class="small text-body-secondary mb-0" id="reservation-route-status" role="status">Calculando percurso pelas ruas…</p>
+            <a class="small" href="{{ $percursoUrl }}" target="_blank" rel="noopener noreferrer"
+                >Abrir percurso ampliado</a
+            >
+        </div>
+        <noscript><p>Ative o JavaScript para visualizar o percurso ou abra o mapa ampliado.</p></noscript>
     @else
-    <p class="small text-body-secondary">A solicitação não possui coordenadas completas para exibir o percurso.</p>
+        <p class="small text-body-secondary">A solicitação não possui coordenadas completas para exibir o percurso.</p>
     @endif
 </div>
-@if($temCoordenadas)
-@once
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
-<script>
+@if ($temCoordenadas)
+    @once
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+        <script>
 (async () => {
     const status = document.getElementById('reservation-route-status');
     try {
@@ -63,6 +76,6 @@
     }
 })();
 </script>
-@endonce
+    @endonce
 
 @endif
