@@ -32,6 +32,7 @@ class ReportFormatTest extends TestCase
             $casos[] = ['csv', 'text/csv; charset=UTF-8', $perfil];
             $casos[] = ['pdf', 'application/pdf', $perfil];
         }
+
         return $casos;
     }
 
@@ -61,10 +62,12 @@ class ReportFormatTest extends TestCase
                     DB::table('exportacao_registros')->insert(['exportacao_id' => 1, 'ordem' => $indice + 1, 'chamado_id' => $id,
                         'snapshot' => json_encode(['protocolo' => $registro->protocolo, 'assunto' => $registro->assunto])]);
                 }
+
                 return [['exportacao_id' => 1]];
             });
         $runner->shouldReceive('call')->once()->with('sp_enfileirar_exportacao', [10, 1])->andReturnUsing(function (): array {
             DB::table('exportacoes')->where('id', 1)->update(['situacao' => 'fila']);
+
             return [];
         });
         $runner->shouldReceive('call')->once()->withArgs(fn ($nome) => $nome === 'sp_auditar')->andReturn([]);
