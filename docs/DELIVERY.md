@@ -32,4 +32,4 @@ git worktree add ../frota-pf-review -b review/frota-pf refs/remotes/frota-pf/doc
 
 O arquivo de checksums fica fora do pacote em `/tmp/frota-pf-finalization-2026-10-06.sha256`; valide-o com `sha256sum -c` antes da transferência. A branch final é `docs/final-delivery`.
 
-O material entregue é código para revisão e homologação local. O banco remoto e a hospedagem não foram acessados nesta rodada; não houve deploy, merge ou alteração de dados reais. A atualização de instalação 1.0.0 está preparada como patch manual documentado em DATABASE.md e depende de backup restaurado e DBA.
+O material dessa rodada histórica foi entregue para revisão e homologação local. O banco remoto e a hospedagem não foram acessados naquela rodada; não houve deploy, merge ou alteração de dados reais. A atualização de instalação 1.0.0 foi preparada como patch manual documentado em [DATABASE.md](DATABASE.md), dependente de backup restaurado e DBA. O desenvolvimento remoto e sua preparação posteriores estão registrados em [REMOTE_RUNTIME.md](REMOTE_RUNTIME.md).
