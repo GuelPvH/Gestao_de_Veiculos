@@ -64,6 +64,7 @@ class MonitoringReportRepository
         $consulta = DB::table('veiculos as v');
         $this->acesso->scope($consulta, 'rastreamento', 'consultar', null, 'v.unidade_id');
         $this->acesso->scope($consulta, 'rastreamento', 'ver_localizacao', null, 'v.unidade_id');
+
         return $consulta->orderBy('v.nome')->get(['v.id', 'v.nome', 'v.placa'])
             ->mapWithKeys(fn ($v) => [$v->id => $v->nome.' · '.$v->placa])->all();
     }
@@ -78,6 +79,7 @@ class MonitoringReportRepository
         // Cada viagem aponta para a revisao confirmada na aprovacao.
         $inicio = CarbonImmutable::parse($filtros['de'], config('fleet.timezone'))->startOfDay()->utc();
         $fim = CarbonImmutable::parse($filtros['ate'], config('fleet.timezone'))->addDay()->startOfDay()->utc();
+
         return $consulta->where('sr.saida_prevista', '<', $fim->format('Y-m-d H:i:s'))
             ->where('sr.retorno_previsto', '>=', $inicio->format('Y-m-d H:i:s'))->orderBy('sr.saida_prevista')->limit(501)
             ->get(['s.id as solicitacao_id', 't.protocolo', 'sr.origem', 'sr.destino', 'sr.origem_latitude', 'sr.origem_longitude', 'sr.destino_latitude', 'sr.destino_longitude', 'sr.polilinha_planejada', 'sr.saida_prevista', 'sr.retorno_previsto']);
