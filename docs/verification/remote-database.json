@@ -1,0 +1,121 @@
+{
+  "recorded_on": "2026-10-11",
+  "timezone": "America/Manaus",
+  "status": "remote_ready",
+  "development_default": "remote",
+  "connection_configuration": "private_env",
+  "remote_database": {
+    "engine": "MariaDB",
+    "server_version": "11.8.9",
+    "initial_schema_version": "1.0.0",
+    "target_schema_version": "1.0.5",
+    "upgrade_sql": "applied_and_verified",
+    "schema_verification": "passed",
+    "verified_schema_version": "1.0.5",
+    "inventory": {
+      "tables": 74,
+      "views": 14,
+      "procedures": 42,
+      "triggers": 124
+    },
+    "server_identity_matches_backup": true,
+    "full_metadata_equivalent": true,
+    "metadata_classes_compared": 11,
+    "metadata_differences": 0,
+    "existing_data_preserved": true,
+    "unchanged_table_checksums_verified": 62,
+    "transformed_users_requests_checksums_verified": true,
+    "preserved_records": {
+      "users": 3,
+      "requests": 8
+    },
+    "credentials_and_dates_invariants": "passed",
+    "maintenance_lock_released": true
+  },
+  "isolated_restore": {
+    "backup_restored": true,
+    "upgraded_schema_version": "1.0.5",
+    "inventory": {
+      "tables": 74,
+      "views": 14,
+      "procedures": 42,
+      "triggers": 124
+    },
+    "full_metadata_equivalent": true,
+    "preserved_records": {
+      "users": 3,
+      "requests": 8
+    }
+  },
+  "runtime": {
+    "application": "remote_healthy",
+    "authentication_worker": "remote_healthy",
+    "security_worker": "remote_healthy",
+    "scheduler": "remote_healthy",
+    "remote_target_check": "passed",
+    "schema_startup_check": "passed",
+    "application_image_build": "passed_runtime_target",
+    "vite_image_build": "passed",
+    "phpmyadmin": {
+      "target": "remote",
+      "interface_http_status": 200,
+      "database_authentication_verified": true
+    },
+    "public_routes_verified": true,
+    "administrative_mfa": {
+      "preserved": true,
+      "origin_and_rp_configuration_pending": true,
+      "login_verified": false,
+      "enabled": true
+    },
+    "redis": "healthy",
+    "vite": "healthy",
+    "remote_activation_script": "passed",
+    "active_php_connection_verified": true,
+    "queryable_views": 14,
+    "http_checks": {
+      "application_health": 200,
+      "login_page": 200,
+      "anonymous_dashboard_redirect": 302,
+      "phpmyadmin_interface": 200,
+      "vite": 200
+    },
+    "session_cookie_isolated_from_local": true,
+    "mail_transport": "log",
+    "institutional_account_login_tested": false
+  },
+  "local_verification": {
+    "isolated_environment_variables": 8,
+    "environment_and_server_overrides_verified": true,
+    "unit_tests": {
+      "passed": 3,
+      "assertions": 8
+    },
+    "remote_script_refusal_cases": 4,
+    "database_safety_tests": {
+      "executed": 61,
+      "passed": 60,
+      "skipped": 1,
+      "scope": "local_native_integration"
+    },
+    "shell_and_php_syntax": "passed",
+    "diff_check": "passed"
+  },
+  "maintenance_tool_connection_counts": {
+    "schema_verification": 4,
+    "inventory": 3
+  },
+  "pending_blocker": null,
+  "hosting_constraints": {
+    "connections_per_hour": 500,
+    "previous_mysql_error": 1226,
+    "final_inventory_readback_after_quota_available": "passed"
+  },
+  "data_safety": {
+    "backup_and_credentials_remain_private": true,
+    "remote_seed_execution": false,
+    "remote_test_identity_creation": false,
+    "standard_laravel_migrations_executed": false,
+    "optional_local_database_preserved": true
+  }
+}
