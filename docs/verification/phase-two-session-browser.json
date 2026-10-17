@@ -1,0 +1,52 @@
+{
+  "browser": "153.0.8010.12",
+  "source": "compiled Blade and production bundle; synthetic HTTP responses",
+  "checks": [
+    {
+      "test": "two tabs share one initial status request",
+      "passed": true
+    },
+    {
+      "test": "hidden tabs do not fetch session status",
+      "passed": true
+    },
+    {
+      "test": "initial deadline follows server",
+      "passed": true
+    },
+    {
+      "test": "warning at 29 minutes in both tabs and password focus",
+      "passed": true
+    },
+    {
+      "test": "incorrect password keeps deadline and clears input",
+      "passed": true
+    },
+    {
+      "test": "a late pre-renewal status response cannot undo the new deadline",
+      "passed": true
+    },
+    {
+      "test": "renewal synchronizes tabs without storing credentials or tokens",
+      "passed": true
+    },
+    {
+      "test": "altered wall clock does not trigger expiration",
+      "passed": true
+    },
+    {
+      "test": "focus after suspension rechecks server and ends both tabs",
+      "passed": true
+    },
+    {
+      "test": "no answer expires at 30 minutes and unsent form does not prevent logout",
+      "passed": true
+    },
+    {
+      "test": "server-rendered initial state avoids redundant startup status request",
+      "passed": true
+    }
+  ],
+  "statuses": 5,
+  "errors": []
+}
