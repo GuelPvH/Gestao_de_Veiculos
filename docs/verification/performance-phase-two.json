@@ -1,0 +1,430 @@
+{
+  "branch": "correcao-de-tabelas",
+  "baseline_commit": "c870044925b74c812a896aad5f339c61fe5ffbce",
+  "dashboard_controller": {
+    "measured_at_utc": "2026-10-11T21:39:36-04:00",
+    "profiles": [
+      {
+        "profile": "administrador",
+        "before": {
+          "ms": 791.18,
+          "queries": 5,
+          "sql_wall_ms": 771.2
+        },
+        "after": {
+          "ms": 333.14,
+          "queries": 2,
+          "sql_wall_ms": 329.88
+        },
+        "visible_results_identical": true,
+        "latency_reduction_percent": 57.9
+      },
+      {
+        "profile": "financeiro",
+        "before": {
+          "ms": 771.56,
+          "queries": 5,
+          "sql_wall_ms": 768.02
+        },
+        "after": {
+          "ms": 316.4,
+          "queries": 2,
+          "sql_wall_ms": 311.79
+        },
+        "visible_results_identical": true,
+        "latency_reduction_percent": 59
+      },
+      {
+        "profile": "gestor",
+        "before": {
+          "ms": 806.4,
+          "queries": 5,
+          "sql_wall_ms": 796.48
+        },
+        "after": {
+          "ms": 482.83,
+          "queries": 3,
+          "sql_wall_ms": 474.34
+        },
+        "visible_results_identical": true,
+        "latency_reduction_percent": 40.1
+      },
+      {
+        "profile": "servidor",
+        "before": {
+          "ms": 652.68,
+          "queries": 4,
+          "sql_wall_ms": 646.47
+        },
+        "after": {
+          "ms": 160.99,
+          "queries": 1,
+          "sql_wall_ms": 159.3
+        },
+        "visible_results_identical": true,
+        "latency_reduction_percent": 75.3
+      }
+    ]
+  },
+  "login_controller": {
+    "measured_at_utc": "2026-10-11T21:50:35-04:00",
+    "method": "isolated controllers, real credentials and remote database; native CALL included in both counts",
+    "samples": [
+      {
+        "sample": 1,
+        "phase": "before",
+        "ms": 1878.03,
+        "queries": 7,
+        "sql_wall_ms": 1331.26,
+        "active_link_reads": 2,
+        "duplicate_deadline_updates": 1
+      },
+      {
+        "sample": 1,
+        "phase": "after",
+        "ms": 1162.82,
+        "queries": 5,
+        "sql_wall_ms": 682.93,
+        "active_link_reads": 1,
+        "duplicate_deadline_updates": 0
+      },
+      {
+        "sample": 2,
+        "phase": "before",
+        "ms": 1473.19,
+        "queries": 7,
+        "sql_wall_ms": 988.44,
+        "active_link_reads": 2,
+        "duplicate_deadline_updates": 1
+      },
+      {
+        "sample": 2,
+        "phase": "after",
+        "ms": 1193.87,
+        "queries": 5,
+        "sql_wall_ms": 712.09,
+        "active_link_reads": 1,
+        "duplicate_deadline_updates": 0
+      },
+      {
+        "sample": 3,
+        "phase": "before",
+        "ms": 1428.47,
+        "queries": 7,
+        "sql_wall_ms": 981.24,
+        "active_link_reads": 2,
+        "duplicate_deadline_updates": 1
+      },
+      {
+        "sample": 3,
+        "phase": "after",
+        "ms": 1105.92,
+        "queries": 5,
+        "sql_wall_ms": 674.81,
+        "active_link_reads": 1,
+        "duplicate_deadline_updates": 0
+      }
+    ]
+  },
+  "traced_dashboard_before": {
+    "path": "/painel",
+    "status": 200,
+    "total_ms": 2526.87054,
+    "query_count": 14,
+    "sql_wall_ms": 2214.26
+  },
+  "traced_dashboard_after": {
+    "path": "/painel",
+    "status": 200,
+    "total_ms": 2362.296467,
+    "query_count": 10,
+    "sql_wall_ms": 2094.21
+  },
+  "http_after": {
+    "measured_at_utc": "2026-10-12T01:56:30.5497399Z",
+    "connection": "127.0.0.1:8080",
+    "host_header": "localhost:8080",
+    "requests": [
+      {
+        "profile": "public",
+        "method": "GET",
+        "path": "/entrar",
+        "status": 200,
+        "headers_ms": 230.29,
+        "total_ms": 262.61,
+        "response_bytes": 18445,
+        "redirect": ""
+      },
+      {
+        "profile": "public",
+        "method": "POST",
+        "path": "/entrar",
+        "status": 302,
+        "headers_ms": 1563.47,
+        "total_ms": 1590.72,
+        "response_bytes": 402,
+        "redirect": "http://localhost:8080/selecionar-perfil"
+      },
+      {
+        "profile": "authenticated",
+        "method": "GET",
+        "path": "/selecionar-perfil",
+        "status": 200,
+        "headers_ms": 1312.36,
+        "total_ms": 1313.1,
+        "response_bytes": 49437,
+        "redirect": ""
+      },
+      {
+        "profile": "Administrador",
+        "method": "POST",
+        "path": "/selecionar-perfil",
+        "status": 302,
+        "headers_ms": 1527.99,
+        "total_ms": 1531.07,
+        "response_bytes": 358,
+        "redirect": "http://localhost:8080/painel"
+      },
+      {
+        "profile": "Administrador",
+        "method": "GET",
+        "path": "/painel",
+        "status": 302,
+        "headers_ms": 1506.7,
+        "total_ms": 1510.11,
+        "response_bytes": 386,
+        "redirect": "http://localhost:8080/seguranca/mfa"
+      },
+      {
+        "profile": "Administrador",
+        "method": "GET",
+        "path": "/sessao/status",
+        "status": 200,
+        "headers_ms": 1057.83,
+        "total_ms": 1059.2,
+        "response_bytes": 101,
+        "redirect": ""
+      },
+      {
+        "profile": "Administrador",
+        "method": "GET",
+        "path": "/selecionar-perfil",
+        "status": 200,
+        "headers_ms": 1393.85,
+        "total_ms": 1402.31,
+        "response_bytes": 38478,
+        "redirect": ""
+      },
+      {
+        "profile": "Financeiro",
+        "method": "POST",
+        "path": "/selecionar-perfil",
+        "status": 302,
+        "headers_ms": 2625.2,
+        "total_ms": 2626.95,
+        "response_bytes": 358,
+        "redirect": "http://localhost:8080/painel"
+      },
+      {
+        "profile": "Financeiro",
+        "method": "GET",
+        "path": "/painel",
+        "status": 200,
+        "headers_ms": 3835.22,
+        "total_ms": 3837.24,
+        "response_bytes": 85902,
+        "redirect": ""
+      },
+      {
+        "profile": "Financeiro",
+        "method": "GET",
+        "path": "/painel",
+        "status": 200,
+        "headers_ms": 4014.94,
+        "total_ms": 4019.87,
+        "response_bytes": 63897,
+        "redirect": ""
+      },
+      {
+        "profile": "Financeiro",
+        "method": "GET",
+        "path": "/sessao/status",
+        "status": 200,
+        "headers_ms": 1088.54,
+        "total_ms": 1090.73,
+        "response_bytes": 101,
+        "redirect": ""
+      },
+      {
+        "profile": "Financeiro",
+        "method": "GET",
+        "path": "/selecionar-perfil",
+        "status": 200,
+        "headers_ms": 1451.82,
+        "total_ms": 1453.05,
+        "response_bytes": 38511,
+        "redirect": ""
+      },
+      {
+        "profile": "Gestor",
+        "method": "POST",
+        "path": "/selecionar-perfil",
+        "status": 302,
+        "headers_ms": 1776.83,
+        "total_ms": 1778.36,
+        "response_bytes": 358,
+        "redirect": "http://localhost:8080/painel"
+      },
+      {
+        "profile": "Gestor",
+        "method": "GET",
+        "path": "/painel",
+        "status": 200,
+        "headers_ms": 1789.33,
+        "total_ms": 1790.38,
+        "response_bytes": 85899,
+        "redirect": ""
+      },
+      {
+        "profile": "Gestor",
+        "method": "GET",
+        "path": "/painel",
+        "status": 200,
+        "headers_ms": 2237.22,
+        "total_ms": 2238.7,
+        "response_bytes": 63986,
+        "redirect": ""
+      },
+      {
+        "profile": "Gestor",
+        "method": "GET",
+        "path": "/solicitacoes",
+        "status": 200,
+        "headers_ms": 1939.44,
+        "total_ms": 1941.42,
+        "response_bytes": 69211,
+        "redirect": ""
+      },
+      {
+        "profile": "Gestor",
+        "method": "GET",
+        "path": "/solicitacoes",
+        "status": 200,
+        "headers_ms": 1970.77,
+        "total_ms": 1973.77,
+        "response_bytes": 69234,
+        "redirect": ""
+      },
+      {
+        "profile": "Gestor",
+        "method": "GET",
+        "path": "/sessao/status",
+        "status": 200,
+        "headers_ms": 1035.01,
+        "total_ms": 1036.73,
+        "response_bytes": 101,
+        "redirect": ""
+      },
+      {
+        "profile": "Gestor",
+        "method": "GET",
+        "path": "/selecionar-perfil",
+        "status": 200,
+        "headers_ms": 1425.64,
+        "total_ms": 1427.3,
+        "response_bytes": 38473,
+        "redirect": ""
+      },
+      {
+        "profile": "Servidor",
+        "method": "POST",
+        "path": "/selecionar-perfil",
+        "status": 302,
+        "headers_ms": 1811.29,
+        "total_ms": 1812.9,
+        "response_bytes": 358,
+        "redirect": "http://localhost:8080/painel"
+      },
+      {
+        "profile": "Servidor",
+        "method": "GET",
+        "path": "/painel",
+        "status": 200,
+        "headers_ms": 1831.92,
+        "total_ms": 1833.22,
+        "response_bytes": 81392,
+        "redirect": ""
+      },
+      {
+        "profile": "Servidor",
+        "method": "GET",
+        "path": "/painel",
+        "status": 200,
+        "headers_ms": 1790.99,
+        "total_ms": 1792.64,
+        "response_bytes": 59480,
+        "redirect": ""
+      },
+      {
+        "profile": "Servidor",
+        "method": "GET",
+        "path": "/sessao/status",
+        "status": 200,
+        "headers_ms": 1145.33,
+        "total_ms": 1148.28,
+        "response_bytes": 101,
+        "redirect": ""
+      },
+      {
+        "profile": "Servidor",
+        "method": "GET",
+        "path": "/selecionar-perfil",
+        "status": 200,
+        "headers_ms": 1367.44,
+        "total_ms": 1367.81,
+        "response_bytes": 38492,
+        "redirect": ""
+      },
+      {
+        "profile": "authenticated",
+        "method": "GET",
+        "path": "/selecionar-perfil",
+        "status": 200,
+        "headers_ms": 1514.54,
+        "total_ms": 1514.98,
+        "response_bytes": 38493,
+        "redirect": ""
+      },
+      {
+        "profile": "authenticated",
+        "method": "POST",
+        "path": "/sair",
+        "status": 302,
+        "headers_ms": 826.05,
+        "total_ms": 827.76,
+        "response_bytes": 358,
+        "redirect": "http://localhost:8080/entrar"
+      }
+    ]
+  },
+  "account_limit": {
+    "available": false,
+    "sqlstate": "HY000",
+    "driver_code": 1226,
+    "resource": "max_connections_per_hour",
+    "limit": 500,
+    "detected_at_utc": "2026-10-11T22:01:39-04:00"
+  },
+  "tests": {
+    "general_assertions": 1232,
+    "phpstan_errors": 0,
+    "debugbar_browser": "passed",
+    "mysql_tests": 24,
+    "general_skipped": 31,
+    "general_tests": 179,
+    "mysql_skipped": 1,
+    "mysql_assertions": 413,
+    "browser_session_checks": 11,
+    "frontend_build": "passed"
+  }
+}
