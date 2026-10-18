@@ -1,1 +1,1 @@
-@include('reports.index')
+@include ('reports.index')
