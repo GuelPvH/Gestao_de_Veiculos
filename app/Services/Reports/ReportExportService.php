@@ -47,6 +47,10 @@ class ReportExportService
         if ($selecionados === [] || $camposSelecionados->contains(null)) {
             throw ValidationException::withMessages(['campos' => 'Selecione campos autorizados para exportação.']);
         }
+        $formato = $filtros['formato'] ?? 'csv';
+        if (! in_array($formato, ['csv', 'pdf'], true)) {
+            throw ValidationException::withMessages(['formato' => 'Escolha CSV ou PDF.']);
+        }
         $ids = $this->ids($codigo, $filtros);
         if ($ids->isEmpty()) {
             throw ValidationException::withMessages(['campos' => 'Não há registros no conjunto filtrado para exportar.']);
@@ -64,10 +68,10 @@ class ReportExportService
             }
         }
         $retorno = $this->procedimentos->call('sp_preparar_exportacao', [
-            (int) $vinculo->vinculo_id, $tela['module'], 'csv',
+            (int) $vinculo->vinculo_id, $tela['module'], $formato,
             $codigo === 'expenses' ? ($filtros['de'] ?? null) : null,
             $codigo === 'expenses' ? ($filtros['ate'] ?? null) : null,
-            json_encode($filtrosProcedure, JSON_THROW_ON_ERROR),
+            json_encode((object) $filtrosProcedure, JSON_THROW_ON_ERROR),
             json_encode($camposSelecionados->pluck('id')->map(fn ($id) => (int) $id)->all(), JSON_THROW_ON_ERROR),
             json_encode($ids->all(), JSON_THROW_ON_ERROR),
         ]);
@@ -76,7 +80,11 @@ class ReportExportService
             throw new RuntimeException('A preparação da exportação não retornou identificador.');
         }
         $this->procedimentos->call('sp_enfileirar_exportacao', [(int) $vinculo->vinculo_id, $id]);
-        $this->writeCsv($id, (int) $vinculo->usuario_id);
+        if ($formato === 'pdf') {
+            $this->writePdf($id, (int) $vinculo->usuario_id, $codigo, $filtros);
+        } else {
+            $this->writeCsv($id, (int) $vinculo->usuario_id);
+        }
 
         return $id;
     }
@@ -88,13 +96,13 @@ class ReportExportService
         $exportacao = DB::table('exportacoes as e')->join('arquivos as a', 'a.id', '=', 'e.arquivo_id')
             ->where('e.id', $id)->where('e.solicitado_por_vinculo_id', (int) $vinculo->vinculo_id)
             ->where('e.situacao', 'concluida')->where('a.situacao', 'disponivel')
-            ->first(['e.modulo_codigo', 'e.total_registros', 'a.chave_armazenamento', 'a.nome_original']);
+            ->first(['e.modulo_codigo', 'e.formato', 'e.total_registros', 'a.chave_armazenamento', 'a.nome_original']);
         abort_unless($exportacao !== null, 404);
         $codigo = array_search($exportacao->modulo_codigo, array_map(fn ($item) => $item['module'], array_intersect_key(config('screens'), self::TARGETS)), true);
         abort_unless(is_string($codigo), 404);
         abort_unless($this->allStillAllowed($codigo, $id, (int) $exportacao->total_registros), 403);
         $chave = (string) $exportacao->chave_armazenamento;
-        abort_unless(preg_match('/^relatorios\/[A-Za-z0-9]{40}\.csv$/D', $chave) === 1 && Storage::disk('local')->exists($chave), 404);
+        abort_unless(preg_match('/^relatorios\/[A-Za-z0-9]{40}\.(csv|pdf)$/D', $chave) === 1 && Storage::disk('local')->exists($chave), 404);
 
         return $exportacao;
     }
@@ -102,7 +110,9 @@ class ReportExportService
     public function download(int $id): StreamedResponse
     {
         $exportacao = $this->ready($id);
-        return Storage::disk('local')->download($exportacao->chave_armazenamento, $exportacao->nome_original, ['Content-Type' => 'text/csv; charset=UTF-8', 'Cache-Control' => 'private, no-store']);
+        abort_unless(in_array($exportacao->formato, ['csv', 'pdf'], true) && pathinfo($exportacao->chave_armazenamento, PATHINFO_EXTENSION) === $exportacao->formato, 404);
+        $mime = $exportacao->formato === 'pdf' ? 'application/pdf' : 'text/csv; charset=UTF-8';
+        return Storage::disk('local')->download($exportacao->chave_armazenamento, $exportacao->nome_original, ['Content-Type' => $mime, 'Cache-Control' => 'private, no-store']);
     }
 
     /** @return Collection<int, int>|Collection<int, array{fonte: string, id: int}> */
@@ -195,6 +205,48 @@ class ReportExportService
                 } catch (Throwable $limpeza) {
                     report($limpeza);
                 }
+            }
+            throw $erro;
+        }
+    }
+
+    private function writePdf(int $id, int $usuario, string $codigo, array $filtros): void
+    {
+        $chave = 'relatorios/'.Str::random(40).'.pdf';
+        try {
+            $campos = DB::table('exportacao_campos as ec')->join('relatorio_campos as rc', 'rc.id', '=', 'ec.campo_id')
+                ->where('ec.exportacao_id', $id)->orderBy('ec.ordem')->get(['rc.chave', 'rc.rotulo']);
+            $registros = DB::table('exportacao_registros')->where('exportacao_id', $id)->orderBy('ordem')
+                ->pluck('snapshot')->map(fn ($snapshot) => json_decode($snapshot, true, 512, JSON_THROW_ON_ERROR));
+            if ($campos->isEmpty() || $registros->isEmpty() || $registros->count() > 10000) {
+                throw new RuntimeException('Seleção inválida para o PDF.');
+            }
+            $conteudo = app(ReportPdfRenderer::class)->render($id, $codigo, $campos, $registros, $filtros);
+            if (! Storage::disk('local')->put($chave, $conteudo)) {
+                throw new RuntimeException('Não foi possível armazenar o PDF privado.');
+            }
+            DB::transaction(function () use ($id, $usuario, $chave, $conteudo, $registros): void {
+                $arquivoId = DB::table('arquivos')->insertGetId([
+                    'enviado_por' => $usuario, 'chave_armazenamento' => $chave,
+                    'nome_original' => 'frota-pf-relatorio-'.$id.'.pdf', 'tipo_mime' => 'application/pdf',
+                    'tamanho_bytes' => strlen($conteudo), 'sha256' => hash('sha256', $conteudo, true), 'situacao' => 'disponivel',
+                ]);
+                $atualizados = DB::table('exportacoes')->where('id', $id)->where('situacao', 'fila')->update([
+                    'situacao' => 'concluida', 'arquivo_id' => $arquivoId, 'total_registros' => $registros->count(),
+                    'iniciado_em' => now('UTC'), 'concluido_em' => now('UTC'),
+                ]);
+                if ($atualizados !== 1) {
+                    throw new RuntimeException('O estado da exportação mudou durante a geração.');
+                }
+                $this->procedimentos->call('sp_auditar', [(int) $this->acesso->link()->vinculo_id, 'exportacao_concluida', 'exportacoes', $id, 'Arquivo PDF privado gerado a partir da seleção confirmada.']);
+            });
+        } catch (Throwable $erro) {
+            DB::table('exportacoes')->where('id', $id)->whereIn('situacao', ['previa', 'fila', 'processando'])
+                ->update(['situacao' => 'falhou', 'erro_codigo' => 'GERACAO_PDF']);
+            try {
+                Storage::disk('local')->delete($chave);
+            } catch (Throwable $limpeza) {
+                report($limpeza);
             }
             throw $erro;
         }

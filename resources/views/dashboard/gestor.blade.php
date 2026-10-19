@@ -5,7 +5,11 @@
     <div class="gestor-overview-grid">
         <x-fleet.monthly-activity :periodos="$periodos" :series="$series" titulo="Movimentação da frota" />
         <x-ui.panel titulo="Frota em movimento">
-            <x-fleet.position-map :pontos="$posicoes" />
+            @if($acesso->level('rastreamento') > 0)
+                <x-fleet.simulated-monitoring-map :compact="true" />
+            @else
+                <x-ui.empty titulo="Monitoramento indisponível" descricao="Seu perfil não possui acesso ao monitoramento." />
+            @endif
             @if($acesso->level('rastreamento') > 0)<a class="btn btn-outline-secondary mt-3" href="{{ route('monitoring.index') }}">Abrir monitoramento</a>@endif
         </x-ui.panel>
     </div>

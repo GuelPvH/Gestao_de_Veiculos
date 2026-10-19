@@ -104,11 +104,7 @@ class DashboardController extends Controller
             }
         }
         unset($periodo, $valor);
-        $posicoes = collect();
-        if ($acesso->level('rastreamento') > 0) {
-            $posicoes = $leituras->select('monitoring', $leituras->query('monitoring'))->limit(100)->get();
-        }
-        return view('dashboard.gestor', compact('indicadores', 'solicitacoes', 'series', 'periodos', 'posicoes', 'acesso'));
+        return view('dashboard.gestor', compact('indicadores', 'solicitacoes', 'series', 'periodos', 'acesso'));
     }
 
 }
