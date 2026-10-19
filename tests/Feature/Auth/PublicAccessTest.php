@@ -38,6 +38,7 @@ class PublicAccessTest extends TestCase
     {
         config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
         DB::purge('sqlite');
+        DB::statement('CREATE TABLE auditoria (id INTEGER PRIMARY KEY, ator_usuario_id INTEGER, evento TEXT, entidade TEXT, entidade_id INTEGER, correlacao TEXT, descricao TEXT, ip BLOB, depois TEXT)');
         DB::statement('CREATE TABLE usuarios (id INTEGER PRIMARY KEY, identificador TEXT UNIQUE, nome TEXT, senha_hash TEXT, ativo INTEGER, deve_trocar_senha INTEGER)');
         DB::table('usuarios')->insert([
             'id' => 1,

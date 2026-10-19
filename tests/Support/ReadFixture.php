@@ -5,6 +5,7 @@ namespace Tests\Support;
 use App\Models\User;
 use App\Services\Auth\FleetSession;
 use App\Services\Authorization\AccessContext;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Mockery;
@@ -128,7 +129,13 @@ class ReadFixture
         Auth::guard()->setUser(User::findOrFail(1));
         app(AccessContext::class)->load($vinculo);
         $servico = Mockery::mock(FleetSession::class);
-        $servico->shouldReceive('validate')->andReturn($vinculo);
+        $servico->shouldReceive('validate')->andReturnUsing(function ($request) use ($vinculo) {
+            $now = CarbonImmutable::now('UTC');
+            $request->attributes->set('fleet.session', (object) ['id' => 10, 'usuario_id' => 1, 'vinculo_ativo_id' => 10, 'criado_em' => $now, 'expira_em' => $now->addMinutes(30), 'reautenticar_ate' => $now->addMinutes(30), 'encerrada_em' => null, 'mfa_verificada_em' => $now, 'mfa_vinculo_id' => 10, 'mfa_versao' => DB::table('usuarios')->where('id', 1)->value('versao_seguranca'), 'mfa_http_hash' => hash('sha256', $request->session()->getId(), true)]);
+
+            return $vinculo;
+        });
+        $servico->shouldReceive('deadline')->andReturnUsing(fn ($session) => CarbonImmutable::parse($session->reautenticar_ate, 'UTC'));
         app()->instance(FleetSession::class, $servico);
 
         return $vinculo;

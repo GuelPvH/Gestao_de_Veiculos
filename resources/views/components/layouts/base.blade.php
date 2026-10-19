@@ -1,4 +1,4 @@
-@props(['titulo' => 'Frota · PF'])
+@props (['titulo' => 'Frota · PF'])
 <!doctype html>
 <html lang="pt-BR" data-bs-theme="{{ in_array(request('tema'), ['light', 'dark'], true) ? request('tema') : 'light' }}">
 <head>
@@ -11,16 +11,30 @@
         (() => {
             try {
                 const temaFixo = new URLSearchParams(location.search).get('tema');
-                const tema = ['light', 'dark'].includes(temaFixo) ? temaFixo : localStorage.getItem('frota-tema') || 'system';
-                document.documentElement.dataset.bsTheme = tema === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : ['light', 'dark'].includes(tema) ? tema : 'light';
+                const tema = ['light', 'dark'].includes(temaFixo)
+                    ? temaFixo
+                    : localStorage.getItem('frota-tema') || 'system';
+                document.documentElement.dataset.bsTheme =
+                    tema === 'system'
+                        ? matchMedia('(prefers-color-scheme: dark)').matches
+                            ? 'dark'
+                            : 'light'
+                        : ['light', 'dark'].includes(tema)
+                          ? tema
+                          : 'light';
             } catch (_) {}
         })();
     </script>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite (['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
     <a href="#main-content" class="skip-link">Pular para o conteúdo</a>
     {{ $slot }}
+    @auth
+        @if (request()->attributes->has('fleet.session') && !request()->routeIs('mfa.index'))
+            <x-auth.session-modal />
+        @endif
+    @endauth
     <x-ui.modal id="discard-changes" titulo="Descartar alterações?">
         <p>Você tem alterações ainda não concluídas. Ao sair, elas serão descartadas.</p>
         <div class="d-flex flex-wrap gap-2 justify-content-end">

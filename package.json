@@ -4,13 +4,18 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "format": "prettier --write \"**/*.{js,mjs,cjs,css,json,md,yml,yaml,blade.php}\"",
+        "format:check": "prettier --check \"**/*.{js,mjs,cjs,css,json,md,yml,yaml,blade.php}\""
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.13.0",
-        "@playwright/test": "^1.63.0",
+        "@playwright/test": "^1.64.0",
+        "@prettier/plugin-php": "0.25.0",
         "laravel-vite-plugin": "^3.1",
-        "vite": "^8.0.0"
+        "prettier": "3.9.10",
+        "prettier-plugin-blade": "3.3.3",
+        "vite": "^8.3.4"
     },
     "dependencies": {
         "@fontsource/inter": "^5.3.0",

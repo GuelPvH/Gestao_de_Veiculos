@@ -1,5 +1,5 @@
 {
-  "source_sha256": "4fff532e931f87ed22a228a9b353cd53e15e6c3d66fb19f8adb9d2a8ec042c76",
+  "source_sha256": "b093f7b047cfbe1990dce656f7d707c91093b6178d2d8d278ca8b095e2af134c",
   "tables": {
     "versoes_modelo": {
       "versao": {
@@ -149,6 +149,38 @@
         "default": null
       },
       "atualizado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "estado_identidade": {
+        "type": "TEXT",
+        "default": "'legado'"
+      },
+      "email_verificado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "email_pendente": {
+        "type": "TEXT",
+        "default": null
+      },
+      "versao_seguranca": {
+        "type": "INTEGER",
+        "default": "1"
+      },
+      "senha_temporaria_emitida_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "senha_temporaria_expira_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "senha_temporaria_usada_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "senha_temporaria_revogada_em": {
         "type": "TEXT",
         "default": null
       }
@@ -449,6 +481,30 @@
       "agente_usuario": {
         "type": "TEXT",
         "default": null
+      },
+      "autenticada_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "reautenticar_ate": {
+        "type": "TEXT",
+        "default": null
+      },
+      "mfa_verificada_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "mfa_vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "mfa_versao": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "mfa_http_hash": {
+        "type": "BLOB",
+        "default": null
       }
     },
     "controle_vinculos": {
@@ -524,6 +580,14 @@
       },
       "invalidado_em": {
         "type": "TEXT",
+        "default": null
+      },
+      "email_destino": {
+        "type": "TEXT",
+        "default": null
+      },
+      "versao_seguranca": {
+        "type": "INTEGER",
         "default": null
       }
     },
@@ -2561,6 +2625,262 @@
         "default": null
       },
       "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "confirmacoes_identidade": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "finalidade": {
+        "type": "TEXT",
+        "default": null
+      },
+      "email_destino": {
+        "type": "TEXT",
+        "default": null
+      },
+      "versao_seguranca": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "token_hash": {
+        "type": "BLOB",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "expira_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "usado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "invalidado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "email_outbox": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "evento_chave": {
+        "type": "TEXT",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "finalidade": {
+        "type": "TEXT",
+        "default": null
+      },
+      "versao_seguranca": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "destinatario_cifrado": {
+        "type": "TEXT",
+        "default": null
+      },
+      "token_cifrado": {
+        "type": "TEXT",
+        "default": null
+      },
+      "recuperacao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "confirmacao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "aviso_codigo": {
+        "type": "TEXT",
+        "default": null
+      },
+      "estado": {
+        "type": "TEXT",
+        "default": "'pendente'"
+      },
+      "tentativas": {
+        "type": "INTEGER",
+        "default": "0"
+      },
+      "proxima_tentativa_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "expira_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "lease_id": {
+        "type": "TEXT",
+        "default": null
+      },
+      "lease_ate": {
+        "type": "TEXT",
+        "default": null
+      },
+      "aceito_smtp_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "provedor_id": {
+        "type": "TEXT",
+        "default": null
+      },
+      "codigo_erro": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "credenciais_mfa": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "credential_id": {
+        "type": "TEXT",
+        "default": null
+      },
+      "registro": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criada_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "usada_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "revogada_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "desafios_mfa": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "sessao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "versao_seguranca": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "http_hash": {
+        "type": "BLOB",
+        "default": null
+      },
+      "finalidade": {
+        "type": "TEXT",
+        "default": null
+      },
+      "opcoes": {
+        "type": "TEXT",
+        "default": null
+      },
+      "expira_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "usado_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criado_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "recuperacoes_mfa": {
+      "id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "usuario_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "solicitada_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "versao_seguranca": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "justificativa": {
+        "type": "TEXT",
+        "default": null
+      },
+      "criada_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "expira_em": {
+        "type": "TEXT",
+        "default": null
+      },
+      "concluida_em": {
+        "type": "TEXT",
+        "default": null
+      }
+    },
+    "aprovacoes_mfa": {
+      "recuperacao_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "aprovada_por": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "vinculo_id": {
+        "type": "INTEGER",
+        "default": null
+      },
+      "aprovada_em": {
         "type": "TEXT",
         "default": null
       }

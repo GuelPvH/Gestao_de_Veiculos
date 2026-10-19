@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
@@ -13,6 +14,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property string|null $email
  * @property string|null $telefone
  * @property bool $ativo
+ * @property string $estado_identidade
+ * @property int $versao_seguranca
+ * @property CarbonImmutable|null $senha_temporaria_revogada_em
+ * @property CarbonImmutable|null $senha_temporaria_expira_em
+ * @property CarbonImmutable|null $email_verificado_em
+ * @property string|null $email_pendente
  * @property bool $deve_trocar_senha
  */
 class User extends Authenticatable
@@ -43,6 +50,12 @@ class User extends Authenticatable
             'ativo' => 'boolean',
             'deve_trocar_senha' => 'boolean',
             'senha_alterada_em' => 'immutable_datetime',
+            'email_verificado_em' => 'immutable_datetime',
+            'senha_temporaria_emitida_em' => 'immutable_datetime',
+            'senha_temporaria_expira_em' => 'immutable_datetime',
+            'senha_temporaria_usada_em' => 'immutable_datetime',
+            'senha_temporaria_revogada_em' => 'immutable_datetime',
+            'versao_seguranca' => 'integer',
         ];
     }
 }

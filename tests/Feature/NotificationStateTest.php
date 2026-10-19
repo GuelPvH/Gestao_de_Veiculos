@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Services\Auth\FleetSession;
 use App\Services\Auth\ProcedureRunner;
 use Illuminate\Support\Facades\DB;
 use Mockery;
@@ -60,9 +59,8 @@ class NotificationStateTest extends TestCase
 
         $vinculo = ReadFixture::profile(1);
         $vinculo->usuario_id = 2;
-        $sessao = Mockery::mock(FleetSession::class);
-        $sessao->shouldReceive('validate')->andReturn($vinculo);
-        app()->instance(FleetSession::class, $sessao);
+        // The shared fixture captures the same link object and still provides
+        // an authenticated session snapshot to the security middleware.
         $this->get(route('notifications.index'))->assertForbidden();
         $this->post(route('notifications.hide', 31), ['versao' => 1])->assertForbidden();
     }
@@ -100,6 +98,22 @@ class NotificationStateTest extends TestCase
         app()->instance(ProcedureRunner::class, $procedimentos);
 
         $this->post(route('notifications.read', 61), ['versao' => 1])->assertStatus(419);
+    }
+
+    public function test_notification_links_are_checked_in_one_scoped_query_for_the_whole_page(): void
+    {
+        for ($id = 71; $id <= 80; $id++) {
+            $this->notification($id, 1, 1);
+            DB::table('vw_notificacoes_usuario')->where('id', $id)->update(['solicitacao_id' => $id % 2 ? 1 : 2]);
+        }
+        $queries = [];
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = $query->sql;
+        });
+        $this->get(route('notifications.index'))->assertOk()->assertViewHas('registros', function ($records): bool {
+            return $records->count() === 10 && $records->every(fn ($record) => $record->link === ($record->solicitacao_id === 1 ? route('solicitacoes.show', 1) : null));
+        });
+        $this->assertCount(1, array_filter($queries, fn ($sql) => str_contains($sql, 'vw_solicitacoes_atuais')));
     }
 
     private function notification(int $evento, int $usuario, int $versao, ?string $lida = null, ?string $oculta = null): void

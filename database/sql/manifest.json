@@ -1,10 +1,11 @@
 {
-  "sha256": "4fff532e931f87ed22a228a9b353cd53e15e6c3d66fb19f8adb9d2a8ec042c76",
-  "bytes": 234265,
+  "sha256": "b093f7b047cfbe1990dce656f7d707c91093b6178d2d8d278ca8b095e2af134c",
+  "bytes": 261587,
   "tables": [
     "abastecimentos",
     "acoes",
     "anexos",
+    "aprovacoes_mfa",
     "arquivos",
     "auditoria",
     "categorias_chamado",
@@ -15,10 +16,14 @@
     "chamados",
     "checklist_itens",
     "configuracao_sistema",
+    "confirmacoes_identidade",
     "controle_vinculos",
+    "credenciais_mfa",
+    "desafios_mfa",
     "despesa_eventos",
     "despesas",
     "documentos_veiculo",
+    "email_outbox",
     "exportacao_campos",
     "exportacao_registros",
     "exportacoes",
@@ -49,6 +54,7 @@
     "posicoes_rastreamento",
     "preferencias_usuario",
     "rastreadores",
+    "recuperacoes_mfa",
     "recuperacoes_senha",
     "relatorio_campos",
     "reservas",
@@ -103,6 +109,7 @@
     "sp_criar_administrador_inicial",
     "sp_criar_sessao",
     "sp_criar_solicitacao",
+    "sp_criar_solicitacao_completa",
     "sp_criar_usuario",
     "sp_decidir_solicitacao",
     "sp_desativar_vinculo",
@@ -131,6 +138,8 @@
     "sp_vincular_perfil"
   ],
   "triggers": [
+    "bi_aprovacoes_mfa_independentes",
+    "bi_sessoes_reautenticacao",
     "tg_abastecimento_bi",
     "tg_arquivo_bu",
     "tg_auditoria_bi",
@@ -141,6 +150,9 @@
     "tg_despesa_bu",
     "tg_exportacao_campos_bi",
     "tg_exportacao_registros_bi",
+    "tg_identidade_au",
+    "tg_identidade_bi",
+    "tg_identidade_bu",
     "tg_imutavel_auditoria_bd",
     "tg_imutavel_auditoria_bu",
     "tg_imutavel_chamado_eventos_bd",
@@ -250,5 +262,68 @@
     "tg_vresposta_bd",
     "tg_vresposta_bi",
     "tg_vresposta_bu"
+  ],
+  "schema_version": "1.0.6",
+  "patches": [
+    {
+      "version": "1.0.3",
+      "files": [
+        {
+          "path": "patches/1.0.3_identity-precheck.sql",
+          "sha256": "cbc5b081e8bf8ebb3e642de082796b6372185d7136b02c12c6fab42dc2ba0ce9"
+        },
+        {
+          "path": "patches/1.0.3_identity.sql",
+          "sha256": "17a99c7fbb9cda157935efb788495083ecf19d177ebf1ae1d8d9008e6be25591"
+        },
+        {
+          "path": "patches/1.0.3_identity-postcheck.sql",
+          "sha256": "517ecc50ba895bfea522be455ceb5965a82ebc69156641c3cd2ab0ea19c6d334"
+        }
+      ]
+    },
+    {
+      "version": "1.0.4",
+      "files": [
+        {
+          "path": "patches/1.0.4_requests-precheck.sql",
+          "sha256": "448417e19d4ab4017cb527ecddfd868b9cccd0fb9a8e9e2663dbb7eeac1a530b"
+        },
+        {
+          "path": "patches/1.0.4_requests.sql",
+          "sha256": "441efdf4812f1eb9e064cb54e574f3d8597c18788ef075bdb5c9e4dea54d8d31"
+        },
+        {
+          "path": "patches/1.0.4_requests-postcheck.sql",
+          "sha256": "ef6979e7e0530c5923daa3808e5ae06514585c6dfbab58c0691cb39042c62c31"
+        }
+      ]
+    },
+    {
+      "version": "1.0.5",
+      "files": [
+        {
+          "path": "patches/1.0.5_session_mfa-precheck.sql",
+          "sha256": "8f1cf51ddb4bf0dfa140365a975f238d7abc9670bd79b89c493521442352aeab"
+        },
+        {
+          "path": "patches/1.0.5_session_mfa.sql",
+          "sha256": "40405a1dae3c0724750aeb511360e34084ba594cfe48f8762886016d42934c3b"
+        },
+        {
+          "path": "patches/1.0.5_session_mfa-postcheck.sql",
+          "sha256": "75442e9dd00b292b611388d6aeb8e750b621e8bef460d4ac1877507623c61767"
+        }
+      ]
+    },
+    {
+      "version": "1.0.6",
+      "files": [
+        {
+          "path": "patches/1.0.6_vehicle_plate.sql",
+          "sha256": "c6c6ec512bd13fa09806641bd230efe1767c9656cdca0219b2e2e2d1e626b81b"
+        }
+      ]
+    }
   ]
 }

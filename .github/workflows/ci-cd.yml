@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.4'
           coverage: none
@@ -57,7 +57,7 @@ jobs:
         run: |
           composer --no-plugins --no-scripts validate --strict
           composer --no-plugins --no-scripts audit --locked --abandoned=fail
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
           cache: npm
@@ -72,7 +72,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.3', '8.4']
+        php: ['8.3', '8.4', '8.5']
     env:
       APP_ENV: testing
       APP_DEBUG: 'false'
@@ -87,10 +87,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, dom, fileinfo, pdo_sqlite, sqlite3
+          extensions: mbstring, dom, intl, gmp, sodium, fileinfo, pdo_sqlite, sqlite3
           coverage: none
           tools: composer:2.10.3
       - name: Install PHP dependencies without project scripts
@@ -115,12 +115,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
           cache: npm
       - name: Install locked frontend dependencies
         run: npm ci --ignore-scripts
+      - name: Check Prettier formatting including Blade templates
+        run: npm run format:check
       - name: Build Bootstrap and Vite assets
         run: npm run build
 
@@ -133,10 +135,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
         with:
           php-version: '8.4'
-          extensions: mbstring, dom, intl, fileinfo, pdo_mysql
+          extensions: mbstring, dom, intl, gmp, sodium, redis, pcntl, fileinfo, pdo_mysql
           coverage: none
           tools: composer:2.10.3
       - name: Install locked dependencies and native database clients

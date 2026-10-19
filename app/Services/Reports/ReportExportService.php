@@ -112,6 +112,7 @@ class ReportExportService
         $exportacao = $this->ready($id);
         abort_unless(in_array($exportacao->formato, ['csv', 'pdf'], true) && pathinfo($exportacao->chave_armazenamento, PATHINFO_EXTENSION) === $exportacao->formato, 404);
         $mime = $exportacao->formato === 'pdf' ? 'application/pdf' : 'text/csv; charset=UTF-8';
+
         return Storage::disk('local')->download($exportacao->chave_armazenamento, $exportacao->nome_original, ['Content-Type' => $mime, 'Cache-Control' => 'private, no-store']);
     }
 

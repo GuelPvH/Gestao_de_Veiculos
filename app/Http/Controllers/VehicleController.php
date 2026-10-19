@@ -29,7 +29,7 @@ class VehicleController extends Controller
         $unidade = (int) $this->acesso->link()->unidade_id;
         abort_unless($this->acesso->can('frota', 'criar', null, $unidade), 403);
 
-        return $this->form('create', null, $this->options());
+        return $this->form('create', null, $this->options('create'));
     }
 
     public function operation(int $registro, string $acao): View
@@ -39,7 +39,7 @@ class VehicleController extends Controller
         $veiculo = DB::table('veiculos')->where('id', $registro)->first();
         abort_unless($veiculo !== null, 404);
 
-        return $this->form($acao, $veiculo, $this->options($registro));
+        return $this->form($acao, $veiculo, $this->options($acao, $registro));
     }
 
     public function store(VehicleInputRequest $requisicao): RedirectResponse
@@ -99,12 +99,17 @@ class VehicleController extends Controller
         ]);
     }
 
-    private function options(?int $registro = null): array
+    private function options(string $acao, ?int $registro = null): array
     {
-        $unidades = DB::table('unidades')->where('ativa', 1)->orderBy('nome')->get(['id', 'nome']);
-        $unidadesDisponiveis = $unidades->filter(fn ($unidade) => $this->acesso->can('frota', 'criar', null, (int) $unidade->id))->pluck('nome', 'id')->all();
-        $categorias = DB::table('categorias_veiculo')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all();
-        $reservas = $registro === null ? [] : DB::table('reservas as r')
+        $unidadesDisponiveis = [];
+        if ($acao === 'create') {
+            $unidades = DB::table('unidades')->where('ativa', 1)->orderBy('nome')->get(['id', 'nome']);
+            $unidadesDisponiveis = $unidades->filter(fn ($unidade) => $this->acesso->can('frota', 'criar', null, (int) $unidade->id))->pluck('nome', 'id')->all();
+        }
+        $categorias = in_array($acao, ['create', 'edit'], true)
+            ? DB::table('categorias_veiculo')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all()
+            : [];
+        $reservas = $acao !== 'release' || $registro === null ? [] : DB::table('reservas as r')
             ->leftJoin('manutencoes as m', 'm.reserva_id', '=', 'r.id')
             ->where('r.veiculo_id', $registro)->where('r.situacao', 'ativa')->whereIn('r.tipo', ['indisponibilidade', 'manutencao'])
             ->whereNull('m.id')->orderBy('r.inicio')->limit(100)

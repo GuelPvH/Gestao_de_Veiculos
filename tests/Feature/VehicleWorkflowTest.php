@@ -59,14 +59,14 @@ class VehicleWorkflowTest extends TestCase
         ], $changes);
     }
 
-    public function test_create_normalizes_plate_and_persists_only_schema_fields(): void
+    public function test_create_preserves_plate_format_and_persists_only_schema_fields(): void
     {
         $this->procedures();
         $this->get(route('vehicles.index'))->assertOk()->assertSee('value="inativo"', false);
         $this->get(route('vehicles.create'))->assertOk()->assertSee('Unidade responsável')->assertSee('Categoria');
         $this->post(route('vehicles.store'), $this->vehicleData())->assertRedirect(route('vehicles.show', 4));
         $veiculo = DB::table('veiculos')->where('id', 4)->first();
-        $this->assertSame('ROA2B34', $veiculo->placa);
+        $this->assertSame('ROA-2B34', $veiculo->placa);
         $this->assertSame('Veículo administrativo', $veiculo->nome);
         $this->assertSame(1, (int) $veiculo->criado_por);
         $this->assertSame('12345678901', $veiculo->renavam);

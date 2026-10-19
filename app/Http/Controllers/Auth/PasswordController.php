@@ -3,20 +3,16 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\DeliverRecoveryLink;
-use App\Models\User;
+use App\Services\Auth\IdentityService;
 use App\Services\Auth\PasswordPolicy;
-use App\Services\Auth\PasswordVerifier;
-use App\Services\Auth\ProcedureRunner;
 use App\Services\Auth\RecoverySettings;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\MessageBag;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,7 +25,7 @@ class PasswordController extends Controller
         return view('auth.password');
     }
 
-    public function update(Request $requisicao, PasswordVerifier $verificador): RedirectResponse
+    public function update(Request $requisicao, IdentityService $identidades): RedirectResponse
     {
         $dados = $requisicao->validate(['senha_atual' => ['required', 'string', 'max:256'], 'nova_senha' => PasswordPolicy::rules()]);
         $usuarioId = (int) $requisicao->user()->getAuthIdentifier();
@@ -39,17 +35,7 @@ class PasswordController extends Controller
         RateLimiter::hit($identidade, 60);
         RateLimiter::hit($identidadeIp, 60);
 
-        DB::transaction(function () use ($usuarioId, $dados, $verificador): void {
-            $usuario = User::query()->whereKey($usuarioId)->lockForUpdate()->firstOrFail();
-            if (! $verificador->verify($dados['senha_atual'], $usuario->getAuthPassword())) {
-                throw ValidationException::withMessages(['senha_atual' => 'Senha atual inválida.']);
-            }
-            $agora = now('UTC');
-            DB::table('usuarios')->where('id', $usuarioId)->update(['senha_hash' => $verificador->make($dados['nova_senha']), 'deve_trocar_senha' => 0, 'senha_alterada_em' => $agora]);
-            DB::table('sessoes')->where('usuario_id', $usuarioId)->whereNull('encerrada_em')->update(['encerrada_em' => $agora, 'motivo_encerramento' => 'troca_senha']);
-            DB::table('recuperacoes_senha')->where('usuario_id', $usuarioId)->whereNull('usado_em')->whereNull('invalidado_em')->update(['invalidado_em' => $agora]);
-            DB::table('auditoria')->insert(['ator_usuario_id' => $usuarioId, 'evento' => 'senha_alterada', 'entidade' => 'usuarios', 'entidade_id' => $usuarioId, 'descricao' => 'Senha alterada; sessões anteriores encerradas.']);
-        });
+        $identidades->changePassword($usuarioId, $dados['senha_atual'], $dados['nova_senha']);
         RateLimiter::clear($identidade);
         RateLimiter::clear($identidadeIp);
         Auth::logout();
@@ -64,7 +50,7 @@ class PasswordController extends Controller
         return view('auth.recover', ['disponivel' => $settings->available()]);
     }
 
-    public function sendRecovery(Request $requisicao, RecoverySettings $settings): RedirectResponse
+    public function sendRecovery(Request $requisicao, RecoverySettings $settings, IdentityService $identidades): RedirectResponse
     {
         $dados = $requisicao->validate(['identificador' => ['required', 'string', 'max:100']]);
         $identificador = mb_strtolower(trim($dados['identificador']));
@@ -84,12 +70,12 @@ class PasswordController extends Controller
         }
 
         try {
-            $job = DeliverRecoveryLink::forIdentifier($identificador)
-                ->onConnection($settings->queueConnection())
-                ->onQueue('default');
-            dispatch($job);
-        } catch (Throwable) {
-            Log::warning('Uma solicitação pública de recuperação não pôde ser enfileirada.');
+            $identidades->requestRecovery($identificador);
+        } catch (Throwable $error) {
+            if ($error instanceof QueryException || $error instanceof \PDOException) {
+                report($error);
+            }
+            Log::warning('Uma solicitação pública de recuperação não pôde ser persistida.');
         }
 
         return back()->with('status', 'Se houver um acesso elegível, você receberá as orientações no e-mail cadastrado.');
@@ -100,7 +86,7 @@ class PasswordController extends Controller
         return view('auth.reset', ['token' => '']);
     }
 
-    public function consume(Request $requisicao, ProcedureRunner $procedimentos, PasswordVerifier $verificador): RedirectResponse|Response
+    public function consume(Request $requisicao, IdentityService $identidades): RedirectResponse|Response
     {
         $chave = 'fleet-reset:'.hash('sha256', (string) $requisicao->ip());
         abort_if(RateLimiter::tooManyAttempts($chave, 5), 429);
@@ -120,12 +106,16 @@ class PasswordController extends Controller
 
         $dados = $validador->validated();
         try {
-            $procedimentos->call('sp_consumir_recuperacao', [hash('sha256', $dados['token'], true), $verificador->make($dados['nova_senha'])]);
-        } catch (Throwable) {
+            $identidades->consumeRecovery($dados['token'], $dados['nova_senha']);
+        } catch (ValidationException $erro) {
             return response()->view('auth.reset', [
-                'token' => '',
-                'errors' => new MessageBag(['nova_senha' => ['Link inválido, vencido ou já utilizado. Solicite a recuperação novamente.']]),
+                'token' => $token, 'errors' => $erro->validator->errors(),
             ], 422);
+        } catch (Throwable $error) {
+            if ($error instanceof QueryException || $error instanceof \PDOException) {
+                report($error);
+            }
+            abort(503);
         }
         $requisicao->session()->invalidate();
         $requisicao->session()->regenerateToken();

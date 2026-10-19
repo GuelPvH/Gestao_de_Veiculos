@@ -1,0 +1,36 @@
+{
+    "plugins": ["prettier-plugin-blade", "@prettier/plugin-php"],
+    "printWidth": 120,
+    "tabWidth": 4,
+    "useTabs": false,
+    "singleQuote": true,
+    "semi": true,
+    "trailingComma": "all",
+    "endOfLine": "lf",
+    "overrides": [
+        {
+            "files": "*.blade.php",
+            "options": {
+                "parser": "blade",
+                "phpVersion": "8.3",
+                "bladePhpFormatting": "safe",
+                "bladeSyntaxPlugins": [],
+                "bladeEchoSpacing": "space",
+                "bladeSlotClosingTag": "preserve",
+                "bladeVoidElementSlash": "preserve"
+            }
+        },
+        {
+            "files": ["*.md", "*.yml", "*.yaml"],
+            "options": {
+                "tabWidth": 2
+            }
+        },
+        {
+            "files": ["{compose,docker-compose}.{yml,yaml}"],
+            "options": {
+                "tabWidth": 4
+            }
+        }
+    ]
+}

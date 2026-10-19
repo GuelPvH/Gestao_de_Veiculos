@@ -2,18 +2,9 @@
 
 namespace App\Models;
 
-use App\Services\Auth\ProcedureRunner;
-use App\Services\Authorization\AccessContext;
-use App\Services\Read\FleetReadRepository;
-use App\Services\Read\OperationCatalog;
-use App\Services\Read\ReferenceReadRepository;
-use Carbon\CarbonImmutable;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
-use stdClass;
+use App\Services\Requests\RequestReadRepository;
 
+<<<<<<< HEAD
 /** Model de acesso a dados; preserva views SQL, escopos e procedures do contrato existente. */
 class Solicitacao
 {
@@ -256,3 +247,7 @@ class Solicitacao
     }
 
 }
+=======
+/** @deprecated Use RequestReadRepository para consultas e RequestWorkflow para escrita. */
+class Solicitacao extends RequestReadRepository {}
+>>>>>>> main

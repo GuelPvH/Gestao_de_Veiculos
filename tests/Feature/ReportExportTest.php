@@ -19,41 +19,42 @@ class ReportExportTest extends TestCase
         $this->withoutVite();
         ReadFixture::create();
         ReadFixture::profile(1);
+        ReadFixture::grant('chamados', 'exportar', 1);
         $this->assertSame('sqlite', DB::connection()->getDriverName());
     }
 
     public function test_csv_includes_filtered_rows_beyond_first_page_and_private_download_rechecks_permission(): void
     {
         Storage::fake('local');
-        $original = (array) DB::table('vw_solicitacoes_atuais')->where('id', 1)->first();
-        DB::table('vw_solicitacoes_atuais')->where('id', 1)->update(['destino' => '=HYPERLINK("https://invalid.example")']);
+        $original = (array) DB::table('chamados')->where('id', 1)->first();
+        DB::table('chamados')->where('id', 1)->update(['assunto' => '=HYPERLINK("https://invalid.example")']);
         for ($id = 4; $id <= 14; $id++) {
-            DB::table('vw_solicitacoes_atuais')->insert(array_merge($original, ['id' => $id, 'protocolo' => 'MATCH-'.$id]));
+            DB::table('chamados')->insert(array_merge($original, ['id' => $id, 'protocolo' => 'MATCH-'.$id]));
         }
         $procedimentos = Mockery::mock(ProcedureRunner::class);
         $procedimentos->shouldReceive('call')->once()->withArgs(fn ($nome) => $nome === 'sp_preparar_exportacao')
             ->andReturnUsing(function ($nome, $dados): array {
                 $this->assertSame(10, $dados[0]);
-                $this->assertSame('solicitacoes', $dados[1]);
+                $this->assertSame('chamados', $dados[1]);
                 $this->assertSame('csv', $dados[2]);
-                $this->assertSame([1, 5], json_decode($dados[6], true));
+                $this->assertSame([47, 48], json_decode($dados[6], true));
                 $ids = json_decode($dados[7], true);
                 $this->assertCount(12, $ids);
                 $this->assertContains(14, $ids);
                 DB::table('exportacoes')->insert([
-                    'id' => 1, 'solicitado_por_vinculo_id' => 10, 'modulo_codigo' => 'solicitacoes',
+                    'id' => 1, 'solicitado_por_vinculo_id' => 10, 'modulo_codigo' => 'chamados',
                     'formato' => 'csv', 'situacao' => 'previa', 'filtros' => '{}', 'alcance_aplicado' => 'proprios',
                     'total_registros' => count($ids),
                 ]);
                 DB::table('exportacao_campos')->insert([
-                    ['exportacao_id' => 1, 'campo_id' => 1, 'modulo_codigo' => 'solicitacoes', 'ordem' => 1],
-                    ['exportacao_id' => 1, 'campo_id' => 5, 'modulo_codigo' => 'solicitacoes', 'ordem' => 2],
+                    ['exportacao_id' => 1, 'campo_id' => 47, 'modulo_codigo' => 'chamados', 'ordem' => 1],
+                    ['exportacao_id' => 1, 'campo_id' => 48, 'modulo_codigo' => 'chamados', 'ordem' => 2],
                 ]);
                 foreach ($ids as $indice => $id) {
-                    $registro = DB::table('vw_solicitacoes_atuais')->where('id', $id)->first();
+                    $registro = DB::table('chamados')->where('id', $id)->first();
                     DB::table('exportacao_registros')->insert([
-                        'exportacao_id' => 1, 'ordem' => $indice + 1, 'solicitacao_id' => $id,
-                        'snapshot' => json_encode(['protocolo' => $registro->protocolo, 'destino' => $registro->destino]),
+                        'exportacao_id' => 1, 'ordem' => $indice + 1, 'chamado_id' => $id,
+                        'snapshot' => json_encode(['protocolo' => $registro->protocolo, 'assunto' => $registro->assunto]),
                     ]);
                 }
 
@@ -69,7 +70,7 @@ class ReportExportTest extends TestCase
         app()->instance(ProcedureRunner::class, $procedimentos);
 
         $this->post(route('reports.export'), [
-            'modulo' => 'requests', 'campos' => ['protocolo', 'destino'],
+            'modulo' => 'tickets', 'campos' => ['protocolo', 'assunto'],
         ])->assertRedirect(route('reports.download', 1));
         $arquivo = DB::table('arquivos')->where('nome_original', 'frota-pf-relatorio-1.csv')->first();
         $this->assertNotNull($arquivo);
@@ -82,7 +83,7 @@ class ReportExportTest extends TestCase
         $this->get(route('reports.ready', 1))->assertOk()->assertSee('Arquivo gerado');
         $this->get(route('reports.download', 1))->assertOk()->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
 
-        DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'solicitacoes')->where('acao_codigo', 'exportar')->delete();
+        DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'chamados')->where('acao_codigo', 'exportar')->delete();
         $acesso = app(AccessContext::class);
         $acesso->load($acesso->link());
         $this->get(route('reports.ready', 1))->assertForbidden();
@@ -108,10 +109,10 @@ class ReportExportTest extends TestCase
         $procedimentos = Mockery::mock(ProcedureRunner::class);
         $procedimentos->shouldNotReceive('call');
         app()->instance(ProcedureRunner::class, $procedimentos);
-        $this->post(route('reports.export'), ['modulo' => 'requests', 'campos' => ['senha_hash']])->assertSessionHasErrors('campos.0');
-        DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'solicitacoes')->where('acao_codigo', 'exportar')->delete();
+        $this->post(route('reports.export'), ['modulo' => 'tickets', 'campos' => ['senha_hash']])->assertSessionHasErrors('campos.0');
+        DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'chamados')->where('acao_codigo', 'exportar')->delete();
         $acesso = app(AccessContext::class);
         $acesso->load($acesso->link());
-        $this->post(route('reports.export'), ['modulo' => 'requests', 'campos' => ['protocolo']])->assertForbidden();
+        $this->post(route('reports.export'), ['modulo' => 'tickets', 'campos' => ['protocolo']])->assertForbidden();
     }
 }
