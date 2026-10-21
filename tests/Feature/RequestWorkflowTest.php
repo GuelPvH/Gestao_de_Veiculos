@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
+use App\Services\Requests\RequestWorkflow;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
+use PDOException;
 use Tests\Support\ReadFixture;
 use Tests\TestCase;
 
@@ -20,22 +22,11 @@ class RequestWorkflowTest extends TestCase
         ReadFixture::create();
         ReadFixture::profile(1);
         ReadFixture::grant('frota', 'selecionar', 2);
-<<<<<<< HEAD
-        DB::table('motoristas')->insert([
-            ['usuario_id' => 1, 'numero_cnh' => 'QA-REQUEST-1', 'categoria_cnh' => 'B', 'categorias_autorizadas' => 'B', 'validade_cnh' => '2030-01-01', 'ativo' => 1],
-            ['usuario_id' => 2, 'numero_cnh' => 'QA-REQUEST-2', 'categoria_cnh' => 'B', 'categorias_autorizadas' => 'B', 'validade_cnh' => '2030-01-01', 'ativo' => 1],
-        ]);
-        DB::table('vw_vinculos_ativos')->insert([
-            ['vinculo_id' => 10, 'usuario_id' => 1, 'perfil_id' => 1, 'unidade_id' => 1, 'vigente_desde' => '2026-01-01 00:00:00', 'vigente_ate' => null],
-            ['vinculo_id' => 11, 'usuario_id' => 2, 'perfil_id' => 1, 'unidade_id' => 1, 'vigente_desde' => '2026-01-01 00:00:00', 'vigente_ate' => null],
-        ]);
-=======
         DB::table('veiculos')->update(['categoria_id' => 1, 'capacidade' => 4]);
         DB::table('vw_frota')->update(['capacidade' => 4]);
         foreach ([1, 2, 3] as $usuario) {
             DB::table('motoristas')->insert(['usuario_id' => $usuario, 'numero_cnh' => 'QA'.$usuario, 'categoria_cnh' => 'B', 'categorias_autorizadas' => 'B', 'validade_cnh' => '2027-12-31', 'ativo' => 1]);
         }
->>>>>>> main
         $acesso = app(AccessContext::class);
         $acesso->load($acesso->link());
     }
@@ -68,13 +59,47 @@ class RequestWorkflowTest extends TestCase
 
     public function test_module_pages_use_dedicated_views_and_explicit_actions(): void
     {
-        $this->get(route('solicitacoes.index'))->assertOk()->assertViewIs('gestor.solicitacoes.index')->assertSee(route('solicitacoes.show', 1), false);
-        $this->get(route('solicitacoes.create'))->assertOk()->assertViewIs('gestor.solicitacoes.create')->assertSee(route('solicitacoes.store'), false);
+        $this->get(route('solicitacoes.index'))->assertOk()->assertViewIs('gestor.solicitacoes.index')
+            ->assertSee(route('solicitacoes.show', 1), false)
+            ->assertDontSee(route('solicitacoes.show', 2), false)
+            ->assertSee('name="q"', false)
+            ->assertSee('name="situacao"', false)
+            ->assertSee('name="ordem"', false)
+            ->assertSee('name="de"', false)
+            ->assertSee('name="ate"', false);
+        $this->get(route('solicitacoes.create'))->assertOk()->assertViewIs('gestor.solicitacoes.create')
+            ->assertSee(route('solicitacoes.store'), false)
+            ->assertSee('name="veiculo_pretendido_id"', false);
         $this->draft();
         $this->get(route('solicitacoes.edit', 1))->assertOk()->assertViewIs('gestor.solicitacoes.edit')->assertSee('name="_method" value="PATCH"', false);
         $this->get('/solicitacoes/1/unknown')->assertNotFound();
         $this->post('/solicitacoes/1/edit', $this->formData(['versao' => 1]))->assertStatus(405);
         $this->assertSame(1, DB::table('solicitacoes')->where('id', 1)->value('versao'));
+    }
+
+    public function test_server_request_filters_are_validated_and_preserved_for_the_repository(): void
+    {
+        $response = $this->get(route('solicitacoes.index', [
+            'q' => 'QA-REQUESTS-1',
+            'situacao' => 'aguardando_analise',
+            'ordem' => 'antigos',
+            'de' => '2026-10-05',
+            'ate' => '2026-10-05',
+        ]));
+
+        $response->assertOk()->assertViewHas('filtros', fn (array $filtros): bool =>
+            $filtros['q'] === 'QA-REQUESTS-1'
+            && $filtros['situacao'] === 'aguardando_analise'
+            && $filtros['ordem'] === 'antigos'
+            && $filtros['de'] === '2026-10-05'
+            && $filtros['ate'] === '2026-10-05'
+        )->assertViewHas('paginacao', fn ($paginacao): bool =>
+            $paginacao->total() === 1
+            && (int) $paginacao->getCollection()->first()->id === 1
+        );
+
+        $this->get(route('solicitacoes.index', ['ordem' => 'arbitraria']))->assertSessionHasErrors('ordem');
+        $this->get(route('solicitacoes.index', ['situacao' => 'estado-inexistente']))->assertSessionHasErrors('situacao');
     }
 
     public function test_server_date_filters_use_actual_departure_or_planned_fallback(): void
@@ -91,10 +116,10 @@ class RequestWorkflowTest extends TestCase
         $this->get(route('solicitacoes.index', ['de' => '2026-10-07', 'ate' => '2026-10-07']))
             ->assertOk()
             ->assertSee(route('solicitacoes.show', 1), false)
-            ->assertSee('Saída da viagem a partir de')
-            ->assertSee('Saída da viagem até')
-            ->assertSee('name="de" type="date" value="2026-10-07"', false)
-            ->assertSee('name="ate" type="date" value="2026-10-07"', false);
+            ->assertSee('A partir de')
+            ->assertSee('Até')
+            ->assertSee('name="de"', false)->assertSee('value="2026-10-07"', false)
+            ->assertSee('name="ate"', false)->assertSee('value="2026-10-07"', false);
 
         $this->get(route('solicitacoes.index', ['de' => '2026-10-06', 'ate' => '2026-10-06']))
             ->assertOk()
@@ -102,10 +127,13 @@ class RequestWorkflowTest extends TestCase
 
         $this->get(route('solicitacoes.index', ['de' => '2026-10-05', 'ate' => '2026-10-05']))
             ->assertOk()
-            ->assertSee(route('solicitacoes.show', 2), false);
+            ->assertDontSee(route('solicitacoes.show', 2), false);
 
         ReadFixture::profile(2);
-        $this->get(route('solicitacoes.index', ['de' => '2026-10-07', 'ate' => '2026-10-07']))
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-05', 'ate' => '2026-10-05']))
+            ->assertOk()
+            ->assertSee(route('solicitacoes.show', 2), false);
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-06', 'ate' => '2026-10-06']))
             ->assertOk()
             ->assertSee(route('solicitacoes.show', 1), false);
     }
@@ -142,8 +170,6 @@ class RequestWorkflowTest extends TestCase
 
     public function test_approval_requires_selection_and_rejects_choices_outside_unit(): void
     {
-<<<<<<< HEAD
-=======
         ReadFixture::profile(2);
         DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'solicitacoes')->where('acao_codigo', 'aprovar')->update(['nivel_alcance' => 2]);
         DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'frota')->where('acao_codigo', 'consultar')->update(['nivel_alcance' => 2]);
@@ -159,7 +185,6 @@ class RequestWorkflowTest extends TestCase
 
     public function test_create_calls_a_single_complete_procedure_without_a_driver_suggestion(): void
     {
->>>>>>> main
         DB::table('motoristas')->where('usuario_id', 1)->delete();
         $procedimentos = Mockery::mock(ProcedureRunner::class);
         $procedimentos->shouldReceive('call')->once()->with('sp_criar_solicitacao_completa', [
@@ -173,25 +198,6 @@ class RequestWorkflowTest extends TestCase
         });
         app()->instance(ProcedureRunner::class, $procedimentos);
         Storage::fake('local');
-<<<<<<< HEAD
-        $this->post(route('solicitacoes.store'), $this->formData(['motorista_sugerido_id' => 2, 'anexo' => UploadedFile::fake()->create('autorizacao.pdf', 20, 'application/pdf')]))->assertRedirect(route('solicitacoes.show', 4));
-        $anexo = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id')->where('a.revisao_id', 4)->first(['a.id', 'f.chave_armazenamento', 'f.nome_original']);
-        $this->assertNotNull($anexo);
-        Storage::disk('local')->assertExists($anexo->chave_armazenamento);
-        $this->get(route('solicitacoes.download', ['registro' => 4, 'anexo' => $anexo->id]))->assertDownload('autorizacao.pdf');
-        $this->get(route('solicitacoes.download', ['registro' => 1, 'anexo' => $anexo->id]))->assertNotFound();
-        $this->assertNull(DB::table('solicitacao_revisoes')->where('id', 4)->value('motorista_sugerido_id'));
-        foreach (['origem_latitude', 'origem_longitude', 'destino_latitude', 'destino_longitude'] as $campo) {
-            $this->assertEquals($this->formData()[$campo], DB::table('solicitacao_revisoes')->where('id', 4)->value($campo));
-        }
-        $this->assertSame('Visita técnica', DB::table('solicitacao_revisoes')->where('id', 4)->value('finalidade'));
-        $this->assertSame('2026-10-10 12:00:00.000000', DB::table('solicitacao_revisoes')->where('id', 4)->value('saida_prevista'));
-        $this->assertSame(2, DB::table('solicitacoes')->where('id', 4)->value('versao'));
-        $this->assertSame(['Ana', 'Bruno'], DB::table('solicitacao_passageiros')->where('revisao_id', 4)->orderBy('id')->pluck('nome')->all());
-    }
-
-    public function test_unavailable_driver_cannot_be_selected(): void
-=======
         $this->post(route('solicitacoes.store'), $this->formData(['anexo' => UploadedFile::fake()->create('autorizacao.pdf', 20, 'application/pdf')]))->assertRedirect(route('solicitacoes.show', 4));
         $this->assertEquals(-8.76, DB::table('solicitacao_revisoes')->where('id', 4)->value('origem_latitude'));
         $this->assertEquals(-63.91, DB::table('solicitacao_revisoes')->where('id', 4)->value('destino_longitude'));
@@ -203,6 +209,18 @@ class RequestWorkflowTest extends TestCase
         $this->get(route('solicitacoes.download', ['registro' => 4, 'anexo' => $anexo->id]))->assertOk();
         DB::table('vw_solicitacoes_atuais')->where('id', 4)->update(['solicitante_id' => 2]);
         $this->get(route('solicitacoes.download', ['registro' => 4, 'anexo' => $anexo->id]))->assertNotFound();
+    }
+
+    public function test_failed_creation_returns_to_the_form_if_the_previous_url_is_session_status(): void
+    {
+        $workflow = Mockery::mock(RequestWorkflow::class);
+        $workflow->shouldReceive('create')->once()->andThrow(new PDOException('Database operation failed.'));
+        app()->instance(RequestWorkflow::class, $workflow);
+
+        $this->from(route('session.status'))
+            ->post(route('solicitacoes.store'), $this->formData())
+            ->assertRedirect(route('solicitacoes.create'))
+            ->assertSessionHasErrors('operacao');
     }
 
     public function test_driver_is_derived_from_requester_and_must_be_eligible(): void
@@ -222,17 +240,8 @@ class RequestWorkflowTest extends TestCase
     }
 
     public function test_client_cannot_supply_driver_identity(): void
->>>>>>> main
     {
-        $this->post(route('solicitacoes.store'), $this->formData(['motorista_sugerido_id' => 999]))->assertSessionHasErrors('motorista_sugerido_id');
-        $this->assertSame(0, DB::table('solicitacoes')->count());
-    }
-
-    public function test_creation_without_an_active_driver_does_not_leave_an_empty_draft(): void
-    {
-        DB::table('motoristas')->delete();
-
-        $this->post(route('solicitacoes.store'), $this->formData())->assertSessionHasErrors('motorista_sugerido_id');
+        $this->post(route('solicitacoes.store'), $this->formData(['motorista_sugerido_id' => 2]))->assertSessionHasErrors('motorista_sugerido_id');
         $this->assertSame(0, DB::table('solicitacoes')->count());
     }
 

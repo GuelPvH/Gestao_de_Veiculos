@@ -71,7 +71,7 @@ BEGIN
   IF p_passageiros IS NULL OR JSON_TYPE(p_passageiros)<>'ARRAY' OR JSON_LENGTH(p_passageiros)>p_quantidade THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Lista de passageiros inválida.';
   END IF;
-  IF EXISTS(SELECT 1 FROM JSON_TABLE(p_passageiros,'$[*]' COLUMNS(pos FOR ORDINALITY,nome VARCHAR(16384) PATH '$' ERROR ON ERROR)) nomes
+  IF EXISTS(SELECT 1 FROM JSON_TABLE(p_passageiros,'$[*]' COLUMNS(pos FOR ORDINALITY,nome VARCHAR(16383) PATH '$' ERROR ON ERROR)) nomes
     WHERE JSON_TYPE(JSON_EXTRACT(p_passageiros,CONCAT('$[',nomes.pos-1,']')))<>'STRING'
       OR CHAR_LENGTH(TRIM(nomes.nome))=0 OR CHAR_LENGTH(nomes.nome)>150) THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Cada passageiro deve ter um nome com até 150 caracteres.';

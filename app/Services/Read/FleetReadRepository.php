@@ -78,14 +78,6 @@ class FleetReadRepository
 
     public function filtered(string $codigo, array $filtros): Builder
     {
-<<<<<<< HEAD
-        if ($codigo === 'requests' && $this->acesso->link()?->perfil_codigo === 'servidor') {
-            $filtros = array_intersect_key($filtros, array_flip(['q', 'situacao', 'page', 'de', 'ate']));
-        } elseif (in_array($codigo, ['trips', 'requests', 'tickets'], true)) {
-            $filtros = array_intersect_key($filtros, array_flip(['q', 'situacao', 'page']));
-        }
-=======
->>>>>>> main
         $consulta = $this->query($codigo);
         $tela = $this->definition($codigo);
         $filtrarDataRealizada = $codigo === 'requests' && $this->acesso->link()?->perfil_codigo === 'servidor';
