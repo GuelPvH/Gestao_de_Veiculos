@@ -54,10 +54,6 @@ h1{font-size:1.75rem;font-weight:600;line-height:1.4}h2{font-weight:600}
 .gestor-shell .chart-bars{height:210px;border-bottom:0}
 .gestor-shell .sidebar-footer>a.nav-link{display:none}
 .gestor-shell .app-footer{display:none}
-.position-map{min-height:176px;background:var(--cor-fundo);border-radius:8px;overflow:hidden}
-.position-map .empty-state{padding:30px 16px;min-height:176px;display:flex;flex-direction:column;justify-content:center}
-.position-map svg{width:100%;display:block;background:var(--cor-destaque)}
-.map-grid{stroke:var(--cor-superficie);stroke-width:2}.map-point{fill:var(--cor-primaria);stroke:var(--cor-superficie);stroke-width:3}
 @media(max-width:991px){.gestor-overview-grid{grid-template-columns:1fr}}
 
 .fleet-icon{display:inline-flex;align-items:center;justify-content:center;color:inherit}
@@ -68,11 +64,9 @@ h1{font-size:1.75rem;font-weight:600;line-height:1.4}h2{font-weight:600}
 .gestor-shell .breadcrumb{font-size:.75rem;gap:12px}
 .gestor-shell .breadcrumb .fleet-icon,.gestor-shell .breadcrumb svg{width:16px;height:16px}
 .gestor-shell .card-body{padding:22px}
-.gestor-shell .position-map h2{font-size:.875rem}
 .gestor-shell .sidebar-footer .btn-link{text-decoration:none;font-size:.75rem}
 @media(max-width:767px){.gestor-shell .card-body{padding:16px}.gestor-shell .content-area{padding:24px 16px}.gestor-shell .header-unit{font-size:.75rem}.gestor-shell .metric-value{font-size:1.5rem}.gestor-shell .metric-card .card-body{padding:16px}}
 
-.position-map .empty-state{align-items:center}
 
 .gestor-filter-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(180px,1fr) auto;gap:16px;align-items:end}
 .gestor-filter-row>button{margin-bottom:16px}

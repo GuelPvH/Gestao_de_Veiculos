@@ -242,7 +242,6 @@ O commit-base alterou somente [`docs/SETUP.md`](SETUP.md). No passo 3, foi acres
 | `resources/views/components/fleet/attachments.blade.php` | Lista anexos e downloads autorizados | Não expõe caminhos privados |
 | `resources/views/components/fleet/history.blade.php` | Renderiza histórico do registro | Torna rastreabilidade reutilizável |
 | `resources/views/components/fleet/monthly-activity.blade.php` | Resumo mensal de atividade | Padroniza leitura temporal |
-| `resources/views/components/fleet/position-map.blade.php` | Apresenta posições de monitoramento | Separa mapa dos dados e respeita permissão de localização |
 | `resources/views/components/forms/field.blade.php` | Campo com label e erro | Padroniza acessibilidade |
 | `resources/views/components/forms/password.blade.php` | Campo de senha | Evita repopular valor sensível |
 | `resources/views/components/forms/review.blade.php` | Resumo para confirmação de operação | Deixa explícita a revisão pelo usuário |
