@@ -66,12 +66,6 @@ class ReportController extends Controller
         return redirect()->route('reports.download', $id);
     }
 
-    public function ready(int $exportacao, ReportExportService $exportador): View
-    {
-        $arquivo = $exportador->ready($exportacao);
-        return view('reports.ready', compact('exportacao', 'arquivo'));
-    }
-
     public function download(int $exportacao, ReportExportService $exportador): StreamedResponse
     {
         return $exportador->download($exportacao);

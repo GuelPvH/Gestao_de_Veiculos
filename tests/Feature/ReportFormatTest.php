@@ -80,7 +80,6 @@ class ReportFormatTest extends TestCase
         } else {
             $this->assertStringContainsString('FORMATO-15', $conteudo);
         }
-        $this->get(route('reports.ready', 1))->assertOk()->assertSee(strtoupper($formato));
         $this->get(route('reports.download', 1))->assertOk()->assertHeader('Content-Type', $mime);
         DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'chamados')->where('acao_codigo', 'exportar')->delete();
         $acesso = app(AccessContext::class);

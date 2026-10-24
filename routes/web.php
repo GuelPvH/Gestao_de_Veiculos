@@ -118,7 +118,6 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::post('/notificacoes/{evento}/ocultar', [NotificationController::class, 'hide'])->whereNumber('evento')->name('notifications.hide');
     Route::get('/relatorios', [ReportController::class, 'index'])->name('reports.index');
     Route::post('/relatorios/exportar', [ReportController::class, 'export'])->name('reports.export');
-    Route::get('/relatorios/{exportacao}/concluido', [ReportController::class, 'ready'])->whereNumber('exportacao')->name('reports.ready');
     Route::get('/relatorios/{exportacao}/arquivo', [ReportController::class, 'download'])->whereNumber('exportacao')->name('reports.download');
     Route::post('/viagens/{registro}/{acao}', [TripController::class, 'perform'])->whereNumber('registro')->where('acao', 'departure|return|occurrence|cancel')->defaults('tela', 'trips')->name('trips.perform');
     Route::get('/chamados', [TicketController::class, 'index'])->defaults('tela', 'tickets')->name('tickets.index');
