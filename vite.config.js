@@ -1,6 +1,19 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 
+const appUrl = process.env.APP_URL;
+const origins = new Set([appUrl, 'http://localhost:8080', 'http://127.0.0.1:8080'].filter(Boolean));
+if (appUrl) {
+    const configuredUrl = new URL(appUrl);
+    if (['localhost', '127.0.0.1'].includes(configuredUrl.hostname)) {
+        for (const hostname of ['localhost', '127.0.0.1']) {
+            const alias = new URL(configuredUrl);
+            alias.hostname = hostname;
+            origins.add(alias.origin);
+        }
+    }
+}
+
 export default defineConfig({
     plugins: [
         laravel({
