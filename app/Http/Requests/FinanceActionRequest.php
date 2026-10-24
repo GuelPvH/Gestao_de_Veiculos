@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Services\Authorization\AccessContext;
+use App\Support\Value;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -22,15 +23,15 @@ class FinanceActionRequest extends FormRequest
             return false;
         }
         if ($action === 'create') {
-            return $access->can('despesas', 'criar', (int) $link->usuario_id, (int) $link->unidade_id);
+            return $access->can('despesas', 'criar', Value::integer($link->usuario_id), Value::integer($link->unidade_id));
         }
         $id = (int) $this->route('registro');
         $record = $screen === 'maintenance'
             ? DB::table('manutencoes as m')->join('veiculos as v', 'v.id', '=', 'm.veiculo_id')->where('m.id', $id)->first(['m.criado_por', 'v.unidade_id'])
             : DB::table('despesas')->where('id', $id)->first(['criado_por', 'unidade_id']);
         abort_unless($record !== null, 404);
-        $owner = (int) $record->criado_por;
-        $unit = (int) $record->unidade_id;
+        $owner = Value::integer($record->criado_por);
+        $unit = Value::integer($record->unidade_id);
         $permission = match ($action) {
             'edit', 'submit', 'start', 'complete' => 'editar',
             'verify' => 'aprovar',
@@ -44,6 +45,9 @@ class FinanceActionRequest extends FormRequest
             && $access->can('despesas', $permission, $owner, $unit);
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         $screen = (string) $this->route('tela');

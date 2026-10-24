@@ -3,12 +3,8 @@
         <article class="row-summary">
             <div>
                 <strong>{{ ucfirst($item->tipo) }} · {{ $item->descricao_item }}</strong>
-                <p class="mb-1">{{ str_replace('_', ' ', $item->resultado) }}{{ $item->observacao ? ' · ' . $item->observacao : '' }}</p>
-                <p class="small text-body-secondary mb-0">{{
-                    $item->finalizado_em
-                        ? $leituras->format($item->finalizado_em, 'datetime')
-                        : 'Vistoria em preenchimento'
-                }}</p>
+                <p class="mb-1">{{ str_replace('_',' ',$item->resultado) }}{{ $item->observacao ? ' · '.$item->observacao : '' }}</p>
+                <p class="small text-body-secondary mb-0">{{ $item->finalizado_em ? $leituras->format($item->finalizado_em,'datetime') : 'Vistoria em preenchimento' }}</p>
             </div>
         </article>
     @empty
@@ -19,14 +15,9 @@
     @forelse ($ocorrencias as $ocorrencia)
         <article class="row-summary">
             <div>
-                <strong>{{ ucfirst(str_replace('_', ' ', $ocorrencia->tipo)) }}</strong>
+                <strong>{{ ucfirst(str_replace('_',' ',$ocorrencia->tipo)) }}</strong>
                 <p class="mb-1">{{ $ocorrencia->descricao }}</p>
-                <p class="small text-body-secondary mb-0">{{
-                    $leituras->format(
-                        $ocorrencia->ocorrido_em,
-                        'datetime',
-                    )
-                }}</p>
+                <p class="small text-body-secondary mb-0">{{ $leituras->format($ocorrencia->ocorrido_em,'datetime') }}</p>
             </div>
         </article>
     @empty

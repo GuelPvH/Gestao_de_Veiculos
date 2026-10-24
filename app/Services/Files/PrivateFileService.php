@@ -2,6 +2,7 @@
 
 namespace App\Services\Files;
 
+use App\Support\Value;
 use Closure;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -16,8 +17,8 @@ class PrivateFileService
     /**
      * Persiste o arquivo no disco privado e os metadados; o vínculo opcional participa da mesma transação.
      * Não use o callback para procedures que iniciam sua própria transação.
-     */
-    /** Arquiva apenas um upload próprio sem referências; preserva metadados para auditoria. */
+
+     * Arquiva apenas um upload próprio sem referências; preserva metadados para auditoria. */
     public function discardUnlinked(int $arquivoId): bool
     {
         $usuario = Auth::id();
@@ -42,7 +43,7 @@ class PrivateFileService
             }
             DB::table('arquivos')->where('id', $arquivoId)->update(['situacao' => 'arquivado']);
 
-            return $arquivo->chave_armazenamento;
+            return Value::string($arquivo->chave_armazenamento);
         });
         if ($chave === null) {
             return false;

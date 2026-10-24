@@ -11,7 +11,7 @@
         role="combobox"
         aria-autocomplete="list"
         aria-expanded="false"
-        :aria-controls="'location-results-' . $nome"
+        :aria-controls="'location-results-'.$nome"
         nota="Digite pelo menos 3 caracteres e selecione um local. Busca gratuita pelo Photon/OpenStreetMap, somente em Porto Velho."
     />
     <div
@@ -28,13 +28,13 @@
         name="{{ $nome }}_latitude"
         value="{{ old($nome.'_latitude', $latitude) }}"
         data-location-latitude
-    >
+    />
     <input
         type="hidden"
         name="{{ $nome }}_longitude"
         value="{{ old($nome.'_longitude', $longitude) }}"
         data-location-longitude
-    >
+    />
 </div>
 @once
     <script>

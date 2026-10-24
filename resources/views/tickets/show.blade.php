@@ -1,12 +1,9 @@
 <x-layouts.authenticated
-    :titulo="$chamado->protocolo . ' · Chamado'"
-    :breadcrumbs="[
-        ['label' => 'Chamados', 'href' => route('tickets.index')],
-        ['label' => $chamado->protocolo],
-    ]"
+    :titulo="$chamado->protocolo.' · Chamado'"
+    :breadcrumbs="[['label' => 'Chamados', 'href' => route('tickets.index')], ['label' => $chamado->protocolo]]"
 >
     <x-ui.title
-        :titulo="$chamado->protocolo . ' · ' . $chamado->assunto"
+        :titulo="$chamado->protocolo.' · '.$chamado->assunto"
         subtitulo="Acompanhe a conversa e o histórico deste chamado."
     >
         <x-slot:acoes>

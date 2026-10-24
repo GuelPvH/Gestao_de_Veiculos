@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Auth\FleetSession;
 use App\Services\Auth\SecurityAudit;
+use App\Support\CurrentUser;
+use App\Support\Value;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -34,6 +36,7 @@ class AuthController extends Controller
         }
         RateLimiter::hit($chave, 60);
         RateLimiter::hit($chaveIp, 60);
+        /** @var array<string, mixed> $dados */
         $dados = $requisicao->validate(['identificador' => ['required', 'string', 'max:100'], 'senha' => ['required', 'string', 'max:256']]);
         try {
             $sucesso = Auth::attempt(['identificador' => $dados['identificador'], 'password' => $dados['senha'], 'ativo' => 1], false);
@@ -94,15 +97,16 @@ class AuthController extends Controller
     {
         $vinculos = $requisicao->attributes->get('fleet.links_complete')
             ? $requisicao->attributes->get('fleet.links')
-            : $sessoes->links((int) $requisicao->user()->getAuthIdentifier());
+            : $sessoes->links(Value::integer(CurrentUser::get($requisicao)->getAuthIdentifier()));
 
         return view('auth.profiles', compact('vinculos'));
     }
 
     public function select(Request $requisicao, FleetSession $sessoes): RedirectResponse
     {
+        /** @var array<string, mixed> $dados */
         $dados = $requisicao->validate(['vinculo' => ['required', 'integer', 'min:1']]);
-        $sessoes->select($requisicao, (int) $requisicao->user()->getAuthIdentifier(), (int) $dados['vinculo']);
+        $sessoes->select($requisicao, Value::integer(CurrentUser::get($requisicao)->getAuthIdentifier()), Value::integer($dados['vinculo']));
 
         return redirect()->route('dashboard');
     }
@@ -115,8 +119,8 @@ class AuthController extends Controller
     public function logout(Request $requisicao, FleetSession $sessoes, SecurityAudit $audit): RedirectResponse
     {
         try {
-            $sessoes->end($requisicao, (int) $requisicao->user()->getAuthIdentifier());
-            $audit->record('logout', (int) $requisicao->user()->getAuthIdentifier(), 'usuarios', (int) $requisicao->user()->getAuthIdentifier(), $requisicao);
+            $sessoes->end($requisicao, Value::integer(CurrentUser::get($requisicao)->getAuthIdentifier()));
+            $audit->record('logout', Value::integer(CurrentUser::get($requisicao)->getAuthIdentifier()), 'usuarios', Value::integer(CurrentUser::get($requisicao)->getAuthIdentifier()), $requisicao);
         } catch (Throwable $error) {
             if ($error instanceof QueryException || $error instanceof \PDOException) {
                 report($error);

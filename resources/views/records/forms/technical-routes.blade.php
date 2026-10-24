@@ -30,13 +30,7 @@
         rotulo="Método HTTP"
         tipo="select"
         :obrigatorio="true"
-        :opcoes="[
-            'GET' => 'GET',
-            'POST' => 'POST',
-            'PUT' => 'PUT',
-            'PATCH' => 'PATCH',
-            'DELETE' => 'DELETE',
-        ]"
+        :opcoes="['GET'=>'GET','POST'=>'POST','PUT'=>'PUT','PATCH'=>'PATCH','DELETE'=>'DELETE']"
     />
     <x-forms.field
         nome="ativa"
@@ -44,7 +38,7 @@
         tipo="select"
         :valor="1"
         :obrigatorio="true"
-        :opcoes="['1' => 'Ativa', '0' => 'Desativada']"
+        :opcoes="['1'=>'Ativa','0'=>'Desativada']"
     />
     <x-forms.field
         nome="visivel_menu"
@@ -52,7 +46,7 @@
         tipo="select"
         :valor="1"
         :obrigatorio="true"
-        :opcoes="['1' => 'Sim', '0' => 'Não']"
+        :opcoes="['1'=>'Sim','0'=>'Não']"
     />
     <x-forms.field
         nome="ordem"
@@ -88,7 +82,7 @@
         tipo="select"
         :valor="$registro->ativa ?? 1"
         :obrigatorio="true"
-        :opcoes="['1' => 'Ativa', '0' => 'Desativada']"
+        :opcoes="['1'=>'Ativa','0'=>'Desativada']"
     />
     <x-forms.field
         nome="visivel_menu"
@@ -96,7 +90,7 @@
         tipo="select"
         :valor="$registro->visivel_menu ?? 1"
         :obrigatorio="true"
-        :opcoes="['1' => 'Sim', '0' => 'Não']"
+        :opcoes="['1'=>'Sim','0'=>'Não']"
     />
     <x-forms.field
         nome="ordem"

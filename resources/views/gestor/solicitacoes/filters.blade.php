@@ -13,17 +13,7 @@
             tipo="select"
             :valor="$filtros['situacao'] ?? ''"
             placeholder="Todas as situações"
-            :opcoes="
-                $tela['stateLabels'] ??
-    array_combine(
-        $tela['states'] ?? [],
-        array_map(
-            fn($valor) => config('statuses.' . $valor, ucfirst(str_replace('_', ' ', $valor))),
-            $tela['states'] ?? [],
-        ),
-    ) ?:
-    []
-            "
+            :opcoes="$tela['stateLabels'] ?? array_combine($tela['states'] ?? [], array_map(fn($valor) => config('statuses.'.$valor,ucfirst(str_replace('_',' ',$valor))), $tela['states'] ?? [])) ?: []"
         />
         <button class="btn btn-outline-secondary" type="submit">Filtrar</button>
     </div>

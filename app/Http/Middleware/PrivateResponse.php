@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PrivateResponse
 {
+    /** @param Closure(Request): Response $proximo */
     public function handle(Request $requisicao, Closure $proximo): Response
     {
         $resposta = $proximo($requisicao);

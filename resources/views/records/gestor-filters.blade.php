@@ -13,29 +13,18 @@
             tipo="select"
             :valor="$filtros['situacao'] ?? ''"
             placeholder="Todas as situações"
-            :opcoes="
-                $tela['stateLabels'] ??
-    array_combine(
-        $tela['states'] ?? [],
-        array_map(
-            fn($valor) => config('statuses.' . $valor, ucfirst(str_replace('_', ' ', $valor))),
-            $tela['states'] ?? [],
-        ),
-    ) ?:
-    []
-            "
+            :opcoes="$tela['stateLabels'] ?? array_combine($tela['states'] ?? [], array_map(fn($valor) => config('statuses.'.$valor,ucfirst(str_replace('_',' ',$valor))), $tela['states'] ?? [])) ?: []"
         />
         <button class="btn btn-outline-secondary" type="submit">Filtrar</button>
     </div>
     <div class="d-flex flex-wrap gap-2 mb-3">
-        @if (!in_array($codigo, ['trips', 'tickets'], true) &&
-            app(\App\Services\Authorization\AccessContext::class)->level('relatorios') > 0)
+        @if (! in_array($codigo, ['trips', 'tickets'], true) && app(\App\Services\Authorization\AccessContext::class)->level('relatorios') > 0)
             <a class="btn btn-outline-secondary" href="{{ route('reports.index', ['modulo'=>$codigo]) }}">Exportar</a>
         @endif
         @if (!empty($filtros['q']) || !empty($filtros['situacao']))
             <a class="btn btn-link" href="{{ route($codigo.'.index') }}">Limpar filtros</a>
         @endif
-        @if (!in_array($codigo, ['trips', 'tickets'], true))
+        @if (! in_array($codigo, ['trips', 'tickets'], true))
             <button
                 type="button"
                 class="btn btn-link"
@@ -48,7 +37,7 @@
             </button>
         @endif
     </div>
-    @if (!in_array($codigo, ['trips', 'tickets'], true))
+    @if (! in_array($codigo, ['trips', 'tickets'], true))
         <div
             class="collapse {{ !empty($filtros['de']) || !empty($filtros['ate']) ? 'show' : '' }}"
             id="advanced-filters"
@@ -68,7 +57,7 @@
                         rotulo="Ordenação"
                         tipo="select"
                         :valor="$filtros['ordem'] ?? 'recentes'"
-                        :opcoes="['recentes' => 'Mais recentes', 'antigos' => 'Mais antigos']"
+                        :opcoes="['recentes'=>'Mais recentes','antigos'=>'Mais antigos']"
                     />
                 </div>
                 <div><button class="btn btn-primary mb-3" type="submit">Aplicar filtros</button></div>

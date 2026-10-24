@@ -1,4 +1,4 @@
-<x-layouts.authenticated titulo="Histórico de trajetos" :breadcrumbs="[['label' => 'Histórico de trajetos']]">
+<x-layouts.authenticated titulo="Histórico de trajetos" :breadcrumbs="[['label'=>'Histórico de trajetos']]">
     <x-ui.title
         titulo="Histórico de trajetos"
         subtitulo="Consulte os percursos planejados das solicitações aprovadas no período."
@@ -58,22 +58,8 @@
                                 </td>
                                 <td>{{ $trajeto->origem }}</td>
                                 <td>{{ $trajeto->destino }}</td>
-                                <td>
-                                    {{
-                                        $leituras->format(
-                                            $trajeto->saida_prevista,
-                                            'datetime',
-                                        )
-                                    }}
-                                </td>
-                                <td>
-                                    {{
-                                        $leituras->format(
-                                            $trajeto->retorno_previsto,
-                                            'datetime',
-                                        )
-                                    }}
-                                </td>
+                                <td>{{ $leituras->format($trajeto->saida_prevista, 'datetime') }}</td>
+                                <td>{{ $leituras->format($trajeto->retorno_previsto, 'datetime') }}</td>
                             </tr>
                         @endforeach
                     </tbody>

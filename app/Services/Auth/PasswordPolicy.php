@@ -7,7 +7,7 @@ use Illuminate\Validation\Rules\Password;
 
 class PasswordPolicy
 {
-    /** @return array<mixed> */
+    /** @return list<string|Password|Closure> */
     public static function rules(): array
     {
         return ['required', 'string', 'confirmed', 'max:256', Password::min(12)->mixedCase()->numbers()->symbols(),

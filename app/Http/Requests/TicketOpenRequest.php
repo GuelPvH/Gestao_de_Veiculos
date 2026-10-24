@@ -13,6 +13,9 @@ class TicketOpenRequest extends FormRequest
         return app(TicketService::class)->canCreate();
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         return [

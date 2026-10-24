@@ -6,6 +6,7 @@ use App\Http\Requests\SolicitacaoActionRequest;
 use App\Http\Requests\SolicitacaoDraftRequest;
 use App\Services\Requests\RequestReadRepository;
 use App\Services\Requests\RequestWorkflow;
+use App\Support\Value;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,8 +18,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SolicitacoesController extends Controller
 {
+    /**
+     * @return array<array-key, mixed>
+     */
     public function __construct(private RequestReadRepository $model, private RequestWorkflow $workflow) {}
 
+    /**
+     * @return array<string, mixed>
+     */
     private function viewData(): array
     {
         return ['codigo' => 'requests', 'tela' => $this->model->definition()];
@@ -82,9 +89,9 @@ class SolicitacoesController extends Controller
 
         try {
             if ($acao === 'edit') {
-                $this->workflow->save($registro, (int) $dados['versao'], $dados, $requisicao->file('anexo'));
+                $this->workflow->save($registro, Value::integer($dados['versao']), $dados, $requisicao->file('anexo'));
             } else {
-                $this->workflow->transition($acao, $registro, (int) $dados['versao'], $dados);
+                $this->workflow->transition($acao, $registro, Value::integer($dados['versao']), $dados);
             }
         } catch (QueryException|PDOException $erro) {
             report($erro);
@@ -145,6 +152,6 @@ class SolicitacoesController extends Controller
     {
         $arquivo = $this->model->attachment($registro, $anexo);
 
-        return Storage::disk('local')->download($arquivo->chave_armazenamento, $arquivo->nome_original);
+        return Storage::disk('local')->download(Value::string($arquivo->chave_armazenamento), Value::nullableString($arquivo->nome_original));
     }
 }

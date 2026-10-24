@@ -93,6 +93,6 @@
         tipo="select"
         :valor="$registro->ativo ?? 1"
         :obrigatorio="true"
-        :opcoes="['1' => 'Ativo', '0' => 'Inativo']"
+        :opcoes="['1'=>'Ativo','0'=>'Inativo']"
     />
 @endif

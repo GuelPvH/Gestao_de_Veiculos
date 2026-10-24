@@ -1,4 +1,4 @@
-@if (in_array($acao, ['create', 'edit'], true))
+@if (in_array($acao,['create','edit'],true))
     <x-forms.field
         nome="veiculo"
         rotulo="Veículo (placa)"
@@ -43,13 +43,13 @@
         accept="application/pdf,image/png,image/jpeg"
         nota="Até 10 MB por arquivo."
     />
-@elseif ($acao === 'verify')
+@elseif ($acao==='verify')
     <x-forms.field
         nome="resultado"
         rotulo="Resultado da conferência"
         tipo="select"
         :obrigatorio="true"
-        :opcoes="['aceito' => 'Aceitar', 'correcao_solicitada' => 'Solicitar correção']"
+        :opcoes="['aceito'=>'Aceitar','correcao_solicitada'=>'Solicitar correção']"
     />
     <x-forms.field
         nome="valor_confirmado"

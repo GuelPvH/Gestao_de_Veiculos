@@ -1,15 +1,5 @@
-@props ([
-    'nome',
-    'rotulo',
-    'tipo' => 'text',
-    'valor' => '',
-    'obrigatorio' => false,
-    'opcoes' => [],
-    'nota' => '',
-    'id' => null,
-    'placeholder' => 'Selecione'
-])
-@php ($identificador = $id ?? 'field-' . str_replace(['[', ']'], ['-', ''], $nome))
+@props (['nome', 'rotulo', 'tipo' => 'text', 'valor' => '', 'obrigatorio' => false, 'opcoes' => [], 'nota' => '', 'id' => null, 'placeholder' => 'Selecione'])
+@php ($identificador = $id ?? 'field-'.str_replace(['[', ']'], ['-', ''], $nome))
 <div class="mb-3">
     <label class="form-label" for="{{ $identificador }}"
         >{{ $rotulo }}
@@ -21,12 +11,7 @@
         <select
             id="{{ $identificador }}"
             name="{{ $nome }}"
-            {{
-                $attributes->class([
-                    'form-select',
-                    'is-invalid' => $errors->has($nome),
-                ])
-            }}
+            {{ $attributes->class(['form-select', 'is-invalid' => $errors->has($nome)]) }}
             @required ($obrigatorio)
             aria-invalid="{{ $errors->has($nome) ? 'true' : 'false' }}"
             aria-describedby="{{ $identificador }}-help {{ $identificador }}-error"
@@ -43,12 +28,7 @@
             id="{{ $identificador }}"
             name="{{ $nome }}"
             rows="4"
-            {{
-                $attributes->class([
-                    'form-control',
-                    'is-invalid' => $errors->has($nome),
-                ])
-            }}
+            {{ $attributes->class(['form-control', 'is-invalid' => $errors->has($nome)]) }}
             @required ($obrigatorio)
             aria-invalid="{{ $errors->has($nome) ? 'true' : 'false' }}"
             aria-describedby="{{ $identificador }}-help {{ $identificador }}-error"
@@ -60,12 +40,7 @@
             name="{{ $nome }}"
             type="{{ $tipo }}"
             @if (!in_array($tipo, ['password', 'file'], true)) value="{{ old($nome, $valor) }}" @endif
-            {{
-                $attributes->class([
-                    'form-control',
-                    'is-invalid' => $errors->has($nome),
-                ])
-            }}
+            {{ $attributes->class(['form-control', 'is-invalid' => $errors->has($nome)]) }}
             @required ($obrigatorio)
             aria-invalid="{{ $errors->has($nome) ? 'true' : 'false' }}"
             aria-describedby="{{ $identificador }}-help {{ $identificador }}-error"

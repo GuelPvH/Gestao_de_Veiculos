@@ -6,6 +6,8 @@ use App\Jobs\DeliverAccountActivation;
 use App\Jobs\DeliverEmailVerification;
 use App\Jobs\DeliverRecoveryLink;
 use App\Jobs\DeliverSecurityNotice;
+use App\Support\Value;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -29,24 +31,24 @@ class DispatchPendingMail
         $rows = DB::table('email_outbox')->whereIn('finalidade', $purposes)
             ->whereIn('estado', ['pendente', 'enfileirado', 'enviando'])
             ->where('expira_em', '>', now('UTC'))->where('proxima_tentativa_em', '<=', now('UTC'))
-            ->where(function ($query): void {
+            ->where(function (Builder $query): void {
                 $query->whereNull('lease_ate')->orWhere('lease_ate', '<=', now('UTC'));
             })->orderByRaw("CASE WHEN finalidade = 'aviso' THEN 0 ELSE 1 END")->orderBy('id')->limit(max(1, min(1000, $limit)))->get(['id', 'finalidade']);
         $sent = 0;
         foreach ($rows as $row) {
             $claimed = DB::table('email_outbox')->where('id', $row->id)->whereIn('estado', ['pendente', 'enfileirado', 'enviando'])
-                ->where(function ($query): void {
+                ->where(function (Builder $query): void {
                     $query->whereNull('lease_ate')->orWhere('lease_ate', '<=', now('UTC'));
-                })->update(['estado' => 'enfileirado', 'lease_ate' => now('UTC')->addSeconds((int) config('identity.mail_lease_seconds', 120))]);
+                })->update(['estado' => 'enfileirado', 'lease_ate' => now('UTC')->addSeconds(Value::integer(config('identity.mail_lease_seconds', 120)))]);
             if (! $claimed) {
                 continue;
             }
             try {
                 $job = match ($row->finalidade) {
-                    'ativacao' => new DeliverAccountActivation((int) $row->id),
-                    'email' => new DeliverEmailVerification((int) $row->id),
-                    'aviso' => new DeliverSecurityNotice((int) $row->id),
-                    default => new DeliverRecoveryLink((int) $row->id),
+                    'ativacao' => new DeliverAccountActivation(Value::integer($row->id)),
+                    'email' => new DeliverEmailVerification(Value::integer($row->id)),
+                    'aviso' => new DeliverSecurityNotice(Value::integer($row->id)),
+                    default => new DeliverRecoveryLink(Value::integer($row->id)),
                 };
                 dispatch($job->onConnection($this->settings->queueConnection())->onQueue($row->finalidade === 'aviso' ? 'security-mails' : 'auth-mails'));
                 $sent++;

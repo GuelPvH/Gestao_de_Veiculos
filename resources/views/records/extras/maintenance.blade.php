@@ -15,7 +15,7 @@
                         <td>{{ $pneu->codigo }}</td>
                         <td>{{ $pneu->posicao }}</td>
                         <td>{{ $pneu->medida }}</td>
-                        <td>{{ $leituras->format($pneu->instalado_em, 'datetime') }}</td>
+                        <td>{{ $leituras->format($pneu->instalado_em,'datetime') }}</td>
                     </tr>
                 @empty
                     <tr>

@@ -1,6 +1,6 @@
 <x-layouts.authenticated
     titulo="Cadastrar pneu"
-    :breadcrumbs="[['label' => 'Pneus', 'href' => route('tyres.index')], ['label' => 'Cadastrar']]"
+    :breadcrumbs="[['label'=>'Pneus','href'=>route('tyres.index')],['label'=>'Cadastrar']]"
 >
     <x-ui.title titulo="Cadastrar pneu" subtitulo="Vincule o pneu a uma despesa de aquisição da categoria Pneus." />
     <x-ui.panel>

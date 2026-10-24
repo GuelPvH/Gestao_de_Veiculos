@@ -20,7 +20,7 @@
             >
             <form action="{{ route('recovery.consume') }}" method="post" data-loading-form data-recovery-reset-form>
                 @csrf
-                <input type="hidden" name="token" value="{{ $token }}">
+                <input type="hidden" name="token" value="{{ $token }}" />
                 <x-forms.password nome="nova_senha" rotulo="Nova senha" autocomplete="new-password" />
                 <x-forms.password
                     nome="nova_senha_confirmation"
@@ -31,7 +31,7 @@
                     class="btn btn-primary"
                     type="submit"
                     data-reset-submit
-                    @disabled (!preg_match('/\A[0-9a-f]{64}\z/', $token))
+                    @disabled (! preg_match('/\A[0-9a-f]{64}\z/', $token))
                 >
                     Redefinir senha</button
                 ><x-ui.loading />

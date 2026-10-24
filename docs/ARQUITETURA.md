@@ -23,8 +23,8 @@ flowchart TD
     assets[Assets compilados pelo Vite] --> navegador
     agendador[Agendador Laravel] --> outbox[Relay da outbox]
     outbox --> mysql
-    outbox --> redis[(Redis e filas)]
-    redis --> workers[Workers de e-mail]
+    outbox --> filas[(Filas no MySQL)]
+    filas --> workers[Workers de e-mail]
     workers --> mysql
     workers --> smtp[Transporte SMTP]
 ```
@@ -157,7 +157,7 @@ de versão exigidos antes da execução normal; ele não aplica patches.
 
 A outbox durável fica na tabela MySQL `email_outbox`. `DispatchPendingMail`
 seleciona entregas disponíveis, estabelece uma reserva temporária e publica
-jobs nas filas Redis `auth-mails` ou `security-mails`. Os jobs carregam o
+jobs nas filas MySQL `auth-mails` ou `security-mails`. Os jobs carregam o
 identificador da outbox, evitando transportar a mensagem inteira na fila.
 
 `OutboxDelivery` revalida elegibilidade e estado, controla a reserva de envio,
@@ -167,9 +167,10 @@ aceitação SMTP e a persistência no MySQL são etapas distintas; uma repetiç�
 após falha não equivale a uma garantia de envio exatamente uma vez.
 
 `routes/console.php` agenda o relay e a supervisão das filas. Os comandos de
-saúde verificam atraso, falhas, pressão de memória e sinais de vida dos
-processos. Redis participa de filas, cache e coordenação; os registros
-institucionais e a outbox permanecem no MySQL.
+saúde verificam atraso, falhas e sinais de vida dos processos. O MySQL também
+fornece cache, limites de tentativas e bloqueios compartilhados. Métricas de
+Redis são consultadas somente quando esse armazenamento estiver configurado.
+O provisionamento e a transição estão em [MYSQL-RUNTIME.md](MYSQL-RUNTIME.md).
 
 ## Arquivos, relatórios e interface
 
@@ -201,7 +202,7 @@ O Dockerfile separa dependências PHP, compilação de assets, runtime de produ�
 e runtime de desenvolvimento. A imagem de desenvolvimento inclui ferramentas
 como Debugbar; a imagem padrão utiliza o conjunto de produção.
 
-`docker-compose.yml` define aplicação, Redis, workers, scheduler e serviços
+`docker-compose.yml` define aplicação, workers, scheduler e serviços
 opcionais de administração e manutenção. O override acrescenta o ambiente de
 desenvolvimento e o Vite; `compose.local.yml` adapta a execução ao banco local
 com dados fictícios. `scripts/dev-remote.sh` verifica o alvo configurado antes

@@ -557,7 +557,7 @@ def upgrade(client, args):
         manifest = canonical()
         installed = {row[0] for row in client.rows('SELECT versao FROM versoes_modelo;')}
         require('1.0.2' in installed, 'Atualização requer baseline 1.0.2.')
-        require(not installed.difference({'1.0.0', '1.0.1', '1.0.2', '1.0.3', '1.0.4', '1.0.5', '1.0.6'}), 'Banco tem versão desconhecida ou mais recente.')
+        require(not installed.difference({'1.0.0', '1.0.1', '1.0.2', '1.0.3', '1.0.4', '1.0.5', '1.0.6', '1.0.7'}), 'Banco tem versão desconhecida ou mais recente.')
         pending = [patch for patch in manifest['patches'] if patch['version'] not in installed]
         # Modules are sequential: a later installed module cannot hide a missing predecessor.
         known = [patch['version'] in installed for patch in manifest['patches']]

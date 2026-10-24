@@ -8,6 +8,7 @@ use App\Services\Authorization\AccessContext;
 use App\Services\Read\FleetReadRepository;
 use App\Services\Read\OperationCatalog;
 use App\Services\Vehicles\VehicleWorkflow;
+use App\Support\Value;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -26,7 +27,7 @@ class VehicleController extends Controller
 
     public function create(): View
     {
-        $unidade = (int) $this->acesso->link()->unidade_id;
+        $unidade = Value::integer($this->acesso->requireLink()->unidade_id);
         abort_unless($this->acesso->can('frota', 'criar', null, $unidade), 403);
 
         return $this->form('create', null, $this->options('create'));
@@ -77,7 +78,10 @@ class VehicleController extends Controller
         });
     }
 
-    private function form(string $acao, ?object $registro, array $opcoes): View
+    /**
+     * @param  array<string, mixed>  $opcoes
+     */
+    private function form(string $acao, ?\stdClass $registro, array $opcoes): View
     {
         $tela = $this->leituras->definition('vehicles');
         $titulo = match ($acao) {
@@ -99,12 +103,15 @@ class VehicleController extends Controller
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function options(string $acao, ?int $registro = null): array
     {
         $unidadesDisponiveis = [];
         if ($acao === 'create') {
             $unidades = DB::table('unidades')->where('ativa', 1)->orderBy('nome')->get(['id', 'nome']);
-            $unidadesDisponiveis = $unidades->filter(fn ($unidade) => $this->acesso->can('frota', 'criar', null, (int) $unidade->id))->pluck('nome', 'id')->all();
+            $unidadesDisponiveis = $unidades->filter(fn ($unidade) => $this->acesso->can('frota', 'criar', null, Value::integer($unidade->id)))->pluck('nome', 'id')->all();
         }
         $categorias = in_array($acao, ['create', 'edit'], true)
             ? DB::table('categorias_veiculo')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all()
@@ -114,7 +121,7 @@ class VehicleController extends Controller
             ->where('r.veiculo_id', $registro)->where('r.situacao', 'ativa')->whereIn('r.tipo', ['indisponibilidade', 'manutencao'])
             ->whereNull('m.id')->orderBy('r.inicio')->limit(100)
             ->get(['r.id', 'r.tipo', 'r.inicio', 'r.fim', 'r.descricao'])
-            ->mapWithKeys(fn ($reserva) => [$reserva->id => '#'.$reserva->id.' · '.ucfirst($reserva->tipo).' · '.CarbonImmutable::parse($reserva->inicio, 'UTC')->setTimezone(config('fleet.timezone'))->format('d/m/Y H:i').' até '.CarbonImmutable::parse($reserva->fim, 'UTC')->setTimezone(config('fleet.timezone'))->format('d/m/Y H:i').' ('.config('fleet.timezone').') · '.$reserva->descricao])->all();
+            ->mapWithKeys(fn ($reserva) => [Value::integer($reserva->id) => '#'.Value::string($reserva->id).' · '.ucfirst(Value::string($reserva->tipo)).' · '.CarbonImmutable::parse(Value::date($reserva->inicio), 'UTC')->setTimezone(config('fleet.timezone'))->format('d/m/Y H:i').' até '.CarbonImmutable::parse(Value::date($reserva->fim), 'UTC')->setTimezone(config('fleet.timezone'))->format('d/m/Y H:i').' ('.config('fleet.timezone').') · '.Value::string($reserva->descricao)])->all();
 
         return ['unidadesDisponiveis' => $unidadesDisponiveis, 'categoriasDisponiveis' => $categorias, 'reservasDisponiveis' => $reservas];
     }

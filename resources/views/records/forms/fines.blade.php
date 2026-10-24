@@ -17,7 +17,7 @@
         rotulo="Precisão da autuação"
         tipo="select"
         :valor="'instante'"
-        :opcoes="['instante' => 'Data e hora exatas', 'dia' => 'Somente o dia (hora ignorada)']"
+        :opcoes="['instante'=>'Data e hora exatas','dia'=>'Somente o dia (hora ignorada)']"
         :obrigatorio="true"
         nota="Para autuação sem hora precisa, selecione somente o dia. A apuração considerará todo esse dia no fuso do órgão."
     />
@@ -123,7 +123,7 @@
         nome="resultado"
         rotulo="Resultado da conferência"
         tipo="select"
-        :opcoes="['aceito' => 'Aceitar e quitar', 'correcao_solicitada' => 'Solicitar correção']"
+        :opcoes="['aceito'=>'Aceitar e quitar','correcao_solicitada'=>'Solicitar correção']"
         :obrigatorio="true"
     />
     <x-forms.field nome="valor_confirmado" rotulo="Valor confirmado (se aceito)" tipo="number" min="0.01" step="0.01" />

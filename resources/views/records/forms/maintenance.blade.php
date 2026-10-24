@@ -10,7 +10,7 @@
     rotulo="Tipo de manutenção"
     tipo="select"
     :obrigatorio="true"
-    :opcoes="['preventiva' => 'Preventiva', 'corretiva' => 'Corretiva', 'vistoria' => 'Vistoria']"
+    :opcoes="['preventiva'=>'Preventiva','corretiva'=>'Corretiva','vistoria'=>'Vistoria']"
 />
 <div class="row">
     <div class="col-md-6">

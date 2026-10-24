@@ -1,9 +1,6 @@
 <x-layouts.authenticated
     titulo="Arquivo gerado"
-    :breadcrumbs="[
-        ['label' => 'Relatórios', 'href' => route('reports.index')],
-        ['label' => 'Arquivo gerado'],
-    ]"
+    :breadcrumbs="[['label'=>'Relatórios','href'=>route('reports.index')],['label'=>'Arquivo gerado']]"
 >
     <x-ui.title titulo="Arquivo gerado" subtitulo="Seu relatório está pronto para download." />
     <x-ui.panel titulo="Download">

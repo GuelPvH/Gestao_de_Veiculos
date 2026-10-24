@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ConfigurationUpdateRequest;
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
+use App\Support\Value;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -32,16 +33,16 @@ class ConfigurationController extends Controller
             abort_unless($atual !== null, 404);
             $novos = [
                 'fuso_horario' => $dados['fuso_horario'],
-                'sessao_inatividade_minutos' => (int) $dados['sessao_inatividade_minutos'],
-                'limite_sem_comunicacao_minutos' => (int) $dados['limite_sem_comunicacao_minutos'],
+                'sessao_inatividade_minutos' => Value::integer($dados['sessao_inatividade_minutos']),
+                'limite_sem_comunicacao_minutos' => Value::integer($dados['limite_sem_comunicacao_minutos']),
             ];
             if ($atual->fuso_horario === $novos['fuso_horario']
-                && (int) $atual->sessao_inatividade_minutos === $novos['sessao_inatividade_minutos']
-                && (int) $atual->limite_sem_comunicacao_minutos === $novos['limite_sem_comunicacao_minutos']) {
+                && Value::integer($atual->sessao_inatividade_minutos) === $novos['sessao_inatividade_minutos']
+                && Value::integer($atual->limite_sem_comunicacao_minutos) === $novos['limite_sem_comunicacao_minutos']) {
                 return;
             }
             DB::table('configuracao_sistema')->where('id', 1)->update($novos);
-            $procedimentos->call('sp_auditar', [(int) $vinculo->vinculo_id, 'configuracao_atualizada', 'configuracao_sistema', 1, 'Parâmetros operacionais atualizados.']);
+            $procedimentos->call('sp_auditar', [Value::integer($vinculo->vinculo_id), 'configuracao_atualizada', 'configuracao_sistema', 1, 'Parâmetros operacionais atualizados.']);
         });
         config(['fleet.timezone' => $dados['fuso_horario']]);
 

@@ -1,6 +1,6 @@
 <x-layouts.authenticated
-    :titulo="$record->codigo . ' · Pneu'"
-    :breadcrumbs="[['label' => 'Pneus', 'href' => route('tyres.index')], ['label' => $record->codigo]]"
+    :titulo="$record->codigo.' · Pneu'"
+    :breadcrumbs="[['label'=>'Pneus','href'=>route('tyres.index')],['label'=>$record->codigo]]"
 >
     <x-ui.title :titulo="$record->codigo" subtitulo="Histórico de instalação e situação do pneu.">
         <x-slot:acoes>
@@ -17,12 +17,7 @@
                     </div>
                     <div>
                         <dt>Marca e modelo</dt>
-                        <dd>
-                            {{
-                                trim(($record->marca ?? '') . ' ' . ($record->modelo ?? '')) ?:
-                                    '—'
-                            }}
-                        </dd>
+                        <dd>{{ trim(($record->marca ?? '').' '.($record->modelo ?? '')) ?: '—' }}</dd>
                     </div>
                     <div>
                         <dt>Número de série</dt>
@@ -56,20 +51,10 @@
                                     <td>{{ $installation->placa }}</td>
                                     <td>{{ $installation->posicao }}</td>
                                     <td>
-                                        {{
-                                            \Carbon\CarbonImmutable::parse($installation->instalado_em, 'UTC')
-                                                ->setTimezone(config('fleet.timezone'))
-                                                ->format('d/m/Y H:i')
-                                        }}
+                                        {{ \Carbon\CarbonImmutable::parse($installation->instalado_em,'UTC')->setTimezone(config('fleet.timezone'))->format('d/m/Y H:i') }}
                                     </td>
                                     <td>
-                                        {{
-                                            $installation->removido_em
-                                                ? \Carbon\CarbonImmutable::parse($installation->removido_em, 'UTC')
-                                                    ->setTimezone(config('fleet.timezone'))
-                                                    ->format('d/m/Y H:i')
-                                                : '—'
-                                        }}
+                                        {{ $installation->removido_em ? \Carbon\CarbonImmutable::parse($installation->removido_em,'UTC')->setTimezone(config('fleet.timezone'))->format('d/m/Y H:i') : '—' }}
                                     </td>
                                     <td>
                                         @if ($canEdit && $installation->removido_em === null)
@@ -174,7 +159,7 @@
                                 value="1"
                                 id="tyre-confirmar"
                                 required
-                            ><label class="form-check-label" for="tyre-confirmar"
+                            /><label class="form-check-label" for="tyre-confirmar"
                                 >Confirmo o descarte deste pneu.</label
                             >
                         </div>

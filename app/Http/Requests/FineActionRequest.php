@@ -12,6 +12,9 @@ class FineActionRequest extends FormRequest
         return $this->route('acao') === null || in_array($this->route('acao'), ['edit', 'assign', 'proof', 'verify', 'correct', 'settle', 'dispute', 'cancel'], true);
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         $valor = ['required', 'numeric', 'decimal:0,2', 'min:0.01', 'max:99999999999.99'];

@@ -2,6 +2,7 @@
 
 use App\Services\Auth\IdentityService;
 use App\Services\Auth\PasswordPolicy;
+use App\Support\Value;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -28,7 +29,7 @@ Artisan::command('fleet:create-admin', function (): int {
         return 1;
     }
     try {
-        app(IdentityService::class)->createInitialAdministrator($identificador, $nome, $email, $senha);
+        app(IdentityService::class)->createInitialAdministrator(Value::string($identificador), Value::string($nome), Value::string($email), Value::string($senha));
     } catch (Throwable) {
         $this->error('Inicialização recusada. Confira o provisionamento e os privilégios privadamente.');
 
@@ -40,9 +41,10 @@ Artisan::command('fleet:create-admin', function (): int {
 })->purpose('Inicializar somente o primeiro administrador, após provisionamento conferido');
 
 Schedule::command('fleet:dispatch-mail --limit=100')->everyMinute()->withoutOverlapping();
-Schedule::call(fn () => Cache::store('redis')->put('fleet:heartbeat:scheduler', time(), 120))
+Schedule::call(fn () => Cache::store(Value::string(config('cache.default')))->put('fleet:heartbeat:scheduler', time(), 120))
     ->name('fleet:scheduler-heartbeat')->everyMinute();
-Schedule::command('queue:monitor redis:auth-mails,redis:security-mails --max=100')
+$mailQueueConnection = config('fleet.recovery_queue_connection', 'database');
+Schedule::command('queue:monitor '.$mailQueueConnection.':auth-mails,'.$mailQueueConnection.':security-mails --max=100')
     ->everyMinute()->withoutOverlapping();
 
 Schedule::command('fleet:delivery-health')->everyFiveMinutes()->withoutOverlapping();

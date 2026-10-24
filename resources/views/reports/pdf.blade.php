@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Relatório de {{ $titulo }}</title>
     <style>
         @page {
@@ -148,7 +148,7 @@
         <div class="brand">GESTÃO DE VEÍCULOS</div>
         <div class="brand-sub">Controle de frota e operações</div>
         <div class="ref">
-            <strong>RELATÓRIO #{{ str_pad((string) $id, 6, '0', STR_PAD_LEFT) }}</strong><br>Emitido em {{ $emitido }}
+            <strong>RELATÓRIO #{{ str_pad((string) $id, 6, '0', STR_PAD_LEFT) }}</strong><br />Emitido em {{ $emitido }}
         </div>
     </div>
     <div class="footer">Gestão de Veículos · {{ $titulo }} · Relatório #{{ $id }}</div>
@@ -172,17 +172,9 @@
         </tr>
     </table>
     <div class="filters">
-        <strong>Filtros aplicados</strong><br>
-        Período: {{
-            !empty($filtros['de'])
-                ? \Carbon\CarbonImmutable::parse($filtros['de'])->format('d/m/Y')
-                : 'Sem limite inicial'
-        }} até {{
-            !empty($filtros['ate'])
-                ? \Carbon\CarbonImmutable::parse($filtros['ate'])->format('d/m/Y')
-                : 'Sem limite final'
-        }}<br>
-        Busca: {{ $filtros['q'] ?? 'Todas as informações' }}<br>
+        <strong>Filtros aplicados</strong><br />
+        Período: {{ !empty($filtros['de']) ? \Carbon\CarbonImmutable::parse($filtros['de'])->format('d/m/Y') : 'Sem limite inicial' }} até {{ !empty($filtros['ate']) ? \Carbon\CarbonImmutable::parse($filtros['ate'])->format('d/m/Y') : 'Sem limite final' }}<br />
+        Busca: {{ $filtros['q'] ?? 'Todas as informações' }}<br />
         Emitido por: {{ $autor }} · Fuso horário: {{ $fuso }}
     </div>
     @foreach ($secoes as $secao)
@@ -190,17 +182,13 @@
             <div class="section-break"></div>
         @endif
         <h2>
-            Detalhamento{{
-                $secoes->count() > 1
-                    ? ' · Grupo de campos ' . $loop->iteration . ' de ' . $secoes->count()
-                    : ''
-            }}
+            Detalhamento{{ $secoes->count() > 1 ? ' · Grupo de campos '.$loop->iteration.' de '.$secoes->count() : '' }}
         </h2>
         <table class="data">
             <colgroup>
-                <col style="width: 4%">
+                <col style="width: 4%" />
                 @foreach ($secao['larguras'] as $largura)
-                    <col style="width: {{ $largura }}%;">
+                    <col style="width: {{ $largura }}%;" />
                 @endforeach
             </colgroup>
             <thead>

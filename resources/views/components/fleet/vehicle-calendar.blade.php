@@ -19,24 +19,21 @@
             </nav>
         </div>
         <div class="vehicle-calendar-grid">
-            @foreach (['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'] as $rotulo)
+            @foreach (['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'] as $rotulo)
                 <span class="small text-body-secondary">{{ $rotulo }}</span>
             @endforeach
-            @for ($i = 1; $i < $inicio->dayOfWeekIso; $i++)
+            @for ($i=1;$i<$inicio->dayOfWeekIso;$i++)
                 <span aria-hidden="true"></span>
             @endfor
             @foreach ($dias as $dia)
-                <div @class (['vehicle-calendar-day', 'has-reservations' => $dia['reservas']->isNotEmpty()])>
+                <div @class (['vehicle-calendar-day','has-reservations'=>$dia['reservas']->isNotEmpty()])>
                     <time datetime="{{ $dia['data']->format('Y-m-d') }}">{{ $dia['data']->day }}</time>
                     @foreach ($dia['reservas'] as $reserva)
                         <a
                             class="vehicle-calendar-reservation text-decoration-none"
                             href="{{ route('agenda.show', $reserva->id) }}"
-                            ><span>{{
-                                \Carbon\CarbonImmutable::parse($reserva->inicio, 'UTC')
-                                    ->setTimezone(config('fleet.timezone'))
-                                    ->format('H:i')
-                            }}</span
+                            ><span
+                                >{{ \Carbon\CarbonImmutable::parse($reserva->inicio,'UTC')->setTimezone(config('fleet.timezone'))->format('H:i') }}</span
                             ><span>{{ $reserva->nome }}</span></a
                         >
                     @endforeach

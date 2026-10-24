@@ -1,6 +1,6 @@
 <x-layouts.authenticated
     :titulo="$titulo"
-    :breadcrumbs="[['label' => $tela['title'], 'href' => route('solicitacoes.index')], ['label' => $titulo]]"
+    :breadcrumbs="[['label'=>$tela['title'],'href'=>route('solicitacoes.index')],['label'=>$titulo]]"
 >
     <x-ui.title :titulo="$titulo" subtitulo="Preencha as informações e confira a revisão antes de concluir." />
     <x-ui.panel>
@@ -16,11 +16,11 @@
             @csrf
             @if ($acao === 'edit') @method ('PATCH')@endif
             @if ($registro)
-                <input type="hidden" name="versao" value="{{ $registro->versao }}">
+                <input type="hidden" name="versao" value="{{ $registro->versao }}" />
             @endif
-            @if (in_array($acao, ['create', 'edit'], true))
+            @if (in_array($acao,['create','edit'],true))
                 <ol class="wizard-steps" aria-label="Etapas da solicitação">
-                    @foreach (['Viagem', 'Pessoas', 'Veículo', 'Revisão'] as $etapa)
+                    @foreach (['Viagem','Pessoas','Veículo','Revisão'] as $etapa)
                         <li data-step-label>{{ $loop->iteration }}. {{ $etapa }}</li>
                     @endforeach
                 </ol>
@@ -60,13 +60,7 @@
                                 nome="saida_prevista"
                                 rotulo="Saída prevista"
                                 tipo="datetime-local"
-                                :valor="
-                                    $registro && $registro->saida_prevista
-        ? \Carbon\CarbonImmutable::parse($registro->saida_prevista, 'UTC')
-            ->setTimezone(config('fleet.timezone'))
-            ->format('Y-m-d\TH:i')
-        : ''
-                                "
+                                :valor="$registro && $registro->saida_prevista ? \Carbon\CarbonImmutable::parse($registro->saida_prevista,'UTC')->setTimezone(config('fleet.timezone'))->format('Y-m-d\TH:i') : ''"
                                 :obrigatorio="true"
                                 data-date-start
                             />
@@ -76,13 +70,7 @@
                                 nome="retorno_previsto"
                                 rotulo="Retorno previsto"
                                 tipo="datetime-local"
-                                :valor="
-                                    $registro && $registro->retorno_previsto
-        ? \Carbon\CarbonImmutable::parse($registro->retorno_previsto, 'UTC')
-            ->setTimezone(config('fleet.timezone'))
-            ->format('Y-m-d\TH:i')
-        : ''
-                                "
+                                :valor="$registro && $registro->retorno_previsto ? \Carbon\CarbonImmutable::parse($registro->retorno_previsto,'UTC')->setTimezone(config('fleet.timezone'))->format('Y-m-d\TH:i') : ''"
                                 :obrigatorio="true"
                                 data-date-end
                             />
@@ -122,7 +110,7 @@
                         tipo="select"
                         :valor="$registro->necessita_motorista ?? 1"
                         :obrigatorio="true"
-                        :opcoes="['1' => 'Sim, preciso de um condutor', '0' => 'Não, eu conduzirei']"
+                        :opcoes="['1'=>'Sim, preciso de um condutor','0'=>'Não, eu conduzirei']"
                         nota="O gestor escolhe o motorista na aprovação. Para conduzir, você precisa de cadastro e habilitação válidos para a viagem."
                     />
                 </section>

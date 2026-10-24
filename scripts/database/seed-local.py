@@ -22,15 +22,12 @@ if PRIVATE == ROOT or ROOT in PRIVATE.parents:
 PRIVATE.mkdir(parents=True, exist_ok=True); PRIVATE.chmod(0o700)
 ENV = PRIVATE / 'local.env'; LOGIN = PRIVATE / 'local-test-login.txt'
 if not ENV.exists():
-    ENV.write_text('LOCAL_DB_PASSWORD='+secrets.token_hex(24)+'\nLOCAL_DB_ROOT_PASSWORD='+secrets.token_hex(24)+'\nREDIS_PASSWORD='+secrets.token_hex(24)+'\n'); ENV.chmod(0o600)
+    ENV.write_text('LOCAL_DB_PASSWORD='+secrets.token_hex(24)+'\nLOCAL_DB_ROOT_PASSWORD='+secrets.token_hex(24)+'\n'); ENV.chmod(0o600)
 values=read_env(ENV)
-if not values.get('REDIS_PASSWORD'):
-    with ENV.open('a') as output:
-        output.write('\nREDIS_PASSWORD='+secrets.token_hex(24)+'\n')
 ENV.chmod(0o600)
 compose=['docker','compose','--env-file','.env','--env-file',str(ENV),'-f','docker-compose.yml','-f','docker-compose.override.yml','-f','compose.local.yml']
 # Provision storage first. Application entrypoints refuse an absent/old schema.
-subprocess.run(compose+['--profile','admin','up','-d','--wait','--wait-timeout','180','mysql-local','redis'], check=True)
+subprocess.run(compose+['--profile','admin','up','-d','--wait','--wait-timeout','180','mysql-local'], check=True)
 mysql=compose+['exec','-T','mysql-local','sh','-c','MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot --skip-reconnect --batch --skip-column-names frota_pf_local']
 def sql(query):
     result=subprocess.run(mysql,input=query,text=True,capture_output=True,check=True)

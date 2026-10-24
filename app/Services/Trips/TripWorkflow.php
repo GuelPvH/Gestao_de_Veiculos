@@ -4,6 +4,7 @@ namespace App\Services\Trips;
 
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
+use App\Support\Value;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,10 @@ class TripWorkflow
 
     public function __construct(private AccessContext $acesso, private ProcedureRunner $procedimentos) {}
 
+    /**
+     * @param  array<string, mixed>  $entrada
+     * @param  array<string, mixed>  $validado
+     */
     public function perform(int $registro, string $acao, array $validado, array $entrada): void
     {
         abort_unless(isset(self::ACTIONS[$acao]), 404);
@@ -33,31 +38,31 @@ class TripWorkflow
 
         $viagem = $this->trip($registro);
         $this->authorize($viagem, $acao);
-        $this->checkVersion($viagem, (int) $validado['versao']);
+        $this->checkVersion($viagem, Value::integer($validado['versao']));
         $esperado = $acao === 'return' ? 'em_andamento' : 'programada';
         $this->checkState($viagem, $esperado);
-        $vinculo = (int) $this->acesso->link()->vinculo_id;
+        $vinculo = Value::integer($this->acesso->requireLink()->vinculo_id);
         try {
             if ($acao === 'cancel') {
-                if ((int) $viagem->solicitacao_versao !== (int) $validado['solicitacao_versao']) {
+                if (Value::integer($viagem->solicitacao_versao) !== Value::integer($validado['solicitacao_versao'])) {
                     $this->conflict();
                 }
                 // A rotina canônica cancela a solicitação, viagem programada e reserva juntas.
-                $this->procedimentos->call('sp_cancelar_solicitacao', [$vinculo, (int) $viagem->solicitacao_id, (int) $validado['solicitacao_versao'], trim($validado['justificativa'])]);
+                $this->procedimentos->call('sp_cancelar_solicitacao', [$vinculo, Value::integer($viagem->solicitacao_id), Value::integer($validado['solicitacao_versao']), trim(Value::string($validado['justificativa']))]);
 
                 return;
             }
 
-            $instante = $this->utc($validado['data_registro']);
+            $instante = $this->utc(Value::string($validado['data_registro']));
             $this->checkInstant($instante);
             $checklist = $this->checklist($entrada);
             $this->procedimentos->call($acao === 'departure' ? 'sp_registrar_saida' : 'sp_registrar_retorno', [
                 $vinculo,
                 $registro,
-                (int) $validado['versao'],
+                Value::integer($validado['versao']),
                 $instante->format('Y-m-d H:i:s.u'),
-                (string) $validado['quilometragem'],
-                trim($validado['observacoes'] ?? '') ?: null,
+                Value::string($validado['quilometragem']),
+                trim(Value::string($validado['observacoes'] ?? '')) ?: null,
                 json_encode($checklist, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
             ]);
         } catch (PDOException $erro) {
@@ -65,21 +70,24 @@ class TripWorkflow
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $validado
+     */
     private function occurrence(int $registro, array $validado): void
     {
-        $instante = $this->utc($validado['ocorrido_em']);
+        $instante = $this->utc(Value::string($validado['ocorrido_em']));
         $this->checkInstant($instante, 'ocorrido_em');
         // A procedure legada não confere estado nem versão. Esta escrita mantém o lock
         // até concluir ocorrência, versão e auditoria na mesma transação.
         DB::transaction(function () use ($registro, $validado, $instante): void {
             $viagem = $this->trip($registro, true);
             $this->authorize($viagem, 'occurrence');
-            $this->checkVersion($viagem, (int) $validado['versao']);
+            $this->checkVersion($viagem, Value::integer($validado['versao']));
             $this->checkState($viagem, 'em_andamento');
-            if ($viagem->saida_real === null || $instante->lessThan(CarbonImmutable::parse($viagem->saida_real, 'UTC'))) {
+            if ($viagem->saida_real === null || $instante->lessThan(CarbonImmutable::parse(Value::date($viagem->saida_real), 'UTC'))) {
                 throw ValidationException::withMessages(['ocorrido_em' => 'A ocorrência deve ser posterior à saída registrada.']);
             }
-            $descricao = trim($validado['descricao']);
+            $descricao = trim(Value::string($validado['descricao']));
             $identificador = DB::table('viagem_ocorrencias')->insertGetId([
                 'viagem_id' => $registro,
                 'registrado_por' => (int) Auth::id(),
@@ -91,7 +99,7 @@ class TripWorkflow
             if ($atualizadas !== 1) {
                 $this->conflict();
             }
-            $this->procedimentos->call('sp_auditar', [(int) $this->acesso->link()->vinculo_id, 'ocorrencia_registrada', 'viagem_ocorrencias', $identificador, mb_substr($descricao, 0, 1000)]);
+            $this->procedimentos->call('sp_auditar', [Value::integer($this->acesso->requireLink()->vinculo_id), 'ocorrencia_registrada', 'viagem_ocorrencias', $identificador, mb_substr($descricao, 0, 1000)]);
         }, 3);
     }
 
@@ -113,20 +121,20 @@ class TripWorkflow
     private function authorize(stdClass $viagem, string $acao): void
     {
         $vinculo = $this->acesso->link();
-        abort_unless($vinculo !== null && Auth::id() !== null && (int) $vinculo->usuario_id === (int) Auth::id(), 403);
-        $usuario = (int) $vinculo->usuario_id;
-        $dono = $usuario === (int) $viagem->motorista_id ? $usuario : (int) $viagem->solicitante_id;
-        $unidade = (int) $viagem->unidade_id;
+        abort_unless($vinculo !== null && Auth::id() !== null && Value::integer($vinculo->usuario_id) === Value::integer(Auth::id()), 403);
+        $usuario = Value::integer($vinculo->usuario_id);
+        $dono = $usuario === Value::integer($viagem->motorista_id) ? $usuario : Value::integer($viagem->solicitante_id);
+        $unidade = Value::integer($viagem->unidade_id);
         abort_unless($this->acesso->can('viagens', 'consultar', $dono, $unidade)
             && $this->acesso->can('viagens', self::ACTIONS[$acao], $dono, $unidade), 403);
         if ($acao === 'cancel') {
-            abort_unless($this->acesso->can('solicitacoes', 'cancelar', (int) $viagem->solicitante_id, $unidade), 403);
+            abort_unless($this->acesso->can('solicitacoes', 'cancelar', Value::integer($viagem->solicitante_id), $unidade), 403);
         }
     }
 
     private function checkVersion(stdClass $viagem, int $versao): void
     {
-        if ((int) $viagem->versao !== $versao) {
+        if (Value::integer($viagem->versao) !== $versao) {
             $this->conflict();
         }
     }
@@ -155,11 +163,15 @@ class TripWorkflow
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $entrada
+     * @return array<array-key, mixed>
+     */
     private function checklist(array $entrada): array
     {
         $respostas = [];
         foreach (DB::table('checklist_itens')->where('ativo', 1)->orderBy('ordem')->get(['id', 'obrigatorio']) as $item) {
-            $chave = 'item_'.$item->id;
+            $chave = 'item_'.Value::string($item->id);
             $resultado = $entrada[$chave] ?? null;
             if (($resultado === null || $resultado === '') && ! $item->obrigatorio) {
                 continue;
@@ -167,11 +179,11 @@ class TripWorkflow
             if (! in_array($resultado, ['ok', 'problema', 'nao_aplicavel'], true)) {
                 throw ValidationException::withMessages([$chave => 'Responda o item da vistoria.']);
             }
-            $observacao = trim((string) ($entrada['observacao_'.$item->id] ?? ''));
+            $observacao = trim(Value::string($entrada['observacao_'.Value::string($item->id)] ?? ''));
             if (($resultado === 'problema' && $observacao === '') || mb_strlen($observacao) > 1000) {
-                throw ValidationException::withMessages(['observacao_'.$item->id => 'Descreva o problema em até 1000 caracteres.']);
+                throw ValidationException::withMessages(['observacao_'.Value::string($item->id) => 'Descreva o problema em até 1000 caracteres.']);
             }
-            $respostas[] = ['item_id' => (int) $item->id, 'resultado' => $resultado, 'observacao' => $observacao ?: null];
+            $respostas[] = ['item_id' => Value::integer($item->id), 'resultado' => $resultado, 'observacao' => $observacao ?: null];
         }
         if ($respostas === []) {
             throw ValidationException::withMessages(['checklist' => 'A vistoria precisa de ao menos um item ativo respondido.']);

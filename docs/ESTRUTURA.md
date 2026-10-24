@@ -118,3 +118,6 @@ Para uma alteração de fluxo, comece pelas rotas, pelo controller e pelo servi�
 do módulo. Para uma alteração de exibição, consulte a view, seus componentes e
 os assets. Para uma alteração de acesso ou persistência, acompanhe também
 `AccessContext`, o catálogo de telas e o contrato SQL correspondente.
+
+A execução de cache e filas no MySQL está documentada em [MYSQL-RUNTIME.md](MYSQL-RUNTIME.md).
+A pasta `docs/database-model/` reúne o retrato estrutural, o diagrama e o dicionário do banco remoto.

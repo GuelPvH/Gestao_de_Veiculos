@@ -4,7 +4,7 @@
             <div>
                 <strong>{{ $mensagem->autor }}{{ $mensagem->interna ? ' · Nota interna' : '' }}</strong>
                 <p class="my-2">{{ $mensagem->mensagem }}</p>
-                <p class="small text-body-secondary mb-0">{{ $leituras->format($mensagem->criado_em, 'datetime') }}</p>
+                <p class="small text-body-secondary mb-0">{{ $leituras->format($mensagem->criado_em,'datetime') }}</p>
             </div>
         </article>
     @empty

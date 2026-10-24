@@ -5,10 +5,12 @@
             <article class="row-summary">
                 <x-ui.icon nome="bell" />
                 <div class="flex-grow-1">
-                    <strong>{{
+                    <strong
+                        >{{
                         $evento->titulo ?:
                             ucfirst(str_replace('_', ' ', $evento->tipo))
-                    }}</strong>
+                    }}</strong
+                    >
                     @if ($evento->mensagem)
                         <p class="mb-1">{{ $evento->mensagem }}</p>
                     @endif
@@ -22,13 +24,13 @@
                         @unless ($evento->lida_em)
                             <form method="POST" action="{{ route('notifications.read', $evento->id) }}">
                                 @csrf
-                                <input type="hidden" name="versao" value="{{ $evento->versao }}">
+                                <input type="hidden" name="versao" value="{{ $evento->versao }}" />
                                 <button type="submit" class="btn btn-outline-primary">Marcar como lida</button>
                             </form>
                         @endunless
                         <form method="POST" action="{{ route('notifications.hide', $evento->id) }}">
                             @csrf
-                            <input type="hidden" name="versao" value="{{ $evento->versao }}">
+                            <input type="hidden" name="versao" value="{{ $evento->versao }}" />
                             <button type="submit" class="btn btn-outline-secondary">Ocultar</button>
                         </form>
                     @endif

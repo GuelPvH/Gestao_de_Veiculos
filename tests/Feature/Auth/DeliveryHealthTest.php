@@ -25,6 +25,7 @@ class DeliveryHealthTest extends TestCase
         parent::setUp();
         IdentityFixture::create();
         IdentityFixture::mailSettings();
+        config(['cache.default' => 'redis']);
         $this->cache = new Repository(new ArrayStore);
         Cache::shouldReceive('store')->with('redis')->andReturn($this->cache)->byDefault();
         Cache::shouldReceive('store')->with('file')->andReturn($this->cache)->byDefault();

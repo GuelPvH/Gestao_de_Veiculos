@@ -20,18 +20,9 @@
     @foreach ($conferencias as $conferencia)
         <article class="row-summary">
             <div>
-                <strong>{{
-                    ucfirst(
-                        str_replace('_', ' ', $conferencia->resultado),
-                    )
-                }}</strong>
+                <strong>{{ ucfirst(str_replace('_', ' ', $conferencia->resultado)) }}</strong>
                 <p class="mb-1">{{ $conferencia->motivo }}</p>
-                <p class="small text-body-secondary mb-0">{{
-                    $leituras->format(
-                        $conferencia->conferido_em,
-                        'datetime',
-                    )
-                }}</p>
+                <p class="small text-body-secondary mb-0">{{ $leituras->format($conferencia->conferido_em, 'datetime') }}</p>
             </div>
         </article>
     @endforeach

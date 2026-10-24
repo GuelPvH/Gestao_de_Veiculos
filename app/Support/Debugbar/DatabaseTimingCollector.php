@@ -5,6 +5,7 @@ namespace App\Support\Debugbar;
 use Fruitcake\LaravelDebugbar\DataCollector\QueryCollector;
 use Fruitcake\LaravelDebugbar\LaravelDebugbar;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Database\Events\ConnectionEvent;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Database\Events\TransactionCommitted;
@@ -36,7 +37,7 @@ class DatabaseTimingCollector
         });
 
         foreach ([TransactionBeginning::class => 'Begin Transaction', TransactionCommitted::class => 'Commit Transaction', TransactionRolledBack::class => 'Rollback Transaction'] as $evento => $descricao) {
-            $events->listen($evento, function ($transaction) use ($debugbar, $collector, $descricao): void {
+            $events->listen($evento, function (ConnectionEvent $transaction) use ($debugbar, $collector, $descricao): void {
                 if ($debugbar->isEnabled()) {
                     $collector->collectTransactionEvent($descricao, $transaction->connection);
                 }

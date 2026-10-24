@@ -48,7 +48,7 @@
                     <x-ui.alert tom="warning">Esta nota ficará visível somente para atendentes autorizados.</x-ui.alert>
                 @endif
             @elseif ($acao === 'assign')
-                <input type="hidden" name="versao" value="{{ $chamado->versao }}">
+                <input type="hidden" name="versao" value="{{ $chamado->versao }}" />
                 <x-forms.field
                     nome="responsavel"
                     rotulo="Atendente"
@@ -61,17 +61,14 @@
                     rotulo="Situação"
                     tipo="select"
                     :obrigatorio="true"
-                    :opcoes="[
-                        'em_atendimento' => 'Em atendimento',
-                        'aguardando_solicitante' => 'Aguardando solicitante',
-                    ]"
+                    :opcoes="['em_atendimento' => 'Em atendimento', 'aguardando_solicitante' => 'Aguardando solicitante']"
                 />
                 <x-forms.field nome="motivo" rotulo="Motivo" tipo="textarea" :obrigatorio="true" maxlength="3000" />
                 @if (empty($atendentes))
                     <x-ui.alert tom="warning">Não há atendente com vínculo vigente para esta fila.</x-ui.alert>
                 @endif
             @elseif ($acao === 'resolve')
-                <input type="hidden" name="versao" value="{{ $chamado->versao }}">
+                <input type="hidden" name="versao" value="{{ $chamado->versao }}" />
                 <x-forms.field
                     nome="motivo"
                     rotulo="Motivo da conclusão"

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Value;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -21,6 +22,15 @@ class CheckSchema extends Command
                     $this->error('Banco requer os patches versionados de segurança e solicitações.');
 
                     return self::FAILURE;
+                }
+            }
+            if (config('cache.default') === 'database') {
+                foreach ([config('cache.stores.database.table', 'cache'), config('cache.stores.database.lock_table') ?: 'cache_locks'] as $table) {
+                    if (! Schema::hasTable(Value::string($table))) {
+                        $this->error('Cache MySQL não provisionado. Aplique database/sql/runtime-cache.sql.');
+
+                        return self::FAILURE;
+                    }
                 }
             }
             foreach (['versao_seguranca', 'email_verificado_em'] as $column) {

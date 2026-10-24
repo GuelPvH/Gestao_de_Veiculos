@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Services\Auth\FleetUserProvider;
 use App\Services\Authorization\AccessContext;
+use App\Support\Value;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Queue\Events\Looping;
 use Illuminate\Queue\Events\QueueBusy;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         if ($hotFile = config('fleet.vite_hot_file')) {
-            Vite::useHotFile($hotFile);
+            Vite::useHotFile(Value::string($hotFile));
         }
 
         Event::listen(QueueBusy::class, function (QueueBusy $event): void {
@@ -32,16 +35,16 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Queue::looping(function (Looping $event): void {
-            if ($event->connectionName !== 'redis' || ! in_array($event->queue, ['auth-mails', 'security-mails'], true)) {
+            if ($event->connectionName !== config('fleet.recovery_queue_connection', 'database') || ! in_array($event->queue, ['auth-mails', 'security-mails'], true)) {
                 return;
             }
             try {
-                Cache::store('redis')->put('fleet:heartbeat:'.$event->queue, time(), 120);
+                Cache::store(Value::string(config('cache.default')))->put('fleet:heartbeat:'.$event->queue, time(), 120);
             } catch (\Throwable) {
                 Log::error('security.worker_heartbeat_unavailable', ['queue' => $event->queue]);
             }
         });
 
-        Auth::provider('fleet', fn ($app, array $config) => new FleetUserProvider($app['hash'], $config['model']));
+        Auth::provider('fleet', fn (Application $app, array $config) => new FleetUserProvider($app->make(Hasher::class), Value::string($config['model'])));
     }
 }

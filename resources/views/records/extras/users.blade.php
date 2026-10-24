@@ -15,22 +15,11 @@
                         <td>{{ $vinculo->perfil }}</td>
                         <td>{{ $vinculo->unidade }}</td>
                         <td>
-                            {{ $leituras->format($vinculo->vigente_desde, 'datetime') }} até {{
-                                $vinculo->vigente_ate
-                                    ? $leituras->format($vinculo->vigente_ate, 'datetime')
-                                    : 'Sem prazo final'
-                            }}
+                            {{ $leituras->format($vinculo->vigente_desde,'datetime') }} até {{ $vinculo->vigente_ate ? $leituras->format($vinculo->vigente_ate,'datetime') : 'Sem prazo final' }}
                         </td>
                         <td>
                             <x-ui.status
-                                :valor="
-                                    $vinculo->ativo &&
-    $vinculo->perfil_ativo &&
-    \Carbon\CarbonImmutable::parse($vinculo->vigente_desde, 'UTC')->isPast() &&
-    (!$vinculo->vigente_ate || \Carbon\CarbonImmutable::parse($vinculo->vigente_ate, 'UTC')->isFuture())
-        ? 'ativo'
-        : 'inativo'
-                                "
+                                :valor="$vinculo->ativo && $vinculo->perfil_ativo && \Carbon\CarbonImmutable::parse($vinculo->vigente_desde,'UTC')->isPast() && (!$vinculo->vigente_ate || \Carbon\CarbonImmutable::parse($vinculo->vigente_ate,'UTC')->isFuture()) ? 'ativo' : 'inativo'"
                             />
                         </td>
                     </tr>

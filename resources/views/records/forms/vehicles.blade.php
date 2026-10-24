@@ -110,11 +110,7 @@
         tipo="select"
         :valor="$registro->situacao_cadastro ?? 'ativo'"
         :obrigatorio="true"
-        :opcoes="
-            $acao === 'create'
-        ? ['ativo' => 'Ativo', 'inativo' => 'Inativo']
-        : ['ativo' => 'Ativo', 'inativo' => 'Inativo', 'baixado' => 'Baixado']
-        "
+        :opcoes="$acao === 'create' ? ['ativo'=>'Ativo','inativo'=>'Inativo'] : ['ativo'=>'Ativo','inativo'=>'Inativo','baixado'=>'Baixado']"
         nota="A disponibilidade operacional depende também de viagens e reservas."
     />
     <x-forms.field
@@ -149,7 +145,7 @@
         rotulo="Tipo de bloqueio"
         tipo="select"
         :obrigatorio="true"
-        :opcoes="['indisponibilidade' => 'Indisponibilidade', 'manutencao' => 'Manutenção avulsa']"
+        :opcoes="['indisponibilidade'=>'Indisponibilidade','manutencao'=>'Manutenção avulsa']"
     />
     <div class="row">
         <div class="col-md-6">

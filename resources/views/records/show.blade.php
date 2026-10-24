@@ -1,9 +1,9 @@
 <x-layouts.authenticated
-    :titulo="$tela['title'] . ' · Detalhes'"
-    :breadcrumbs="[['label' => $tela['title'], 'href' => route($codigo . '.index')], ['label' => 'Detalhes']]"
+    :titulo="$tela['title'].' · Detalhes'"
+    :breadcrumbs="[['label'=>$tela['title'], 'href'=>route($codigo.'.index')], ['label'=>'Detalhes']]"
 >
     <x-ui.title
-        :titulo="($registro->protocolo ?? ($registro->nome ?? $tela['title'])) . ' · Detalhes'"
+        :titulo="($registro->protocolo ?? $registro->nome ?? $tela['title']).' · Detalhes'"
         subtitulo="Consulte as informações e o histórico deste registro."
     >
         <x-slot:acoes>
@@ -18,7 +18,7 @@
                         <div>
                             <dt>{{ $campo[1] }}</dt>
                             <dd>
-                                @if ($chave === 'situacao')
+                                @if ($chave==='situacao')
                                     <x-ui.status :valor="$registro->situacao ?? ''" />
                                 @else
                                     {{ $valores[$chave] ?? '—' }}
@@ -36,29 +36,21 @@
                         </li>
                         <li>
                             <strong>Saída e vistoria</strong>
-                            <p class="mb-0">{{
-                                $valores['saida_real'] !== '—'
-                                    ? $valores['saida_real']
-                                    : 'Saída ainda não registrada.'
-                            }}</p>
+                            <p class="mb-0">{{ $valores['saida_real'] !== '—' ? $valores['saida_real'] : 'Saída ainda não registrada.' }}</p>
                         </li>
                         <li>
                             <strong>Retorno e conclusão</strong>
-                            <p class="mb-0">{{
-                                $valores['retorno_real'] !== '—'
-                                    ? $valores['retorno_real']
-                                    : 'Retorno ainda não registrado.'
-                            }}</p>
+                            <p class="mb-0">{{ $valores['retorno_real'] !== '—' ? $valores['retorno_real'] : 'Retorno ainda não registrado.' }}</p>
                         </li>
                     </ol></x-ui.panel
                 >
             @endif
-            @includeIf ('records.extras.' . $codigo)
+            @includeIf ('records.extras.'.$codigo)
             <x-ui.panel titulo="Histórico"><x-fleet.history :eventos="$eventos" /></x-ui.panel>
         </div>
         <div class="stack">
             <x-ui.panel titulo="Ações disponíveis">
-                @forelse ($operacoes as $acao => $rotulo)
+                @forelse ($operacoes as $acao=>$rotulo)
                     <a
                         class="btn btn-outline-secondary w-100 mb-2"
                         href="{{ route($codigo.'.operation', ['registro'=>$registro->id,'acao'=>$acao]) }}"

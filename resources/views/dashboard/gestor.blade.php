@@ -31,7 +31,7 @@
             <a class="row-summary text-decoration-none" href="{{ route('solicitacoes.show', $solicitacao->id) }}"
                 ><div>
                     <strong>{{ $solicitacao->unidade }}</strong>
-                    <p class="small text-body-secondary mb-0">{{ $solicitacao->protocolo }} · {{ config('statuses.' . $solicitacao->situacao) }}</p>
+                    <p class="small text-body-secondary mb-0">{{ $solicitacao->protocolo }} · {{ config('statuses.'.$solicitacao->situacao) }}</p>
                 </div>
                 <x-ui.icon nome="chevron-right"
             /></a>

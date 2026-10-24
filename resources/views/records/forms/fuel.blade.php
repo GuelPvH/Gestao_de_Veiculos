@@ -10,14 +10,7 @@
     rotulo="Combustível"
     tipo="select"
     :obrigatorio="true"
-    :opcoes="[
-        'gasolina' => 'Gasolina',
-        'etanol' => 'Etanol',
-        'diesel' => 'Diesel',
-        'gnv' => 'GNV',
-        'eletricidade' => 'Eletricidade',
-        'outro' => 'Outro',
-    ]"
+    :opcoes="['gasolina'=>'Gasolina','etanol'=>'Etanol','diesel'=>'Diesel','gnv'=>'GNV','eletricidade'=>'Eletricidade','outro'=>'Outro']"
     data-fuel-type
 />
 <div class="row">
@@ -37,7 +30,7 @@
             rotulo="Unidade de medida"
             tipo="select"
             :obrigatorio="true"
-            :opcoes="['litro' => 'Litro', 'm3' => 'Metro cúbico', 'kwh' => 'Quilowatt-hora']"
+            :opcoes="['litro'=>'Litro','m3'=>'Metro cúbico','kwh'=>'Quilowatt-hora']"
             data-fuel-unit
         />
     </div>

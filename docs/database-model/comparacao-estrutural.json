@@ -1,0 +1,570 @@
+{
+  "missing": {
+    "tables": [
+      "veiculo_rastreadores"
+    ],
+    "views": [],
+    "routines": [],
+    "triggers": [
+      "tg_instalacao_rastreador_bu",
+      "tg_posicao_bi",
+      "tg_preservar_veiculo_rastreadores_bd"
+    ]
+  },
+  "extra": {
+    "tables": [],
+    "views": [],
+    "routines": [],
+    "triggers": [
+      "tg_posicao_sem_instalacao_bi"
+    ]
+  },
+  "changed_columns": [
+    {
+      "table": "desafios_mfa",
+      "column": "finalidade",
+      "properties": {
+        "COLLATION_NAME": {
+          "local": "utf8mb4_0900_ai_ci",
+          "remote": "utf8mb4_unicode_ci"
+        }
+      }
+    },
+    {
+      "table": "recuperacoes_mfa",
+      "column": "justificativa",
+      "properties": {
+        "COLLATION_NAME": {
+          "local": "utf8mb4_0900_ai_ci",
+          "remote": "utf8mb4_unicode_ci"
+        }
+      }
+    }
+  ],
+  "changed_indexes": [
+    {
+      "table": "veiculo_rastreadores",
+      "index": "PRIMARY",
+      "local": [
+        [
+          "id",
+          0,
+          null,
+          "BTREE"
+        ]
+      ],
+      "remote": null
+    },
+    {
+      "table": "veiculo_rastreadores",
+      "index": "fk_vr_autor",
+      "local": [
+        [
+          "instalado_por",
+          1,
+          null,
+          "BTREE"
+        ]
+      ],
+      "remote": null
+    },
+    {
+      "table": "veiculo_rastreadores",
+      "index": "fk_vr_rastreador",
+      "local": [
+        [
+          "rastreador_id",
+          1,
+          null,
+          "BTREE"
+        ]
+      ],
+      "remote": null
+    },
+    {
+      "table": "veiculo_rastreadores",
+      "index": "fk_vr_veiculo",
+      "local": [
+        [
+          "veiculo_id",
+          1,
+          null,
+          "BTREE"
+        ]
+      ],
+      "remote": null
+    },
+    {
+      "table": "veiculo_rastreadores",
+      "index": "uq_vr_identidade",
+      "local": [
+        [
+          "id",
+          0,
+          null,
+          "BTREE"
+        ],
+        [
+          "veiculo_id",
+          0,
+          null,
+          "BTREE"
+        ]
+      ],
+      "remote": null
+    },
+    {
+      "table": "veiculo_rastreadores",
+      "index": "uq_vr_rastreador_aberto",
+      "local": [
+        [
+          "rastreador_aberto",
+          0,
+          null,
+          "BTREE"
+        ]
+      ],
+      "remote": null
+    },
+    {
+      "table": "veiculo_rastreadores",
+      "index": "uq_vr_veiculo_aberto",
+      "local": [
+        [
+          "veiculo_aberto",
+          0,
+          null,
+          "BTREE"
+        ]
+      ],
+      "remote": null
+    }
+  ],
+  "changed_foreign_keys": [
+    {
+      "table": "posicoes_rastreamento",
+      "name": "fk_posicao_instalacao",
+      "local": {
+        "columns": [
+          "instalacao_id",
+          "veiculo_id"
+        ],
+        "target": "veiculo_rastreadores",
+        "target_columns": [
+          "id",
+          "veiculo_id"
+        ],
+        "delete": "RESTRICT",
+        "update": "RESTRICT"
+      },
+      "remote": null
+    },
+    {
+      "table": "veiculo_rastreadores",
+      "name": "fk_vr_autor",
+      "local": {
+        "columns": [
+          "instalado_por"
+        ],
+        "target": "usuarios",
+        "target_columns": [
+          "id"
+        ],
+        "delete": "RESTRICT",
+        "update": "RESTRICT"
+      },
+      "remote": null
+    },
+    {
+      "table": "veiculo_rastreadores",
+      "name": "fk_vr_rastreador",
+      "local": {
+        "columns": [
+          "rastreador_id"
+        ],
+        "target": "rastreadores",
+        "target_columns": [
+          "id"
+        ],
+        "delete": "RESTRICT",
+        "update": "RESTRICT"
+      },
+      "remote": null
+    },
+    {
+      "table": "veiculo_rastreadores",
+      "name": "fk_vr_veiculo",
+      "local": {
+        "columns": [
+          "veiculo_id"
+        ],
+        "target": "veiculos",
+        "target_columns": [
+          "id"
+        ],
+        "delete": "RESTRICT",
+        "update": "RESTRICT"
+      },
+      "remote": null
+    }
+  ],
+  "changed_checks": [
+    {
+      "table": "anexos",
+      "name": "ck_anexo_alvo",
+      "local": "(((((((((`revisao_id` is not null) + (`ocorrencia_id` is not null)) + (`checklist_id` is not null)) + (`despesa_id` is not null)) + (`manutencao_id` is not null)) + (`multa_id` is not null)) + (`chamado_id` is not null)) + (`mensagem_id` is not null)) = 1)",
+      "remote": "(`revisao_id` is not null) + (`ocorrencia_id` is not null) + (`checklist_id` is not null) + (`despesa_id` is not null) + (`manutencao_id` is not null) + (`multa_id` is not null) + (`chamado_id` is not null) + (`mensagem_id` is not null) = 1",
+      "classification": "expression_serialization_or_logic_to_review"
+    },
+    {
+      "table": "exportacao_registros",
+      "name": "ck_er_alvo",
+      "local": "(((((((((((((`solicitacao_id` is not null) + (`viagem_id` is not null)) + (`veiculo_id` is not null)) + (`despesa_id` is not null)) + (`multa_id` is not null)) + (`chamado_id` is not null)) + (`usuario_id` is not null)) + (`perfil_id` is not null)) + (`rota_id` is not null)) + (`auditoria_id` is not null)) + (`posicao_rastreamento_id` is not null)) + (`posicao_manual_id` is not null)) = 1)",
+      "remote": "(`solicitacao_id` is not null) + (`viagem_id` is not null) + (`veiculo_id` is not null) + (`despesa_id` is not null) + (`multa_id` is not null) + (`chamado_id` is not null) + (`usuario_id` is not null) + (`perfil_id` is not null) + (`rota_id` is not null) + (`auditoria_id` is not null) + (`posicao_rastreamento_id` is not null) + (`posicao_manual_id` is not null) = 1",
+      "classification": "expression_serialization_or_logic_to_review"
+    },
+    {
+      "table": "veiculo_rastreadores",
+      "name": "ck_vr_periodo",
+      "local": "((`removido_em` is null) or (`removido_em` > `instalado_em`))",
+      "remote": null,
+      "classification": "missing_constraint"
+    }
+  ],
+  "changed_views": [
+    {
+      "name": "vw_frota",
+      "local_definition": "select `v`.`id` AS `id`,`v`.`unidade_id` AS `unidade_id`,`v`.`categoria_id` AS `categoria_id`,`v`.`nome` AS `nome`,`v`.`placa` AS `placa`,`v`.`renavam` AS `renavam`,`v`.`chassi` AS `chassi`,`v`.`marca` AS `marca`,`v`.`modelo` AS `modelo`,`v`.`ano_fabricacao` AS `ano_fabricacao`,`v`.`ano_modelo` AS `ano_modelo`,`v`.`capacidade` AS `capacidade`,`v`.`quilometragem_atual` AS `quilometragem_atual`,`v`.`situacao_cadastro` AS `situacao_cadastro`,`v`.`observacoes` AS `observacoes`,`v`.`criado_por` AS `criado_por`,`v`.`versao` AS `versao`,`v`.`criado_em` AS `criado_em`,`v`.`atualizado_em` AS `atualizado_em`,`c`.`nome` AS `categoria`,`un`.`nome` AS `unidade`,(case when (`v`.`situacao_cadastro` <> 'ativo') then `v`.`situacao_cadastro` when exists(select 1 from `schema_remoto`.`viagens` `t` where ((`t`.`veiculo_id` = `v`.`id`) and (`t`.`situacao` = 'em_andamento'))) then 'em_viagem' when (exists(select 1 from `schema_remoto`.`reservas` `r` where ((`r`.`veiculo_id` = `v`.`id`) and (`r`.`situacao` = 'ativa') and (`r`.`tipo` = 'manutencao') and (`r`.`inicio` <= utc_timestamp(6)) and (`r`.`fim` > utc_timestamp(6)))) or exists(select 1 from `schema_remoto`.`manutencoes` `m` where ((`m`.`veiculo_id` = `v`.`id`) and (`m`.`situacao` = 'em_execucao')))) then 'manutencao' when exists(select 1 from `schema_remoto`.`reservas` `r` where ((`r`.`veiculo_id` = `v`.`id`) and (`r`.`situacao` = 'ativa') and (`r`.`tipo` = 'indisponibilidade') and (`r`.`inicio` <= utc_timestamp(6)) and (`r`.`fim` > utc_timestamp(6)))) then 'indisponivel' else 'disponivel' end) AS `situacao_operacional` from ((`schema_remoto`.`veiculos` `v` join `schema_remoto`.`categorias_veiculo` `c` on((`c`.`id` = `v`.`categoria_id`))) join `schema_remoto`.`unidades` `un` on((`un`.`id` = `v`.`unidade_id`)))",
+      "remote_definition": "select `v`.`id` AS `id`,`v`.`unidade_id` AS `unidade_id`,`v`.`categoria_id` AS `categoria_id`,`v`.`nome` AS `nome`,`v`.`placa` AS `placa`,`v`.`renavam` AS `renavam`,`v`.`chassi` AS `chassi`,`v`.`marca` AS `marca`,`v`.`modelo` AS `modelo`,`v`.`ano_fabricacao` AS `ano_fabricacao`,`v`.`ano_modelo` AS `ano_modelo`,`v`.`capacidade` AS `capacidade`,`v`.`quilometragem_atual` AS `quilometragem_atual`,`v`.`situacao_cadastro` AS `situacao_cadastro`,`v`.`observacoes` AS `observacoes`,`v`.`criado_por` AS `criado_por`,`v`.`versao` AS `versao`,`v`.`criado_em` AS `criado_em`,`v`.`atualizado_em` AS `atualizado_em`,`c`.`nome` AS `categoria`,`un`.`nome` AS `unidade`,case when `v`.`situacao_cadastro` <> 'ativo' then `v`.`situacao_cadastro` when exists(select 1 from `schema_remoto`.`viagens` `t` where `t`.`veiculo_id` = `v`.`id` and `t`.`situacao` = 'em_andamento' limit 1) then 'em_viagem' when exists(select 1 from `schema_remoto`.`reservas` `r` where `r`.`veiculo_id` = `v`.`id` and `r`.`situacao` = 'ativa' and `r`.`tipo` = 'manutencao' and `r`.`inicio` <= utc_timestamp(6) and `r`.`fim` > utc_timestamp(6) limit 1) or exists(select 1 from `schema_remoto`.`manutencoes` `m` where `m`.`veiculo_id` = `v`.`id` and `m`.`situacao` = 'em_execucao' limit 1) then 'manutencao' when exists(select 1 from `schema_remoto`.`reservas` `r` where `r`.`veiculo_id` = `v`.`id` and `r`.`situacao` = 'ativa' and `r`.`tipo` = 'indisponibilidade' and `r`.`inicio` <= utc_timestamp(6) and `r`.`fim` > utc_timestamp(6) limit 1) then 'indisponivel' else 'disponivel' end AS `situacao_operacional` from ((`schema_remoto`.`veiculos` `v` join `schema_remoto`.`categorias_veiculo` `c` on(`c`.`id` = `v`.`categoria_id`)) join `schema_remoto`.`unidades` `un` on(`un`.`id` = `v`.`unidade_id`))",
+      "classification": "definition_text_differs_after_syntax_normalization"
+    },
+    {
+      "name": "vw_monitoramento",
+      "local_definition": "select `v`.`id` AS `veiculo_id`,`v`.`placa` AS `placa`,`v`.`nome` AS `nome`,`v`.`unidade_id` AS `unidade_id`,`vr`.`id` AS `instalacao_id`,`r`.`identificador_externo` AS `identificador_externo`,`r`.`provedor` AS `provedor`,`schema_remoto`.`p`.`capturado_em` AS `capturado_em`,`schema_remoto`.`p`.`recebido_em` AS `recebido_em`,`schema_remoto`.`p`.`latitude` AS `latitude`,`schema_remoto`.`p`.`longitude` AS `longitude`,`schema_remoto`.`p`.`velocidade_kmh` AS `velocidade_kmh`,(case when (`vr`.`id` is null) then 'sem_rastreador' when (`r`.`ativo` = 0) then 'rastreador_inativo' when ((`schema_remoto`.`p`.`id` is null) or (`schema_remoto`.`p`.`capturado_em` < (utc_timestamp(6) + interval -(`cfg`.`limite_sem_comunicacao_minutos`) minute))) then 'sem_comunicacao' else 'transmitindo' end) AS `situacao_comunicacao` from ((((`schema_remoto`.`veiculos` `v` join `schema_remoto`.`configuracao_sistema` `cfg`) left join `schema_remoto`.`veiculo_rastreadores` `vr` on(((`vr`.`veiculo_id` = `v`.`id`) and (`vr`.`removido_em` is null)))) left join `schema_remoto`.`rastreadores` `r` on((`r`.`id` = `vr`.`rastreador_id`))) left join `schema_remoto`.`vw_ultima_posicao_rastreador` `p` on((`schema_remoto`.`p`.`instalacao_id` = `vr`.`id`)))",
+      "remote_definition": "select `v`.`id` AS `veiculo_id`,`v`.`placa` AS `placa`,`v`.`nome` AS `nome`,`v`.`unidade_id` AS `unidade_id`,`p`.`instalacao_id` AS `instalacao_id`,cast(NULL as char(100) charset utf8mb4) AS `identificador_externo`,cast(NULL as char(100) charset utf8mb4) AS `provedor`,`p`.`capturado_em` AS `capturado_em`,`p`.`recebido_em` AS `recebido_em`,`p`.`latitude` AS `latitude`,`p`.`longitude` AS `longitude`,`p`.`velocidade_kmh` AS `velocidade_kmh`,case when `p`.`id` is null then 'sem_rastreador' when `p`.`capturado_em` < utc_timestamp(6) + interval -`cfg`.`limite_sem_comunicacao_minutos` minute then 'sem_comunicacao' else 'transmitindo' end AS `situacao_comunicacao` from ((`schema_remoto`.`veiculos` `v` join `schema_remoto`.`configuracao_sistema` `cfg`) left join `schema_remoto`.`posicoes_rastreamento` `p` on(`p`.`veiculo_id` = `v`.`id` and !exists(select 1 from `schema_remoto`.`posicoes_rastreamento` `newer` where `newer`.`veiculo_id` = `p`.`veiculo_id` and (`newer`.`capturado_em` > `p`.`capturado_em` or `newer`.`capturado_em` = `p`.`capturado_em` and `newer`.`id` > `p`.`id`) limit 1)))",
+      "classification": "definition_text_differs_after_syntax_normalization"
+    },
+    {
+      "name": "vw_ultima_posicao_rastreador",
+      "local_definition": "select `p`.`id` AS `id`,`p`.`instalacao_id` AS `instalacao_id`,`p`.`veiculo_id` AS `veiculo_id`,`p`.`viagem_id` AS `viagem_id`,`p`.`identificador_evento` AS `identificador_evento`,`p`.`capturado_em` AS `capturado_em`,`p`.`recebido_em` AS `recebido_em`,`p`.`latitude` AS `latitude`,`p`.`longitude` AS `longitude`,`p`.`velocidade_kmh` AS `velocidade_kmh`,`p`.`precisao_metros` AS `precisao_metros`,`p`.`ignicao` AS `ignicao` from `schema_remoto`.`posicoes_rastreamento` `p` where exists(select 1 from `schema_remoto`.`posicoes_rastreamento` `newer` where ((`newer`.`instalacao_id` = `p`.`instalacao_id`) and ((`newer`.`capturado_em` > `p`.`capturado_em`) or ((`newer`.`capturado_em` = `p`.`capturado_em`) and (`newer`.`id` > `p`.`id`))))) is false",
+      "remote_definition": "select `p`.`id` AS `id`,`p`.`instalacao_id` AS `instalacao_id`,`p`.`veiculo_id` AS `veiculo_id`,`p`.`viagem_id` AS `viagem_id`,`p`.`identificador_evento` AS `identificador_evento`,`p`.`capturado_em` AS `capturado_em`,`p`.`recebido_em` AS `recebido_em`,`p`.`latitude` AS `latitude`,`p`.`longitude` AS `longitude`,`p`.`velocidade_kmh` AS `velocidade_kmh`,`p`.`precisao_metros` AS `precisao_metros`,`p`.`ignicao` AS `ignicao` from `schema_remoto`.`posicoes_rastreamento` `p` where !exists(select 1 from `schema_remoto`.`posicoes_rastreamento` `newer` where `newer`.`instalacao_id` = `p`.`instalacao_id` and (`newer`.`capturado_em` > `p`.`capturado_em` or `newer`.`capturado_em` = `p`.`capturado_em` and `newer`.`id` > `p`.`id`) limit 1)",
+      "classification": "definition_text_differs_after_syntax_normalization"
+    }
+  ],
+  "changed_routines": [],
+  "changed_triggers": [],
+  "engine_equivalences": [
+    {
+      "table": "auditoria",
+      "column": "antes",
+      "kind": "MariaDB JSON alias LONGTEXT + JSON_VALID"
+    },
+    {
+      "table": "auditoria",
+      "column": "depois",
+      "kind": "MariaDB JSON alias LONGTEXT + JSON_VALID"
+    },
+    {
+      "table": "credenciais_mfa",
+      "column": "registro",
+      "kind": "MariaDB JSON alias LONGTEXT + JSON_VALID"
+    },
+    {
+      "table": "desafios_mfa",
+      "column": "opcoes",
+      "kind": "MariaDB JSON alias LONGTEXT + JSON_VALID"
+    },
+    {
+      "table": "exportacao_registros",
+      "column": "snapshot",
+      "kind": "MariaDB JSON alias LONGTEXT + JSON_VALID"
+    },
+    {
+      "table": "exportacoes",
+      "column": "filtros",
+      "kind": "MariaDB JSON alias LONGTEXT + JSON_VALID"
+    }
+  ],
+  "representation_differences": [
+    {
+      "table": "abastecimentos",
+      "name": "ck_abastecimento_medida",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "auditoria",
+      "name": "ck_auditoria_contexto",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "categorias_veiculo",
+      "name": "ck_categoria_cnh",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "chamados",
+      "name": "ck_chamado_resolvido",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "checklist_itens",
+      "name": "ck_checklist_flags",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "configuracao_sistema",
+      "name": "ck_config_moeda",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "confirmacoes_identidade",
+      "name": "ck_confirmacao_finalidade",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "controle_vinculos",
+      "name": "ck_cv_flags",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "email_outbox",
+      "name": "ck_outbox_pedido",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "email_outbox",
+      "name": "ck_outbox_segredo",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "exportacoes",
+      "name": "ck_exportacao_final",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "manutencoes",
+      "name": "ck_manutencao_km",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "manutencoes",
+      "name": "ck_manutencao_periodo",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "motoristas",
+      "name": "ck_motorista_categoria",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "multa_conferencias",
+      "name": "ck_mcf_resultado",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "multas",
+      "name": "ck_multa_precisao",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "multas",
+      "name": "ck_multa_responsavel",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "notificacao_eventos",
+      "name": "ck_ne_alvo",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "pneu_instalacoes",
+      "name": "ck_pi_km",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "pneu_instalacoes",
+      "name": "ck_pi_remocao",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "pneus",
+      "name": "ck_pneu_descarte",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "posicoes_rastreamento",
+      "name": "ck_posicao_medidas",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "reservas",
+      "name": "ck_reserva_tipo",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "rotas_sistema",
+      "name": "ck_rota_caminho",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "rotas_sistema",
+      "name": "ck_rota_flags",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "sessoes",
+      "name": "ck_sessao_fim",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "sessoes",
+      "name": "ck_sessao_reautenticacao",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "solicitacao_paradas",
+      "name": "ck_parada_coordenadas",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "solicitacao_revisoes",
+      "name": "ck_revisao_flags",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "solicitacao_revisoes",
+      "name": "ck_revisao_latitude",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "solicitacao_revisoes",
+      "name": "ck_revisao_longitude",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "solicitacoes",
+      "name": "ck_solicitacao_revisao",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "usuarios",
+      "name": "ck_identidade_pendente",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "usuarios",
+      "name": "ck_senha_temporaria_validade",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "usuarios",
+      "name": "ck_usuario_flags",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "viagem_checklist_respostas",
+      "name": "ck_vcr_observacao",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "viagem_ocorrencias",
+      "name": "ck_ocorrencia_coordenadas",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "viagens",
+      "name": "ck_viagem_estado",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "viagens",
+      "name": "ck_viagem_km",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "table": "viagens",
+      "name": "ck_viagem_periodo",
+      "kind": "CHECK syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_administradores_permanentes",
+      "kind": "VIEW syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_custos_veiculo_mensais",
+      "kind": "VIEW syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_despesas_detalhadas",
+      "kind": "VIEW syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_multas_detalhadas",
+      "kind": "VIEW syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_notificacoes_usuario",
+      "kind": "VIEW syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_permissoes_efetivas",
+      "kind": "VIEW syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_resumo_financeiro_veiculo",
+      "kind": "VIEW syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_solicitacoes_atuais",
+      "kind": "VIEW syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_trajetos_observados",
+      "kind": "VIEW syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_viagens_detalhadas",
+      "kind": "VIEW syntax normalized by SQL parser"
+    },
+    {
+      "name": "vw_vinculos_ativos",
+      "kind": "VIEW syntax normalized by SQL parser"
+    }
+  ],
+  "dependencies_on_missing": [],
+  "missing_columns": [
+    [
+      "veiculo_rastreadores",
+      "id"
+    ],
+    [
+      "veiculo_rastreadores",
+      "instalado_em"
+    ],
+    [
+      "veiculo_rastreadores",
+      "instalado_por"
+    ],
+    [
+      "veiculo_rastreadores",
+      "rastreador_aberto"
+    ],
+    [
+      "veiculo_rastreadores",
+      "rastreador_id"
+    ],
+    [
+      "veiculo_rastreadores",
+      "removido_em"
+    ],
+    [
+      "veiculo_rastreadores",
+      "veiculo_aberto"
+    ],
+    [
+      "veiculo_rastreadores",
+      "veiculo_id"
+    ]
+  ],
+  "extra_columns": []
+}

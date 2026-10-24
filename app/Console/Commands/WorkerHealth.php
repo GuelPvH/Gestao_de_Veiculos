@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Value;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Throwable;
@@ -14,12 +15,12 @@ class WorkerHealth extends Command
 
     public function handle(): int
     {
-        $queue = (string) $this->argument('queue');
+        $queue = Value::string($this->argument('queue'));
         if (! in_array($queue, ['auth-mails', 'security-mails', 'scheduler'], true)) {
             return self::FAILURE;
         }
         try {
-            $heartbeat = (int) Cache::store('redis')->get('fleet:heartbeat:'.$queue, 0);
+            $heartbeat = Value::integer(Cache::store(Value::string(config('cache.default')))->get('fleet:heartbeat:'.$queue, 0));
             if ($heartbeat < time() - 90) {
                 $this->error('Processo sem atividade recente.');
 

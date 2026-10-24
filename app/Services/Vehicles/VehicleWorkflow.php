@@ -4,6 +4,7 @@ namespace App\Services\Vehicles;
 
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
+use App\Support\Value;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,13 +15,16 @@ class VehicleWorkflow
 {
     public function __construct(private AccessContext $acesso, private ProcedureRunner $procedimentos) {}
 
+    /**
+     * @param  array<string, mixed>  $dados
+     */
     public function create(array $dados): int
     {
         return DB::transaction(function () use ($dados): int {
-            $unidade = (int) $dados['unidade_id'];
+            $unidade = Value::integer($dados['unidade_id']);
             $this->authorize('criar', $unidade, false);
             $this->activeUnit($unidade);
-            $this->activeCategory((int) $dados['categoria_id']);
+            $this->activeCategory(Value::integer($dados['categoria_id']));
             if ($dados['situacao_cadastro'] === 'baixado') {
                 throw ValidationException::withMessages(['situacao_cadastro' => 'Um veículo novo não pode ser cadastrado como baixado.']);
             }
@@ -37,16 +41,19 @@ class VehicleWorkflow
         }, 3);
     }
 
+    /**
+     * @param  array<string, mixed>  $dados
+     */
     public function update(int $id, array $dados): void
     {
         DB::transaction(function () use ($id, $dados): void {
             $veiculo = $this->vehicle($id);
-            $this->authorize('editar', (int) $veiculo->unidade_id);
-            $this->version($veiculo, (int) $dados['versao']);
-            $this->activeCategory((int) $dados['categoria_id']);
+            $this->authorize('editar', Value::integer($veiculo->unidade_id));
+            $this->version($veiculo, Value::integer($dados['versao']));
+            $this->activeCategory(Value::integer($dados['categoria_id']));
             $this->checkIdentifiers($dados, $id);
             $this->checkYears($dados);
-            if ((float) $dados['quilometragem_atual'] < (float) $veiculo->quilometragem_atual) {
+            if (Value::number($dados['quilometragem_atual']) < Value::number($veiculo->quilometragem_atual)) {
                 throw ValidationException::withMessages(['quilometragem_atual' => 'A quilometragem não pode diminuir.']);
             }
             if ($veiculo->situacao_cadastro !== 'baixado' && $dados['situacao_cadastro'] === 'baixado' && ($dados['confirmacao_baixa'] ?? '') !== 'BAIXAR') {
@@ -56,7 +63,7 @@ class VehicleWorkflow
                 throw ValidationException::withMessages(['situacao_cadastro' => 'Um veículo baixado não pode ser reativado por esta operação.']);
             }
             if ($veiculo->situacao_cadastro !== 'ativo' && $dados['situacao_cadastro'] === 'ativo') {
-                $this->activeUnit((int) $veiculo->unidade_id);
+                $this->activeUnit(Value::integer($veiculo->unidade_id));
             }
             if ($dados['situacao_cadastro'] !== 'ativo' && $veiculo->situacao_cadastro === 'ativo') {
                 $ocupado = DB::table('reservas')->where('veiculo_id', $id)->where('situacao', 'ativa')->exists()
@@ -65,35 +72,38 @@ class VehicleWorkflow
                     throw ValidationException::withMessages(['situacao_cadastro' => 'Libere as reservas e conclua as viagens antes de desativar ou baixar o veículo.']);
                 }
             }
-            if (((int) $dados['categoria_id'] !== (int) $veiculo->categoria_id || (int) $dados['capacidade'] !== (int) $veiculo->capacidade)
+            if ((Value::integer($dados['categoria_id']) !== Value::integer($veiculo->categoria_id) || Value::integer($dados['capacidade']) !== Value::integer($veiculo->capacidade))
                 && DB::table('reservas')->where('veiculo_id', $id)->where('situacao', 'ativa')->where('tipo', 'viagem')->exists()) {
                 throw ValidationException::withMessages(['categoria_id' => 'Não altere categoria ou capacidade enquanto houver viagem reservada.']);
             }
-            $this->procedimentos->call('sp_exigir_permissao', [$this->linkId(), 'frota', 'editar', null, (int) $veiculo->unidade_id]);
+            $this->procedimentos->call('sp_exigir_permissao', [$this->linkId(), 'frota', 'editar', null, Value::integer($veiculo->unidade_id)]);
             $alterados = DB::table('veiculos')->where('id', $id)->where('versao', $dados['versao'])->update($this->fields($dados) + ['versao' => DB::raw('versao + 1')]);
             if ($alterados !== 1) {
                 $this->conflict();
             }
-            $this->audit('veiculo_atualizado', $id, mb_substr(trim($dados['justificativa']), 0, 1000));
+            $this->audit('veiculo_atualizado', $id, mb_substr(trim(Value::string($dados['justificativa'])), 0, 1000));
         }, 3);
     }
 
+    /**
+     * @param  array<string, mixed>  $dados
+     */
     public function block(int $id, array $dados): int
     {
         return DB::transaction(function () use ($id, $dados): int {
             $veiculo = $this->vehicle($id);
-            $this->authorize('gerenciar', (int) $veiculo->unidade_id);
-            $this->version($veiculo, (int) $dados['versao']);
+            $this->authorize('gerenciar', Value::integer($veiculo->unidade_id));
+            $this->version($veiculo, Value::integer($dados['versao']));
             if ($veiculo->situacao_cadastro !== 'ativo') {
                 throw ValidationException::withMessages(['operacao' => 'Somente veículos ativos podem receber bloqueios.']);
             }
-            $inicio = $this->utc($dados['inicio']);
-            $fim = $this->utc($dados['fim']);
+            $inicio = $this->utc(Value::string($dados['inicio']));
+            $fim = $this->utc(Value::string($dados['fim']));
             if ($inicio->lessThanOrEqualTo(CarbonImmutable::now('UTC'))) {
                 throw ValidationException::withMessages(['inicio' => 'O início do bloqueio deve ser futuro.']);
             }
             $this->checkAvailability($id, $inicio, $fim);
-            $this->procedimentos->call('sp_exigir_permissao', [$this->linkId(), 'frota', 'gerenciar', null, (int) $veiculo->unidade_id]);
+            $this->procedimentos->call('sp_exigir_permissao', [$this->linkId(), 'frota', 'gerenciar', null, Value::integer($veiculo->unidade_id)]);
             // No MySQL, tg_reserva_bi e sp_validar_reserva revalidam a agenda sob lock.
             $reserva = (int) DB::table('reservas')->insertGetId([
                 'veiculo_id' => $id,
@@ -101,55 +111,62 @@ class VehicleWorkflow
                 'inicio' => $inicio->format('Y-m-d H:i:s.u'),
                 'fim' => $fim->format('Y-m-d H:i:s.u'),
                 'situacao' => 'ativa',
-                'descricao' => trim($dados['descricao']),
+                'descricao' => trim(Value::string($dados['descricao'])),
                 'criado_por' => (int) Auth::id(),
             ]);
-            $this->incrementVersion($id, (int) $dados['versao']);
+            $this->incrementVersion($id, Value::integer($dados['versao']));
             $this->audit('veiculo_bloqueado', $id, 'Bloqueio de agenda '.$reserva.' registrado.');
 
             return $reserva;
         }, 3);
     }
 
+    /**
+     * @param  array<string, mixed>  $dados
+     */
     public function release(int $id, array $dados): void
     {
         DB::transaction(function () use ($id, $dados): void {
             $veiculo = $this->vehicle($id);
-            $this->authorize('gerenciar', (int) $veiculo->unidade_id);
-            $this->version($veiculo, (int) $dados['versao']);
-            $reserva = DB::table('reservas')->where('id', (int) $dados['reserva_id'])->where('veiculo_id', $id)->lockForUpdate()->first(['id', 'tipo', 'situacao']);
+            $this->authorize('gerenciar', Value::integer($veiculo->unidade_id));
+            $this->version($veiculo, Value::integer($dados['versao']));
+            $reserva = DB::table('reservas')->where('id', Value::integer($dados['reserva_id']))->where('veiculo_id', $id)->lockForUpdate()->first(['id', 'tipo', 'situacao']);
             if (! $reserva || $reserva->situacao !== 'ativa' || $reserva->tipo === 'viagem') {
                 throw ValidationException::withMessages(['reserva_id' => 'Selecione um bloqueio manual ativo deste veículo.']);
             }
             if (DB::table('manutencoes')->where('reserva_id', $reserva->id)->exists()) {
                 throw ValidationException::withMessages(['reserva_id' => 'Este bloqueio pertence a uma manutenção e deve ser encerrado nela.']);
             }
-            $this->procedimentos->call('sp_exigir_permissao', [$this->linkId(), 'frota', 'gerenciar', null, (int) $veiculo->unidade_id]);
+            $this->procedimentos->call('sp_exigir_permissao', [$this->linkId(), 'frota', 'gerenciar', null, Value::integer($veiculo->unidade_id)]);
             $alteradas = DB::table('reservas')->where('id', $reserva->id)->where('situacao', 'ativa')->update(['situacao' => 'liberada', 'liberada_em' => CarbonImmutable::now('UTC')->format('Y-m-d H:i:s.u')]);
             if ($alteradas !== 1) {
                 $this->conflict();
             }
-            $this->incrementVersion($id, (int) $dados['versao']);
-            $this->audit('veiculo_liberado', $id, 'Bloqueio de agenda '.$reserva->id.' liberado.');
+            $this->incrementVersion($id, Value::integer($dados['versao']));
+            $this->audit('veiculo_liberado', $id, 'Bloqueio de agenda '.Value::string($reserva->id).' liberado.');
         }, 3);
     }
 
+    /**
+     * @param  array<string, mixed>  $dados
+     * @return array<string, mixed>
+     */
     private function fields(array $dados): array
     {
         return [
-            'categoria_id' => (int) $dados['categoria_id'],
-            'nome' => trim($dados['nome']),
+            'categoria_id' => Value::integer($dados['categoria_id']),
+            'nome' => trim(Value::string($dados['nome'])),
             'placa' => $dados['placa'],
             'renavam' => $dados['renavam'] ?? null,
             'chassi' => $dados['chassi'] ?? null,
-            'marca' => isset($dados['marca']) ? trim($dados['marca']) : null,
-            'modelo' => isset($dados['modelo']) ? trim($dados['modelo']) : null,
+            'marca' => isset($dados['marca']) ? trim(Value::string($dados['marca'])) : null,
+            'modelo' => isset($dados['modelo']) ? trim(Value::string($dados['modelo'])) : null,
             'ano_fabricacao' => $dados['ano_fabricacao'] ?? null,
             'ano_modelo' => $dados['ano_modelo'] ?? null,
-            'capacidade' => (int) $dados['capacidade'],
+            'capacidade' => Value::integer($dados['capacidade']),
             'quilometragem_atual' => $dados['quilometragem_atual'],
             'situacao_cadastro' => $dados['situacao_cadastro'],
-            'observacoes' => isset($dados['observacoes']) ? trim($dados['observacoes']) : null,
+            'observacoes' => isset($dados['observacoes']) ? trim(Value::string($dados['observacoes'])) : null,
         ];
     }
 
@@ -164,14 +181,14 @@ class VehicleWorkflow
     private function authorize(string $acao, int $unidade, bool $consultar = true): void
     {
         $vinculo = $this->acesso->link();
-        abort_unless($vinculo !== null && Auth::id() !== null && (int) $vinculo->usuario_id === (int) Auth::id(), 403);
+        abort_unless($vinculo !== null && Auth::id() !== null && Value::integer($vinculo->usuario_id) === Value::integer(Auth::id()), 403);
         abort_unless((! $consultar || $this->acesso->can('frota', 'consultar', null, $unidade))
             && $this->acesso->can('frota', $acao, null, $unidade), 403);
     }
 
     private function linkId(): int
     {
-        return (int) $this->acesso->link()->vinculo_id;
+        return Value::integer($this->acesso->requireLink()->vinculo_id);
     }
 
     private function activeUnit(int $id): void
@@ -188,6 +205,9 @@ class VehicleWorkflow
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $dados
+     */
     private function checkIdentifiers(array $dados, ?int $except = null): void
     {
         foreach (['placa', 'renavam', 'chassi'] as $campo) {
@@ -196,7 +216,7 @@ class VehicleWorkflow
             }
             $consulta = DB::table('veiculos');
             if ($campo === 'placa') {
-                $normalizada = strtoupper(preg_replace('/[\s-]+/', '', $dados[$campo]));
+                $normalizada = strtoupper(preg_replace('/[\s-]+/', '', Value::string($dados[$campo])) ?? '');
                 $consulta->whereRaw("REPLACE(REPLACE(UPPER(placa), ' ', ''), '-', '') = ?", [$normalizada]);
             } else {
                 $consulta->where($campo, $dados[$campo]);
@@ -210,9 +230,12 @@ class VehicleWorkflow
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $dados
+     */
     private function checkYears(array $dados): void
     {
-        if (isset($dados['ano_fabricacao'], $dados['ano_modelo']) && (int) $dados['ano_modelo'] < (int) $dados['ano_fabricacao']) {
+        if (isset($dados['ano_fabricacao'], $dados['ano_modelo']) && Value::integer($dados['ano_modelo']) < Value::integer($dados['ano_fabricacao'])) {
             throw ValidationException::withMessages(['ano_modelo' => 'O ano do modelo não pode ser anterior ao de fabricação.']);
         }
     }
@@ -243,7 +266,7 @@ class VehicleWorkflow
 
     private function version(stdClass $veiculo, int $versao): void
     {
-        if ((int) $veiculo->versao !== $versao) {
+        if (Value::integer($veiculo->versao) !== $versao) {
             $this->conflict();
         }
     }

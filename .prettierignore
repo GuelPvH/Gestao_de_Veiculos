@@ -27,3 +27,9 @@ database/sql/
 # PHP é formatado pelo Laravel Pint; templates Blade usam Prettier.
 **/*.php
 !**/*.blade.php
+
+# Dependencies and generated runtime files.
+
+# Dependency lockfiles and generated verification/database documentation.
+/docs/verification/
+/docs/database-model/

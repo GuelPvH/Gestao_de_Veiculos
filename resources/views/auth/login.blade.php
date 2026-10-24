@@ -4,7 +4,7 @@
             <x-ui.logo />
             <div class="auth-hero-message">
                 <p class="small text-uppercase">Gestão de frota</p>
-                <h2>Cada viagem.<br>Tudo sob controle.</h2>
+                <h2>Cada viagem.<br />Tudo sob controle.</h2>
                 <p>Solicitações, veículos e pessoas conectados em uma operação mais organizada.</p>
             </div>
         </section>

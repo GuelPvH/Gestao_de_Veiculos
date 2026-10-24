@@ -1,4 +1,4 @@
-<x-layouts.authenticated titulo="Conta e aparência" :breadcrumbs="[['label' => 'Conta e aparência']]">
+<x-layouts.authenticated titulo="Conta e aparência" :breadcrumbs="[['label'=>'Conta e aparência']]">
     <x-ui.title titulo="Conta e aparência" subtitulo="Sua identidade, segurança e preferência visual." />
     <div class="dashboard-grid">
         <x-ui.panel titulo="Dados da conta">
@@ -44,16 +44,12 @@
                     @endforeach</ul
             ></x-ui.alert>
         @endif
-        <p>{{
-            $usuario->email_verificado_em
-                ? 'Seu endereço atual foi confirmado.'
-                : 'Seu endereço atual ainda precisa ser confirmado.'
-        }}</p>
+        <p>{{ $usuario->email_verificado_em ? 'Seu endereço atual foi confirmado.' : 'Seu endereço atual ainda precisa ser confirmado.' }}</p>
         @if ($usuario->email_pendente)
             <p>Endereço aguardando confirmação: {{ $usuario->email_pendente }}.</p>
         @endif
         @if (app(\App\Services\Auth\RecoverySettings::class)->available('email'))
-            @if ($usuario->email_pendente || !$usuario->email_verificado_em)
+            @if ($usuario->email_pendente || ! $usuario->email_verificado_em)
                 <form action="{{ route('identity.resend') }}" method="post">
                     @csrf
                     <button class="btn btn-outline-primary" type="submit">Enviar confirmação</button>
@@ -71,7 +67,7 @@
                     autocomplete="email"
                     value="{{ old('email', $usuario->email_pendente ?: $usuario->email) }}"
                     required
-                >
+                />
                 <x-forms.password nome="senha_atual" rotulo="Senha atual" autocomplete="current-password" />
                 <p class="form-text">Confirme o novo endereço pelo link individual. Esta alteração encerra suas sessões atuais.</p>
                 <button class="btn btn-primary" type="submit">Solicitar alteração de e-mail</button><x-ui.loading />
@@ -93,25 +89,10 @@
                 <tbody>
                     @foreach ($sessoes as $sessao)
                         <tr>
-                            <td>{{ $leituras->format($sessao->criado_em, 'datetime') }}</td>
+                            <td>{{ $leituras->format($sessao->criado_em,'datetime') }}</td>
+                            <td>{{ $leituras->format($sessao->ultima_atividade_em,'datetime') }}</td>
                             <td>
-                                {{
-                                    $leituras->format(
-                                        $sessao->ultima_atividade_em,
-                                        'datetime',
-                                    )
-                                }}
-                            </td>
-                            <td>
-                                {{
-                                    $sessao->encerrada_em
-                                        ? 'Encerrada · ' . str_replace('_', ' ', $sessao->motivo_encerramento)
-                                        : (\Carbon\CarbonImmutable::parse($sessao->expira_em, 'UTC')->isPast()
-                                            ? 'Prazo encerrado'
-                                            : ($sessao->id === session('fleet_session.id')
-                                                ? 'Sessão atual'
-                                                : 'Aberta'))
-                                }}
+                                {{ $sessao->encerrada_em ? 'Encerrada · '.str_replace('_',' ',$sessao->motivo_encerramento) : (\Carbon\CarbonImmutable::parse($sessao->expira_em,'UTC')->isPast() ? 'Prazo encerrado' : ($sessao->id === session('fleet_session.id') ? 'Sessão atual' : 'Aberta')) }}
                             </td>
                         </tr>
                     @endforeach

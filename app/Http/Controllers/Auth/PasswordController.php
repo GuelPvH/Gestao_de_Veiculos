@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Services\Auth\IdentityService;
 use App\Services\Auth\PasswordPolicy;
 use App\Services\Auth\RecoverySettings;
+use App\Support\CurrentUser;
+use App\Support\Value;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,15 +29,16 @@ class PasswordController extends Controller
 
     public function update(Request $requisicao, IdentityService $identidades): RedirectResponse
     {
+        /** @var array<string, mixed> $dados */
         $dados = $requisicao->validate(['senha_atual' => ['required', 'string', 'max:256'], 'nova_senha' => PasswordPolicy::rules()]);
-        $usuarioId = (int) $requisicao->user()->getAuthIdentifier();
+        $usuarioId = Value::integer(CurrentUser::get($requisicao)->getAuthIdentifier());
         $identidade = 'fleet-password-user:'.hash('sha256', (string) $usuarioId);
         $identidadeIp = 'fleet-password-user-ip:'.hash('sha256', $usuarioId.'|'.$requisicao->ip());
         abort_if(RateLimiter::tooManyAttempts($identidade, 15) || RateLimiter::tooManyAttempts($identidadeIp, 5), 429);
         RateLimiter::hit($identidade, 60);
         RateLimiter::hit($identidadeIp, 60);
 
-        $identidades->changePassword($usuarioId, $dados['senha_atual'], $dados['nova_senha']);
+        $identidades->changePassword($usuarioId, Value::string($dados['senha_atual']), Value::string($dados['nova_senha']));
         RateLimiter::clear($identidade);
         RateLimiter::clear($identidadeIp);
         Auth::logout();
@@ -52,8 +55,9 @@ class PasswordController extends Controller
 
     public function sendRecovery(Request $requisicao, RecoverySettings $settings, IdentityService $identidades): RedirectResponse
     {
+        /** @var array<string, mixed> $dados */
         $dados = $requisicao->validate(['identificador' => ['required', 'string', 'max:100']]);
-        $identificador = mb_strtolower(trim($dados['identificador']));
+        $identificador = mb_strtolower(trim(Value::string($dados['identificador'])));
         $ip = (string) $requisicao->ip();
         $chaveIp = 'fleet-recovery-ip:'.hash('sha256', $ip);
         $chaveIdentidade = 'fleet-recovery-identity:'.hash('sha256', $identificador);
@@ -106,7 +110,7 @@ class PasswordController extends Controller
 
         $dados = $validador->validated();
         try {
-            $identidades->consumeRecovery($dados['token'], $dados['nova_senha']);
+            $identidades->consumeRecovery(Value::string($dados['token']), Value::string($dados['nova_senha']));
         } catch (ValidationException $erro) {
             return response()->view('auth.reset', [
                 'token' => $token, 'errors' => $erro->validator->errors(),

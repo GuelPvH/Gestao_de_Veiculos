@@ -1,8 +1,6 @@
 @props (['pontos' => []])
 @php
-    $posicoes = collect($pontos)
-        ->filter(fn($p) => isset($p->latitude, $p->longitude) && is_numeric($p->latitude) && is_numeric($p->longitude))
-        ->values();
+    $posicoes = collect($pontos)->filter(fn($p) => isset($p->latitude, $p->longitude) && is_numeric($p->latitude) && is_numeric($p->longitude))->values();
 @endphp
 <div class="position-map">
     @if ($posicoes->isEmpty())
@@ -12,16 +10,14 @@
         />
     @else
         @php
-            $minLat = $posicoes->min('latitude');
-            $maxLat = $posicoes->max('latitude');
-            $minLon = $posicoes->min('longitude');
-            $maxLon = $posicoes->max('longitude');
+            $minLat = $posicoes->min('latitude'); $maxLat = $posicoes->max('latitude');
+            $minLon = $posicoes->min('longitude'); $maxLon = $posicoes->max('longitude');
         @endphp
         <svg viewBox="0 0 600 260" role="img" aria-label="Distribuição das posições dos veículos; coordenadas disponíveis na lista">
-            @for ($i = 0; $i < 7; $i++)
+            @for ($i=0; $i<7; $i++)
                 <path d="M {{ $i*100 }} 0 V 260" class="map-grid" />
             @endfor
-            @for ($i = 0; $i < 4; $i++)
+            @for ($i=0; $i<4; $i++)
                 <path d="M 0 {{ $i*80 }} H 600" class="map-grid" />
             @endfor
             @foreach ($posicoes as $ponto)

@@ -19,7 +19,7 @@
         tipo="select"
         :valor="$registro->ativo ?? 1"
         :obrigatorio="true"
-        :opcoes="['1' => 'Ativo', '0' => 'Inativo']"
+        :opcoes="['1'=>'Ativo','0'=>'Inativo']"
     />
 @else
     <x-forms.field
@@ -33,7 +33,7 @@
     <x-forms.field
         nome="nome"
         rotulo="Nome do perfil"
-        :valor="$acao === 'duplicate' ? '' : $registro->nome ?? ''"
+        :valor="$acao === 'duplicate' ? '' : ($registro->nome ?? '')"
         :obrigatorio="true"
         maxlength="100"
     />

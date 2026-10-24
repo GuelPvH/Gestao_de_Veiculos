@@ -19,7 +19,7 @@
                 @endif
             </li>
             @php ($ultimaExibida = 0)
-            @php ($paginas = collect([ 1, $paginacao->lastPage(), $paginacao->currentPage() - 1, $paginacao->currentPage(), $paginacao->currentPage() + 1 ]) ->filter(fn($pagina) => $pagina >= 1 && $pagina <= $paginacao->lastPage()) ->unique() ->sort())
+            @php ($paginas = collect([1,$paginacao->lastPage(),$paginacao->currentPage()-1,$paginacao->currentPage(),$paginacao->currentPage()+1])->filter(fn($pagina)=>$pagina>=1 && $pagina<=$paginacao->lastPage())->unique()->sort())
             @foreach ($paginas as $pagina)
                 @if ($ultimaExibida && $pagina - $ultimaExibida > 1)
                     <li class="page-item d-none d-sm-block"><span class="page-link">…</span></li>

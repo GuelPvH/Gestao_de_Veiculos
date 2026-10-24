@@ -2,10 +2,10 @@
 <!doctype html>
 <html lang="pt-BR" data-bs-theme="{{ in_array(request('tema'), ['light', 'dark'], true) ? request('tema') : 'light' }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="light dark">
-    <meta name="referrer" content="no-referrer">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="referrer" content="no-referrer" />
     <title>{{ $titulo }} · Frota · PF</title>
     <script>
         (() => {
@@ -31,7 +31,7 @@
     <a href="#main-content" class="skip-link">Pular para o conteúdo</a>
     {{ $slot }}
     @auth
-        @if (request()->attributes->has('fleet.session') && !request()->routeIs('mfa.index'))
+        @if (request()->attributes->has("fleet.session") && ! request()->routeIs("mfa.index"))
             <x-auth.session-modal />
         @endif
     @endauth

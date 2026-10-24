@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Services\Authorization\AccessContext;
+use App\Support\Value;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +18,7 @@ class TyreActionRequest extends FormRequest
         }
         $action = (string) $this->route('acao');
         if ($action === 'create') {
-            return $access->can('despesas', 'criar', (int) $link->usuario_id, (int) $link->unidade_id);
+            return $access->can('despesas', 'criar', Value::integer($link->usuario_id), Value::integer($link->unidade_id));
         }
         $record = DB::table('pneus as p')->join('despesas as d', 'd.id', '=', 'p.despesa_aquisicao_id')
             ->where('p.id', (int) $this->route('registro'))->first(['d.criado_por', 'd.unidade_id']);
@@ -30,10 +31,13 @@ class TyreActionRequest extends FormRequest
         $permission = $action === 'discard' ? 'cancelar' : 'editar';
 
         return in_array($action, ['install', 'remove', 'discard'], true)
-            && $access->can('despesas', 'consultar', (int) $record->criado_por, (int) $record->unidade_id)
-            && $access->can('despesas', $permission, (int) $record->criado_por, (int) $record->unidade_id);
+            && $access->can('despesas', 'consultar', Value::integer($record->criado_por), Value::integer($record->unidade_id))
+            && $access->can('despesas', $permission, Value::integer($record->criado_por), Value::integer($record->unidade_id));
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         return match ((string) $this->route('acao')) {

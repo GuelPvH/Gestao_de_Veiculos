@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Support\Value;
 use Symfony\Component\Serializer\SerializerInterface;
 use Webauthn\AttestationStatement\AttestationStatementSupportManager;
 use Webauthn\AttestationStatement\NoneAttestationStatementSupport;
@@ -23,16 +24,22 @@ class WebAuthnVerifier
         return (new WebauthnSerializerFactory(new AttestationStatementSupportManager([new NoneAttestationStatementSupport])))->create();
     }
 
+    /**
+     * @return array{string, string}
+     */
     public function settings(): array
     {
-        $origin = (string) config('fleet.mfa.origin', '');
-        $rp = (string) config('fleet.mfa.rp_id', '');
+        $origin = Value::string(config('fleet.mfa.origin', ''));
+        $rp = Value::string(config('fleet.mfa.rp_id', ''));
         $url = parse_url($origin);
         abort_unless(is_array($url) && ($url['scheme'] ?? '') === 'https' && ($url['host'] ?? '') === $rp && ! isset($url['user']) && ! isset($url['pass']) && ! isset($url['query']) && ! isset($url['fragment']) && in_array($url['path'] ?? '', ['', '/'], true), 503, 'MFA_NOT_CONFIGURED');
 
         return [rtrim($origin, '/'), $rp];
     }
 
+    /**
+     * @param  array<array-key, mixed>  $payload
+     */
     public function verify(array $payload, string $options, string $purpose, ?string $stored = null): CredentialRecord
     {
         [$origin, $rp] = $this->settings();
@@ -43,13 +50,13 @@ class WebAuthnVerifier
         if ($purpose === 'registration') {
             abort_unless($credential->response instanceof AuthenticatorAttestationResponse, 422);
             $creation = $serializer->deserialize($options, PublicKeyCredentialCreationOptions::class, 'json');
-            $record = AuthenticatorAttestationResponseValidator::create($factory->creationCeremony())->check($credential->response, $creation, $rp);
+            $record = AuthenticatorAttestationResponseValidator::create($factory->creationCeremony())->check($credential->response, $creation, Value::string($rp));
         } else {
             abort_unless($credential->response instanceof AuthenticatorAssertionResponse && $stored, 422);
             $record = $serializer->deserialize($stored, CredentialRecord::class, 'json');
             $assertion = $serializer->deserialize($options, PublicKeyCredentialRequestOptions::class, 'json');
             abort_unless(hash_equals($record->publicKeyCredentialId, $credential->rawId), 422);
-            $record = AuthenticatorAssertionResponseValidator::create($factory->requestCeremony())->check($record, $credential->response, $assertion, $rp, $record->userHandle);
+            $record = AuthenticatorAssertionResponseValidator::create($factory->requestCeremony())->check($record, $credential->response, $assertion, Value::string($rp), $record->userHandle);
         }
         abort_unless(hash_equals($record->publicKeyCredentialId, $credential->rawId), 422);
 

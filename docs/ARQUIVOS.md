@@ -1,6 +1,6 @@
 # Catálogo de arquivos
 
-Este catálogo descreve individualmente os **390 arquivos próprios** do repositório, incluindo esta documentação. Os caminhos são relativos à raiz do projeto e cada link abre a fonte correspondente. Dependências instaladas, caches, arquivos privados e saídas de build não integram o inventário.
+Este catálogo descreve individualmente os **413 arquivos próprios** do repositório, incluindo esta documentação. Os caminhos são relativos à raiz do projeto e cada link abre a fonte correspondente. Dependências instaladas, caches, arquivos privados e saídas de build não integram o inventário.
 
 A responsabilidade descreve o comportamento atual do arquivo e seu papel na arquitetura. Nas classes de serviço, as entradas públicas listadas ajudam a localizar o fluxo; métodos internos continuam sendo detalhes da implementação.
 
@@ -12,7 +12,7 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | [.dockerignore](../.dockerignore)                             | Exclui dependências, segredos, caches e resultados locais do contexto de build, mantendo a imagem restrita aos arquivos necessários. |
 | [.editorconfig](../.editorconfig)                             | Define codificação, indentação, finais de linha e limpeza de espaços para manter a edição consistente entre ferramentas.             |
-| [.env.example](../.env.example)                               | Modelo de variáveis da instalação: aplicação, banco, Redis, filas, correio e opções de segurança, sem credenciais reais.             |
+| [.env.example](../.env.example)                               | Modelo de variáveis da instalação: aplicação, banco, cache e filas MySQL, correio e opções de segurança, sem credenciais reais.      |
 | [.env.local.example](../.env.local.example)                   | Modelo complementar para o banco e os serviços locais de desenvolvimento.                                                            |
 | [.gitattributes](../.gitattributes)                           | Normaliza texto e finais de linha no Git e associa tipos de arquivo aos formatos de diff.                                            |
 | [.gitignore](../.gitignore)                                   | Exclui configurações privadas, dependências, caches e resultados gerados do versionamento.                                           |
@@ -25,11 +25,11 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | [composer.json](../composer.json)                             | Declara requisitos PHP, pacotes, autoload, scripts e política de instalação da aplicação.                                            |
 | [composer.lock](../composer.lock)                             | Fixa as versões e referências das dependências PHP para reproduzir a instalação.                                                     |
 | [docker-compose.override.yml](../docker-compose.override.yml) | Acrescenta runtime de desenvolvimento, montagem do código e Vite com atualização de assets.                                          |
-| [docker-compose.yml](../docker-compose.yml)                   | Define aplicação, Redis, workers de autenticação e segurança, scheduler e perfis opcionais de administração/manutenção.              |
+| [docker-compose.yml](../docker-compose.yml)                   | Define aplicação, workers de autenticação e segurança, scheduler e perfis opcionais de administração/manutenção.                     |
 | [Dockerfile](../Dockerfile)                                   | Separa runtime PHP, dependências, assets e ferramentas de desenvolvimento em estágios, produzindo a imagem padrão de produção.       |
 | [package-lock.json](../package-lock.json)                     | Fixa a árvore de dependências npm para instalação reproduzível pelo npm ci.                                                          |
 | [package.json](../package.json)                               | Declara as dependências frontend e os comandos de Vite e Prettier.                                                                   |
-| [phpstan.neon](../phpstan.neon)                               | Configura a análise de tipos do PHPStan/Larastan, seus caminhos e limites de verificação.                                            |
+| [phpstan.neon](../phpstan.neon)                               | Configura a análise de tipos do PHPStan/Larastan, seus caminhos e verificação de configuração no nível máximo.                       |
 | [phpunit.xml](../phpunit.xml)                                 | Define as suítes PHP e o ambiente de teste, usando SQLite em memória no cenário padrão.                                              |
 | [README.md](../README.md)                                     | Apresenta o sistema, sua composição e os três pontos de entrada da documentação técnica.                                             |
 | [vite.config.js](../vite.config.js)                           | Conecta os pontos de entrada CSS/JavaScript ao Laravel e define build, hot reload e observação de arquivos no Docker.                |
@@ -848,3 +848,33 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | [tests/Unit/ExampleTest.php](../tests/Unit/ExampleTest.php)                   | Mantém uma verificação unitária mínima da infraestrutura de testes.                                              |
 | [tests/Unit/PasswordVerifierTest.php](../tests/Unit/PasswordVerifierTest.php) | Verifica os formatos de hash aceitos, a verificação de senha e a identificação de hashes que exigem atualização. |
+
+## Tipagem e execução com MySQL
+
+Arquivos incorporados na atualização de tipagem, cache, filas e documentação do modelo.
+
+| Arquivo                                                                                                             | Responsabilidade e propósito                                                         |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [app/Services/Reports/ReportColumn.php](../app/Services/Reports/ReportColumn.php)                                   | Representa uma coluna de relatório com chave e rótulo tipados.                       |
+| [app/Support/CurrentUser.php](../app/Support/CurrentUser.php)                                                       | Obtém o usuário autenticado e exige uma instância válida do modelo.                  |
+| [app/Support/RequestState.php](../app/Support/RequestState.php)                                                     | Lê os registros de contexto da requisição e verifica seus tipos.                     |
+| [app/Support/Value.php](../app/Support/Value.php)                                                                   | Normaliza valores recebidos de HTTP, configuração e banco em tipos explícitos.       |
+| [database/sql/patches/1.0.7_database_cache.sql](../database/sql/patches/1.0.7_database_cache.sql)                   | Provisiona o cache e os bloqueios MySQL na atualização versionada 1.0.7.             |
+| [database/sql/runtime-cache.sql](../database/sql/runtime-cache.sql)                                                 | Cria somente as tabelas de cache e bloqueios para instalações existentes.            |
+| [docs/MYSQL-RUNTIME.md](../docs/MYSQL-RUNTIME.md)                                                                   | Descreve provisionamento, transição e verificação de cache e filas no MySQL.         |
+| [docs/database-model/LEIA-ME.md](../docs/database-model/LEIA-ME.md)                                                 | Apresenta os artefatos e a data do retrato estrutural do banco remoto.               |
+| [docs/database-model/catalogo-relacionamentos.json](../docs/database-model/catalogo-relacionamentos.json)           | Relaciona as chaves estrangeiras e seus identificadores no diagrama.                 |
+| [docs/database-model/comparacao-estrutural.json](../docs/database-model/comparacao-estrutural.json)                 | Registra a comparação entre o esquema remoto e o SQL local.                          |
+| [docs/database-model/comprovacao-importacao-drawio.json](../docs/database-model/comprovacao-importacao-drawio.json) | Registra a conferência da importação do diagrama no draw.io.                         |
+| [docs/database-model/definicoes-banco-remoto.sql](../docs/database-model/definicoes-banco-remoto.sql)               | Guarda as definições estruturais capturadas para consulta, sem execução automática.  |
+| [docs/database-model/dicionario-de-dados.md](../docs/database-model/dicionario-de-dados.md)                         | Descreve campos, tipos, índices e relacionamentos do retrato remoto.                 |
+| [docs/database-model/divergencias-banco-remoto.md](../docs/database-model/divergencias-banco-remoto.md)             | Explica divergências entre o retrato remoto e o esquema local.                       |
+| [docs/database-model/drawio-importado.jpg](../docs/database-model/drawio-importado.jpg)                             | Mostra a conferência visual do diagrama importado.                                   |
+| [docs/database-model/gestao-frota-banco-remoto.drawio](../docs/database-model/gestao-frota-banco-remoto.drawio)     | Contém o diagrama editável do banco dividido por domínios.                           |
+| [docs/database-model/integridade-arquivos.json](../docs/database-model/integridade-arquivos.json)                   | Registra as evidências de integridade dos artefatos do modelo.                       |
+| [docs/database-model/inventario-banco-remoto.json](../docs/database-model/inventario-banco-remoto.json)             | Contém o inventário estrutural capturado do banco remoto.                            |
+| [docs/database-model/objetos-programaveis.md](../docs/database-model/objetos-programaveis.md)                       | Documenta views, procedures e triggers capturadas.                                   |
+| [docs/database-model/validacao-diagrama.json](../docs/database-model/validacao-diagrama.json)                       | Registra a validação das tabelas e ligações do diagrama.                             |
+| [docs/database-model/visualizacao-banco.html](../docs/database-model/visualizacao-banco.html)                       | Permite consultar localmente o modelo com busca e navegação.                         |
+| [pint.json](../pint.json)                                                                                           | Define o padrão Laravel de formatação PHP e exclui arquivos gerados.                 |
+| [tests/Feature/Auth/DatabaseRuntimeTest.php](../tests/Feature/Auth/DatabaseRuntimeTest.php)                         | Verifica cache, limites, bloqueios, filas e sinais de vida sem dependência de Redis. |

@@ -22,7 +22,7 @@ alcance sobre os registros. As regras são verificadas no servidor.
 - **Aplicação:** PHP e Laravel; controllers, validação de entrada e serviços de domínio.
 - **Interface:** Blade, Bootstrap, JavaScript e CSS compilados pelo Vite.
 - **Persistência:** MySQL com tabelas, views, procedures, funções e triggers versionados em SQL.
-- **Processos auxiliares:** Redis, filas de e-mail, workers e agendador Laravel.
+- **Processos auxiliares:** cache e filas no MySQL, workers de e-mail e agendador Laravel.
 - **Arquivos:** armazenamento privado de anexos e exportações CSV/PDF.
 - **Entrega:** imagens Docker e verificações automatizadas no GitHub Actions.
 
@@ -31,3 +31,33 @@ Os contratos de dependências estão em `composer.json`, `composer.lock`,
 `database/sql/`; as configurações de execução estão em `config/` e nos
 arquivos de Compose. O catálogo explica a responsabilidade desses arquivos e
 como eles se relacionam com o restante do sistema.
+
+## Formatação do código
+
+Use o Laravel Pint para PHP e o Prettier para Blade, JavaScript, CSS, JSON, YAML e Markdown.
+As configurações respeitam o `.editorconfig`; dependências, caches, arquivos gerados e lockfiles ficam fora do Prettier.
+
+```bash
+composer format
+npm run format
+```
+
+Nos componentes `approved-route-map` e `reservation-map`, a formatação automática do JavaScript embutido fica desativada para preservar as expressões Blade e evitar mudanças de indentação a cada execução. O restante dos templates continua sendo formatado.
+
+Para conferir sem alterar arquivos:
+
+```bash
+composer format:check
+npm run format:check
+```
+
+## Análise estática
+
+Execute `composer analyse` para analisar `app` e `routes` com PHPStan e Larastan.
+O projeto usa o nível máximo (`max`, atualmente 10), com verificação dos tipos de configuração,
+sem baseline ou regras de supressão.
+
+## Execução com MySQL
+
+O provisionamento de cache, filas e monitoramento está em [docs/MYSQL-RUNTIME.md](docs/MYSQL-RUNTIME.md).
+O diagrama e o dicionário do banco estão em [docs/database-model/LEIA-ME.md](docs/database-model/LEIA-ME.md).

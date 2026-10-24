@@ -1,6 +1,6 @@
 <x-layouts.authenticated
     :titulo="$titulo"
-    :breadcrumbs="[['label' => $tela['title'], 'href' => route($codigo . '.index')], ['label' => $titulo]]"
+    :breadcrumbs="[['label'=>$tela['title'],'href'=>route($codigo.'.index')],['label'=>$titulo]]"
 >
     <x-ui.title :titulo="$titulo" subtitulo="Preencha as informações e confira a revisão antes de concluir." />
     <x-ui.panel>
@@ -14,23 +14,18 @@
             novalidate
         >
             @csrf
-            @if (in_array(
-                    $codigo,
-                    ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines', 'users'],
-                    true
-                ) &&
-                $registro)
-                <input type="hidden" name="versao" value="{{ $registro->versao ?? 1 }}">
+            @if (in_array($codigo, ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines', 'users'], true) && $registro)
+                <input type="hidden" name="versao" value="{{ $registro->versao ?? 1 }}" />
             @endif
             @if ($codigo === 'roles' && $registro)
-                <input type="hidden" name="atualizado_em" value="{{ $registro->atualizado_em ?? '' }}">
+                <input type="hidden" name="atualizado_em" value="{{ $registro->atualizado_em ?? '' }}" />
             @endif
             @if ($codigo === 'trips' && $acao === 'cancel')
-                <input type="hidden" name="solicitacao_versao" value="{{ $registro->solicitacao_versao }}">
+                <input type="hidden" name="solicitacao_versao" value="{{ $registro->solicitacao_versao }}" />
             @endif
             @if ($codigo === 'vehicles')
                 @include ('records.forms.vehicles')
-            @elseif ($codigo === 'trips' && in_array($acao, ['departure', 'return'], true))
+            @elseif ($codigo === 'trips' && in_array($acao,['departure','return'],true))
                 <x-forms.field
                     nome="data_registro"
                     rotulo="{{ $acao==='departure' ? 'Data e hora da saída' : 'Data e hora do retorno' }}"
@@ -46,27 +41,23 @@
                     step="0.1"
                 />
                 <fieldset>
-                    <legend class="h5">Vistoria {{ $acao === 'departure' ? 'de saída' : 'de retorno' }}</legend>
+                    <legend class="h5">Vistoria {{ $acao==='departure' ? 'de saída' : 'de retorno' }}</legend>
                     @foreach ($checklist ?? [] as $item)
                         <div class="row">
                             <div class="col-md-6">
                                 <x-forms.field
-                                    :nome="'item_' . $item->id"
+                                    :nome="'item_'.$item->id"
                                     :rotulo="$item->descricao"
                                     tipo="select"
-                                    :obrigatorio="(bool) $item->obrigatorio"
-                                    :opcoes="[
-                                        'ok' => 'Em ordem',
-                                        'problema' => 'Problema identificado',
-                                        'nao_aplicavel' => 'Não se aplica',
-                                    ]"
+                                    :obrigatorio="(bool)$item->obrigatorio"
+                                    :opcoes="['ok'=>'Em ordem','problema'=>'Problema identificado','nao_aplicavel'=>'Não se aplica']"
                                     data-checklist-result
                                 />
                             </div>
                             <div class="col-md-6">
                                 <x-forms.field
-                                    :nome="'observacao_' . $item->id"
-                                    :rotulo="'Observação: ' . $item->descricao"
+                                    :nome="'observacao_'.$item->id"
+                                    :rotulo="'Observação: '.$item->descricao"
                                     maxlength="1000"
                                     data-checklist-note
                                 />
@@ -81,13 +72,7 @@
                     rotulo="Tipo de ocorrência"
                     tipo="select"
                     :obrigatorio="true"
-                    :opcoes="[
-                        'geral' => 'Geral',
-                        'desvio_trajeto' => 'Desvio de trajeto',
-                        'avaria' => 'Avaria',
-                        'acidente' => 'Acidente',
-                        'atraso' => 'Atraso',
-                    ]"
+                    :opcoes="['geral'=>'Geral','desvio_trajeto'=>'Desvio de trajeto','avaria'=>'Avaria','acidente'=>'Acidente','atraso'=>'Atraso']"
                 />
                 <x-forms.field nome="ocorrido_em" rotulo="Data e hora" tipo="datetime-local" :obrigatorio="true" />
                 <x-forms.field
@@ -126,7 +111,7 @@
                 />
                 <x-forms.field nome="observacao" rotulo="Observações" tipo="textarea" maxlength="2000" />
             @else
-                @includeIf ('records.forms.' . $codigo)
+                @includeIf ('records.forms.'.$codigo)
                 @if ($acao !== 'create')
                     <x-forms.field
                         nome="justificativa"
@@ -153,23 +138,6 @@
         </form>
     </x-ui.panel>
     <x-forms.review
-        :confirmar="
-            in_array(
-        $codigo,
-        [
-            'requests',
-            'trips',
-            'vehicles',
-            'expenses',
-            'fuel',
-            'maintenance',
-            'fines',
-            'users',
-            'roles',
-            'technical-routes',
-        ],
-        true,
-    )
-        "
+        :confirmar="in_array($codigo, ['requests', 'trips', 'vehicles', 'expenses', 'fuel', 'maintenance', 'fines', 'users', 'roles', 'technical-routes'], true)"
     />
 </x-layouts.authenticated>

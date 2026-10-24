@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RequireEnabledRoute
 {
+    /** @param Closure(Request): Response $proximo */
     public function handle(Request $requisicao, Closure $proximo): Response
     {
         if (! app(RequestAccessReader::class)->routeEnabled($requisicao)) {

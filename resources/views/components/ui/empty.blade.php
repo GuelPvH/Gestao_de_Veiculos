@@ -1,8 +1,4 @@
-@props ([
-    'titulo' => 'Nenhum registro encontrado',
-    'texto' => 'Os registros autorizados aparecerão aqui.',
-    'descricao' => null
-])
+@props (['titulo' => 'Nenhum registro encontrado', 'texto' => 'Os registros autorizados aparecerão aqui.', 'descricao' => null])
 <div class="empty-state">
     <x-ui.icon nome="clipboard-list" />
     <h2 class="h6 mt-3">{{ $titulo }}</h2>

@@ -1,4 +1,4 @@
-@props (['periodos', 'series', 'titulo' => 'Atividade nos últimos seis meses'])
+@props (['periodos','series','titulo' => 'Atividade nos últimos seis meses'])
 <x-ui.panel :titulo="$titulo">
     <div class="d-flex flex-wrap gap-3 mb-3">
         @foreach ($series as $serie)

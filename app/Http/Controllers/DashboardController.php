@@ -18,7 +18,7 @@ class DashboardController extends Controller
         if (($acesso->link()->perfil_codigo ?? '') === 'gestor') {
             return $this->gestor($acesso, $leituras);
         }
-        $telas = array_filter(config('screens'), fn (array $tela) => $acesso->level($tela['module']) > 0);
+        $telas = array_filter(FleetReadRepository::definitions(), fn (array $tela) => $acesso->level($tela['module']) > 0);
         $series = [];
         foreach ($telas as $codigo => $tela) {
             if (isset($tela['date']) && count($series) < 2) {
@@ -119,6 +119,10 @@ class DashboardController extends Controller
         return view('dashboard.gestor', compact('indicadores', 'solicitacoes', 'series', 'periodos', 'acesso'));
     }
 
+    /**
+     * @param  list<array{mes: string, valores: list<array{quantidade: int, altura: int}>}>  $periodos
+     * @return list<array{mes: string, valores: list<array{quantidade: int, altura: int}>}>
+     */
     private function heights(array $periodos): array
     {
         $maximo = 1;

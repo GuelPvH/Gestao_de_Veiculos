@@ -1,35 +1,47 @@
 {
-    "plugins": ["prettier-plugin-blade", "@prettier/plugin-php"],
     "printWidth": 120,
     "tabWidth": 4,
-    "useTabs": false,
     "singleQuote": true,
-    "semi": true,
-    "trailingComma": "all",
     "endOfLine": "lf",
+    "proseWrap": "preserve",
+    "plugins": ["prettier-plugin-blade"],
     "overrides": [
         {
             "files": "*.blade.php",
             "options": {
                 "parser": "blade",
-                "phpVersion": "8.3",
-                "bladePhpFormatting": "safe",
-                "bladeSyntaxPlugins": [],
-                "bladeEchoSpacing": "space",
-                "bladeSlotClosingTag": "preserve",
-                "bladeVoidElementSlash": "preserve"
+                "bladePhpFormatting": "off",
+                "bladeSyntaxPlugins": []
             }
         },
         {
-            "files": ["*.md", "*.yml", "*.yaml"],
+            "files": ["*.yml", "*.yaml"],
             "options": {
                 "tabWidth": 2
             }
         },
         {
-            "files": ["{compose,docker-compose}.{yml,yaml}"],
+            "files": [
+                "compose.yml",
+                "compose.yaml",
+                "compose.*.yml",
+                "compose.*.yaml",
+                "docker-compose.yml",
+                "docker-compose.yaml",
+                "docker-compose.*.yml",
+                "docker-compose.*.yaml"
+            ],
             "options": {
                 "tabWidth": 4
+            }
+        },
+        {
+            "files": [
+                "resources/views/components/fleet/approved-route-map.blade.php",
+                "resources/views/components/fleet/reservation-map.blade.php"
+            ],
+            "options": {
+                "embeddedLanguageFormatting": "off"
             }
         }
     ]

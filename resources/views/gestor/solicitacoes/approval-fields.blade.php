@@ -1,4 +1,4 @@
-@if ($acao === 'approve')
+@if ($acao==='approve')
     <x-forms.field
         nome="veiculo_confirmado_id"
         rotulo="Veículo confirmado"

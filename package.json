@@ -5,8 +5,8 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "format": "prettier --write \"**/*.{js,mjs,cjs,css,json,md,yml,yaml,blade.php}\"",
-        "format:check": "prettier --check \"**/*.{js,mjs,cjs,css,json,md,yml,yaml,blade.php}\""
+        "format": "prettier --write . --ignore-unknown",
+        "format:check": "prettier --check . --ignore-unknown"
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.13.0",

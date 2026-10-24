@@ -1,4 +1,4 @@
-<x-layouts.authenticated titulo="Configuração" :breadcrumbs="[['label' => 'Configuração']]">
+<x-layouts.authenticated titulo="Configuração" :breadcrumbs="[['label'=>'Configuração']]">
     <x-ui.title titulo="Configuração" subtitulo="Parâmetros de operação e identificação do sistema." />
     <x-ui.panel titulo="Parâmetros do sistema">
         <form
@@ -37,7 +37,7 @@
                 max="1440"
             />
             <x-forms.field nome="moeda" rotulo="Moeda" :valor="$configuracao->moeda" readonly />
-            @if ($acesso->can('configuracoes', 'editar'))
+            @if ($acesso->can('configuracoes','editar'))
                 <button class="btn btn-primary" type="submit" data-review-submit>Revisar configuração</button>
             @endif</form></x-ui.panel
     ><x-forms.review :confirmar="true" />

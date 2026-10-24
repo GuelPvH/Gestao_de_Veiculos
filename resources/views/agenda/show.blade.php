@@ -1,6 +1,6 @@
 <x-layouts.authenticated
     :titulo="$titulo"
-    :breadcrumbs="[['label' => 'Detalhes', 'href' => route('agenda.index')], ['label' => $titulo]]"
+    :breadcrumbs="[['label'=>'Detalhes', 'href'=>route('agenda.index')], ['label'=>$titulo]]"
 >
     <x-ui.title :titulo="$titulo" subtitulo="Acompanhe a operação e o que precisa da sua atenção." />
     <x-ui.panel titulo="Detalhes do registro">

@@ -30,13 +30,11 @@
                 aria-expanded="false"
                 aria-label="Opções da conta"
             >
-                <span class="avatar" aria-hidden="true">{{
-                    collect(explode(' ', trim($usuario->nome ?? '')))
-                        ->filter()
-                        ->take(2)
-                        ->map(fn($parte) => mb_substr($parte, 0, 1))
-                        ->implode('')
-                }}</span>
+                <span
+                    class="avatar"
+                    aria-hidden="true"
+                    >{{ collect(explode(' ', trim($usuario->nome ?? '')))->filter()->take(2)->map(fn($parte) => mb_substr($parte, 0, 1))->implode('') }}</span
+                >
                 <span class="d-none d-sm-inline">{{ $usuario->nome ?? 'Conta' }}</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -44,7 +42,7 @@
                     <li><a class="dropdown-item" href="{{ route('account.index') }}">Conta e aparência</a></li>
                 @endif
                 <li><a class="dropdown-item" href="{{ route('profiles.index') }}">Trocar perfil</a></li>
-                <li><hr class="dropdown-divider"></li>
+                <li><hr class="dropdown-divider" /></li>
                 <li>
                     <form action="{{ route('logout') }}" method="post" data-loading-form data-profile-switch>
                         @csrf

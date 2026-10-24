@@ -8,7 +8,7 @@
             @forelse ($vinculos as $vinculo)
                 <form action="{{ route('profiles.select') }}" method="post" data-loading-form data-profile-switch>
                     @csrf
-                    <input type="hidden" name="vinculo" value="{{ $vinculo->vinculo_id }}">
+                    <input type="hidden" name="vinculo" value="{{ $vinculo->vinculo_id }}" />
                     <button class="btn btn-outline-secondary profile-card" type="submit">
                         <span
                             ><strong>{{ $vinculo->perfil_nome }}</strong

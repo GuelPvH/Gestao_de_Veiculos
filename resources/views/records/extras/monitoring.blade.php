@@ -19,7 +19,7 @@
                 <tbody>
                     @foreach ($trajeto as $ponto)
                         <tr>
-                            <td>{{ $leituras->format($ponto->ocorrido_em, 'datetime') }}</td>
+                            <td>{{ $leituras->format($ponto->ocorrido_em,'datetime') }}</td>
                             <td>{{ $ponto->fonte }}</td>
                             <td>{{ $ponto->latitude }}</td>
                             <td>{{ $ponto->longitude }}</td>

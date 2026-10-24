@@ -1,12 +1,9 @@
 <x-layouts.authenticated
-    :titulo="$tela['title'] . ' · Detalhes'"
-    :breadcrumbs="[
-        ['label' => $tela['title'], 'href' => route('solicitacoes.index')],
-        ['label' => 'Detalhes'],
-    ]"
+    :titulo="$tela['title'].' · Detalhes'"
+    :breadcrumbs="[['label'=>$tela['title'], 'href'=>route('solicitacoes.index')], ['label'=>'Detalhes']]"
 >
     <x-ui.title
-        :titulo="($registro->protocolo ?? ($registro->nome ?? $tela['title'])) . ' · Detalhes'"
+        :titulo="($registro->protocolo ?? $registro->nome ?? $tela['title']).' · Detalhes'"
         subtitulo="Consulte as informações e o histórico deste registro."
     >
         <x-slot:acoes>
@@ -21,7 +18,7 @@
                         <div>
                             <dt>{{ $campo[1] }}</dt>
                             <dd>
-                                @if ($chave === 'situacao')
+                                @if ($chave==='situacao')
                                     <x-ui.status :valor="$registro->situacao ?? ''" />
                                 @else
                                     {{ $valores[$chave] ?? '—' }}
@@ -34,7 +31,7 @@
         </div>
         <div class="stack">
             <x-ui.panel titulo="Ações disponíveis">
-                @forelse ($operacoes as $acao => $rotulo)
+                @forelse ($operacoes as $acao=>$rotulo)
                     @if ($acao === 'edit')
                         <a
                             class="btn btn-outline-secondary w-100 mb-2"
@@ -65,13 +62,13 @@
     @if ($errors->any() && isset($operacoes[old('modal_acao', '')]))
         <span hidden data-request-reopen="{{ old('modal_acao') }}"></span>
     @endif
-    @foreach ($operacoes as $acao => $rotulo)
+    @foreach ($operacoes as $acao=>$rotulo)
         @if ($acao !== 'edit')
-            <x-ui.modal :id="'request-' . $acao" :titulo="$rotulo">
+            <x-ui.modal :id="'request-'.$acao" :titulo="$rotulo">
                 <form method="post" action="{{ route('solicitacoes.'.$acao.'.submit', $registro->id) }}">
                     @csrf
-                    <input type="hidden" name="modal_acao" value="{{ $acao }}">
-                    <input type="hidden" name="versao" value="{{ $registro->versao }}">
+                    <input type="hidden" name="modal_acao" value="{{ $acao }}" />
+                    <input type="hidden" name="versao" value="{{ $registro->versao }}" />
                     @if ($acao === 'approve')
                         @include ('gestor.solicitacoes.approval-fields')
                         <x-forms.field
@@ -86,14 +83,8 @@
                     @else
                         <x-forms.field
                             :nome="'justificativa'"
-                            :id="'justificativa-' . $acao"
-                            :rotulo="
-                                $acao === 'deny'
-        ? 'Motivo da negativa'
-        : ($acao === 'adjust'
-            ? 'Explique os ajustes necessários'
-            : 'Motivo da nova revisão')
-                            "
+                            :id="'justificativa-'.$acao"
+                            :rotulo="$acao === 'deny' ? 'Motivo da negativa' : ($acao === 'adjust' ? 'Explique os ajustes necessários' : 'Motivo da nova revisão')"
                             tipo="textarea"
                             :obrigatorio="true"
                             maxlength="3000"
@@ -102,11 +93,7 @@
                     <div class="d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button
                         ><button type="submit" class="btn btn-primary">
-                            {{
-                                $acao === 'approve'
-                                    ? 'Confirmar aprovação'
-                                    : 'Confirmar'
-                            }}
+                            {{ $acao === 'approve' ? 'Confirmar aprovação' : 'Confirmar' }}
                         </button>
                     </div>
                 </form>

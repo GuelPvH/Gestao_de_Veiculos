@@ -5,11 +5,7 @@
 <x-layouts.base :titulo="$title">
     <main id="main-content" class="auth-wrapper" tabindex="-1">
         <x-ui.panel :titulo="$title" :nivel="1">
-            <p>{{
-                $activation
-                    ? 'Defina sua senha pessoal para concluir a ativação e confirmar o e-mail cadastrado.'
-                    : 'Confirme que este endereço pertence a você.'
-            }}</p>
+            <p>{{ $activation ? 'Defina sua senha pessoal para concluir a ativação e confirmar o e-mail cadastrado.' : 'Confirme que este endereço pertence a você.' }}</p>
             <p data-reset-link-error class="alert alert-danger" hidden>O link está ausente ou inválido. Abra o convite recebido por e-mail.</p>
             @if (session('status'))
                 <x-ui.alert>{{ session('status') }}</x-ui.alert>
@@ -30,7 +26,7 @@
                 data-recovery-reset-form
             >
                 @csrf
-                <input type="hidden" name="token" value="{{ $token }}">
+                <input type="hidden" name="token" value="{{ $token }}" />
                 @if ($activation)
                     <p>Use pelo menos 12 caracteres com letras maiúsculas, minúsculas, números e símbolos.</p>
                     <x-forms.password nome="nova_senha" rotulo="Nova senha" autocomplete="new-password" />
@@ -44,14 +40,14 @@
                     class="btn btn-primary"
                     type="submit"
                     data-reset-submit
-                    @disabled (!preg_match('/\A[0-9a-f]{64}\z/', $token))
+                    @disabled (! preg_match('/\A[0-9a-f]{64}\z/', $token))
                 >
                     {{ $title }}
                 </button>
                 <x-ui.loading />
             </form>
             @if ($activation)
-                <hr>
+                <hr />
                 <p>Convite vencido? Solicite outro para o endereço cadastrado.</p>
                 <form action="{{ route('identity.requestActivation') }}" method="post">
                     @csrf
@@ -63,7 +59,7 @@
                         maxlength="100"
                         required
                         autocomplete="username"
-                    >
+                    />
                     <button class="btn btn-outline-primary mt-2" type="submit">Solicitar convite</button>
                 </form>
             @endif

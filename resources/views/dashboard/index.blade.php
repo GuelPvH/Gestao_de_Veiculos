@@ -1,12 +1,7 @@
-<x-layouts.authenticated titulo="Painel" :breadcrumbs="[['label' => 'Painel']]">
+<x-layouts.authenticated titulo="Painel" :breadcrumbs="[['label'=>'Painel']]">
     <x-ui.title
         titulo="Painel"
-        :subtitulo="
-            'Visão geral · ' .
-        ($vinculoAtual->perfil_nome ?? '') .
-        ' · ' .
-        now(config('fleet.timezone'))->translatedFormat('d \d\e F \d\e Y')
-        "
+        :subtitulo="'Visão geral · '.($vinculoAtual->perfil_nome ?? '').' · '.now(config('fleet.timezone'))->translatedFormat('d \d\e F \d\e Y')"
     />
     <div class="metric-grid">
         @foreach ($indicadores as $indicador)
@@ -19,9 +14,9 @@
             <x-ui.panel titulo="Atividade recente">
                 @if ($atividade)
                     <x-tables.records
-                        :colunas="array_map(fn($campo) => $campo[1], $atividade['tela']['columns'])"
+                        :colunas="array_map(fn($campo)=>$campo[1],$atividade['tela']['columns'])"
                         :registros="$atividade['registros']"
-                        :rota-detalhe="($atividade['tela']['route'] ?? $atividade['codigo']) . '.show'"
+                        :rota-detalhe="($atividade['tela']['route'] ?? $atividade['codigo']).'.show'"
                     />
                     <a
                         class="btn btn-outline-secondary mt-3"

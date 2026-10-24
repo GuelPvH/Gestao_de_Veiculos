@@ -1,17 +1,7 @@
 @php
     $fleetSession = request()->attributes->get('fleet.session');
-    $initialState =
-        $fleetSession instanceof \stdClass
-            ? [
-                'state' => 'ACTIVE',
-                'server_time' => \Carbon\CarbonImmutable::now('UTC')->toIso8601String(),
-                'expires_at' => app(\App\Services\Auth\FleetSession::class)->deadline($fleetSession)->toIso8601String(),
-            ]
-            : null;
-    $sessionScope =
-        $fleetSession instanceof \stdClass
-            ? hash_hmac('sha256', (string) $fleetSession->id, (string) config('app.key'))
-            : '';
+    $initialState = $fleetSession instanceof \stdClass ? ['state' => 'ACTIVE', 'server_time' => \Carbon\CarbonImmutable::now('UTC')->toIso8601String(), 'expires_at' => app(\App\Services\Auth\FleetSession::class)->deadline($fleetSession)->toIso8601String()] : null;
+    $sessionScope = $fleetSession instanceof \stdClass ? hash_hmac('sha256', (string) $fleetSession->id, (string) config('app.key')) : '';
 @endphp
 <div
     id="fleet-session-warning"
@@ -46,7 +36,7 @@
                         autocomplete="current-password"
                         required
                         maxlength="1024"
-                    >
+                    />
                     <p class="text-danger mt-2" data-session-error role="alert" hidden></p>
                 </form>
             </div>

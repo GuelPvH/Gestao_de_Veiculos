@@ -1,0 +1,302 @@
+{
+  "status": "passed",
+  "pages": 22,
+  "coverage": {
+    "tables": 73,
+    "columns": 691,
+    "foreign_keys": 178,
+    "views": 14,
+    "procedures": 42,
+    "triggers": 122
+  },
+  "xml_schema": "passed",
+  "duplicate_tables": false,
+  "overlapping_table_boxes": [],
+  "errors": [],
+  "remote_metadata_stable": true,
+  "inspection_gaps": [],
+  "drawio_native_window_opened": true,
+  "drawio_native_window_limitation": "Editor confirmado no navegador integrado. A janela original do Firefox não foi modificada.",
+  "source_sha256": "b093f7b047cfbe1990dce656f7d707c91093b6178d2d8d278ca8b095e2af134c",
+  "snapshot_sha256": "12954807d9c2667bd6a6d91fab45673b84a04a776def27fb51d52e407d16893c",
+  "pages_detail": [
+    {
+      "id": "index",
+      "title": "Modelo físico do banco remoto",
+      "tables": [],
+      "relations": 0,
+      "width": 1600,
+      "height": 1760
+    },
+    {
+      "id": "legend",
+      "title": "Como ler este modelo",
+      "tables": [],
+      "relations": 0,
+      "width": 1600,
+      "height": 1408
+    },
+    {
+      "id": "overview",
+      "title": "Mapa dos domínios",
+      "tables": [],
+      "relations": 0,
+      "width": 1760,
+      "height": 1936
+    },
+    {
+      "id": "domain-org",
+      "title": "Organização e identidade",
+      "tables": [
+        "unidades",
+        "usuarios",
+        "motoristas",
+        "preferencias_usuario",
+        "configuracao_sistema",
+        "versoes_modelo"
+      ],
+      "relations": 6,
+      "width": 2912,
+      "height": 2000
+    },
+    {
+      "id": "domain-access",
+      "title": "Perfis e permissões",
+      "tables": [
+        "modulos",
+        "acoes",
+        "modulo_acoes",
+        "perfis",
+        "permissoes",
+        "perfil_permissoes",
+        "usuario_perfis",
+        "controle_vinculos"
+      ],
+      "relations": 19,
+      "width": 2912,
+      "height": 2240
+    },
+    {
+      "id": "domain-routes",
+      "title": "Rotas e auditoria",
+      "tables": [
+        "rotas_sistema",
+        "rota_permissoes",
+        "auditoria"
+      ],
+      "relations": 9,
+      "width": 2912,
+      "height": 1792
+    },
+    {
+      "id": "domain-auth",
+      "title": "Sessões e recuperação",
+      "tables": [
+        "sessoes",
+        "recuperacoes_senha",
+        "confirmacoes_identidade",
+        "email_outbox"
+      ],
+      "relations": 9,
+      "width": 2912,
+      "height": 2064
+    },
+    {
+      "id": "domain-mfa",
+      "title": "Autenticação multifator",
+      "tables": [
+        "credenciais_mfa",
+        "desafios_mfa",
+        "recuperacoes_mfa",
+        "aprovacoes_mfa"
+      ],
+      "relations": 9,
+      "width": 2912,
+      "height": 1312
+    },
+    {
+      "id": "domain-fleet",
+      "title": "Frota e documentos",
+      "tables": [
+        "categorias_veiculo",
+        "veiculos",
+        "documentos_veiculo",
+        "rastreadores"
+      ],
+      "relations": 6,
+      "width": 2912,
+      "height": 1664
+    },
+    {
+      "id": "domain-requests",
+      "title": "Solicitações e revisões",
+      "tables": [
+        "solicitacoes",
+        "solicitacao_revisoes",
+        "solicitacao_paradas",
+        "solicitacao_passageiros",
+        "solicitacao_eventos"
+      ],
+      "relations": 14,
+      "width": 2912,
+      "height": 1984
+    },
+    {
+      "id": "domain-bookings",
+      "title": "Reservas e agenda",
+      "tables": [
+        "reservas",
+        "ocupacoes_agenda"
+      ],
+      "relations": 8,
+      "width": 2912,
+      "height": 1472
+    },
+    {
+      "id": "domain-trips",
+      "title": "Viagens e vistorias",
+      "tables": [
+        "viagens",
+        "checklist_itens",
+        "viagem_checklists",
+        "viagem_checklist_respostas",
+        "viagem_ocorrencias"
+      ],
+      "relations": 9,
+      "width": 2912,
+      "height": 1760
+    },
+    {
+      "id": "domain-tracking",
+      "title": "Monitoramento e posições",
+      "tables": [
+        "posicoes_rastreamento",
+        "posicoes_manuais"
+      ],
+      "relations": 3,
+      "width": 2912,
+      "height": 1152
+    },
+    {
+      "id": "domain-finance",
+      "title": "Despesas e pagamentos",
+      "tables": [
+        "categorias_despesa",
+        "fornecedores",
+        "despesas",
+        "despesa_eventos",
+        "pagamentos_despesa",
+        "abastecimentos"
+      ],
+      "relations": 11,
+      "width": 2912,
+      "height": 1968
+    },
+    {
+      "id": "domain-maintenance",
+      "title": "Manutenção e pneus",
+      "tables": [
+        "manutencoes",
+        "manutencao_itens",
+        "pneus",
+        "pneu_instalacoes"
+      ],
+      "relations": 11,
+      "width": 2912,
+      "height": 1888
+    },
+    {
+      "id": "domain-fines",
+      "title": "Multas e responsabilidade",
+      "tables": [
+        "multas",
+        "multa_responsabilidades",
+        "multa_eventos",
+        "multa_comprovantes",
+        "multa_conferencias",
+        "pagamentos_multa"
+      ],
+      "relations": 16,
+      "width": 2912,
+      "height": 2160
+    },
+    {
+      "id": "domain-support",
+      "title": "Chamados e comunicação",
+      "tables": [
+        "categorias_chamado",
+        "chamados",
+        "chamado_mensagens",
+        "chamado_eventos",
+        "notificacao_eventos",
+        "notificacao_destinatarios"
+      ],
+      "relations": 16,
+      "width": 2912,
+      "height": 2144
+    },
+    {
+      "id": "domain-files",
+      "title": "Arquivos e anexos",
+      "tables": [
+        "arquivos",
+        "anexos"
+      ],
+      "relations": 10,
+      "width": 2912,
+      "height": 2368
+    },
+    {
+      "id": "domain-reports",
+      "title": "Relatórios e exportações",
+      "tables": [
+        "relatorio_campos",
+        "exportacoes",
+        "exportacao_campos",
+        "exportacao_registros"
+      ],
+      "relations": 22,
+      "width": 2912,
+      "height": 4416
+    },
+    {
+      "id": "domain-infra",
+      "title": "Filas técnicas",
+      "tables": [
+        "jobs",
+        "failed_jobs"
+      ],
+      "relations": 0,
+      "width": 2912,
+      "height": 1152
+    },
+    {
+      "id": "differences",
+      "title": "Divergências do banco remoto",
+      "tables": [],
+      "relations": 0,
+      "width": 1760,
+      "height": 1440
+    },
+    {
+      "id": "objects",
+      "title": "Views, procedures e triggers",
+      "tables": [],
+      "relations": 0,
+      "width": 1760,
+      "height": 2608
+    }
+  ],
+  "browser_editor_confirmation": {
+    "status": "saved_in_drawio_editor",
+    "confirmed_at_utc": "2026-10-17T03:11:00.173488+00:00",
+    "browser": "Codex In-app Browser",
+    "original_firefox_window_modified": false,
+    "document_name": "Gestão de frota - Banco remoto.drawio",
+    "storage": "browser",
+    "pages_observed": 22,
+    "detail_page_confirmed": "Frota e documentos",
+    "saved_indicator": "Última alteração há menos de um minuto",
+    "screenshot": "drawio-importado.jpg"
+  }
+}

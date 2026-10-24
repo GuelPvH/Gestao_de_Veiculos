@@ -22,6 +22,9 @@ class VehicleInputRequest extends FormRequest
         return true;
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         $criando = $this->route('registro') === null;

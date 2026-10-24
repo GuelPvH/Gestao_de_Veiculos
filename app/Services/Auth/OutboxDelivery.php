@@ -2,7 +2,9 @@
 
 namespace App\Services\Auth;
 
+use App\Support\Value;
 use Carbon\CarbonImmutable;
+use Illuminate\Mail\Message;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -26,40 +28,40 @@ class OutboxDelivery
             if (! $row || in_array($row->estado, ['aceito', 'cancelado', 'falhou'], true)) {
                 return null;
             }
-            if (CarbonImmutable::parse($row->expira_em, 'UTC')->lessThanOrEqualTo(now('UTC'))) {
+            if (CarbonImmutable::parse(Value::date($row->expira_em), 'UTC')->lessThanOrEqualTo(now('UTC'))) {
                 $this->cancel($row, 'expired');
 
                 return null;
             }
-            if (! $this->settings->available($row->finalidade)) {
+            if (! $this->settings->available(Value::string($row->finalidade))) {
                 return null;
             }
-            if (! $user || ! $user->ativo || (int) $user->versao_seguranca !== (int) $row->versao_seguranca) {
+            if (! $user || ! $user->ativo || Value::integer($user->versao_seguranca) !== Value::integer($row->versao_seguranca)) {
                 $this->cancel($row, 'identity_changed');
 
                 return null;
             }
             if ($row->estado === 'enviando' && $row->lease_ate
-                && CarbonImmutable::parse($row->lease_ate, 'UTC')->isFuture()) {
+                && CarbonImmutable::parse(Value::date($row->lease_ate), 'UTC')->isFuture()) {
                 return null;
             }
-            if (CarbonImmutable::parse($row->proxima_tentativa_em, 'UTC')->isFuture()) {
+            if (CarbonImmutable::parse(Value::date($row->proxima_tentativa_em), 'UTC')->isFuture()) {
                 return null;
             }
-            if ((int) $row->tentativas >= (int) config('identity.mail_max_attempts', 3)) {
+            if (Value::integer($row->tentativas) >= Value::integer(config('identity.mail_max_attempts', 3))) {
                 $this->cancel($row, 'attempts_exhausted', 'falhou');
 
                 return null;
             }
-            $recipient = Crypt::decryptString($row->destinatario_cifrado);
+            $recipient = Crypt::decryptString(Value::string($row->destinatario_cifrado));
             if ($row->finalidade !== 'aviso') {
                 $table = $row->finalidade === 'recuperacao' ? 'recuperacoes_senha' : 'confirmacoes_identidade';
                 $recordId = $row->finalidade === 'recuperacao' ? $row->recuperacao_id : $row->confirmacao_id;
                 $record = DB::table($table)->where('id', $recordId)->lockForUpdate()->first();
                 $expected = $row->finalidade === 'email' ? ($user->email_pendente ?: $user->email) : $user->email;
                 if (! $record || $record->usado_em || $record->invalidado_em || $record->email_destino !== $recipient
-                    || $expected !== $recipient || (int) $record->versao_seguranca !== (int) $user->versao_seguranca
-                    || CarbonImmutable::parse($record->expira_em, 'UTC')->lessThanOrEqualTo(now('UTC'))
+                    || $expected !== $recipient || Value::integer($record->versao_seguranca) !== Value::integer($user->versao_seguranca)
+                    || CarbonImmutable::parse(Value::date($record->expira_em), 'UTC')->lessThanOrEqualTo(now('UTC'))
                     || ($row->finalidade === 'ativacao' && ! DB::table('vw_vinculos_ativos')->where('vinculo_id', $record->vinculo_id)->where('usuario_id', $user->id)->exists())) {
                     $this->cancel($row, 'request_cancelled');
 
@@ -68,10 +70,10 @@ class OutboxDelivery
             }
             $row->recipient = $recipient;
             $row->lease_id = (string) Str::uuid();
-            $row->tentativas = (int) $row->tentativas + 1;
+            $row->tentativas = Value::integer($row->tentativas) + 1;
             DB::table('email_outbox')->where('id', $id)->update([
                 'estado' => 'enviando', 'tentativas' => $row->tentativas, 'lease_id' => $row->lease_id,
-                'lease_ate' => now('UTC')->addSeconds((int) config('identity.mail_lease_seconds', 120)),
+                'lease_ate' => now('UTC')->addSeconds(Value::integer(config('identity.mail_lease_seconds', 120))),
             ]);
 
             return $row;
@@ -84,19 +86,19 @@ class OutboxDelivery
         // invalidates the token, even if SMTP has already accepted the old message.
         try {
             $url = $delivery->token_cifrado
-                ? $this->settings->tokenUrl($delivery->finalidade, Crypt::decryptString($delivery->token_cifrado)) : null;
+                ? $this->settings->tokenUrl(Value::string($delivery->finalidade), Crypt::decryptString(Value::string($delivery->token_cifrado))) : null;
             $subject = match ($delivery->finalidade) {
                 'ativacao' => 'Ativação de acesso', 'email' => 'Confirmação de e-mail',
                 'aviso' => 'Aviso de segurança', default => 'Recuperação de acesso',
             };
-            Mail::send('auth.identity-email', ['url' => $url, 'finalidade' => $delivery->finalidade], function ($message) use ($delivery, $subject): void {
-                $message->to($delivery->recipient)->subject($subject.' · Frota · PF');
-                $message->getSymfonyMessage()->getHeaders()->addTextHeader('X-Frota-Event', $delivery->evento_chave);
+            Mail::send('auth.identity-email', ['url' => $url, 'finalidade' => $delivery->finalidade], function (Message $message) use ($delivery, $subject): void {
+                $message->to(Value::string($delivery->recipient))->subject($subject.' · Frota · PF');
+                $message->getSymfonyMessage()->getHeaders()->addTextHeader('X-Frota-Event', Value::string($delivery->evento_chave));
             });
         } catch (Throwable $failure) {
             // Inspect only a status code, never persist raw SMTP diagnostics.
             $permanent = preg_match('/(?:^|\s)5[0-9]{2}(?:\s|$)/', $failure->getMessage()) === 1;
-            $final = $permanent || $delivery->tentativas >= (int) config('identity.mail_max_attempts', 3);
+            $final = $permanent || $delivery->tentativas >= Value::integer(config('identity.mail_max_attempts', 3));
             $changes = [
                 'estado' => $final ? 'falhou' : 'pendente', 'lease_id' => null, 'lease_ate' => null,
                 'codigo_erro' => $permanent ? 'smtp_permanent' : 'smtp_transient',

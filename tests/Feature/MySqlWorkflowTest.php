@@ -261,7 +261,7 @@ class MySqlWorkflowTest extends TestCase
             'app.env' => 'testing', 'app.url' => 'https://frota.example.test',
             'fleet.recovery_mail_enabled' => true,
             'fleet.recovery_queue_enabled' => true,
-            'fleet.recovery_queue_connection' => 'redis',
+            'fleet.recovery_queue_connection' => 'redis', 'cache.default' => 'redis',
             'queue.connections.redis.driver' => 'redis', 'queue.connections.redis.connection' => 'default',
             'queue.connections.redis.retry_after' => 120, 'database.redis.client' => 'phpredis',
             'database.redis.options.prefix' => $prefix, 'database.redis.default.url' => null,

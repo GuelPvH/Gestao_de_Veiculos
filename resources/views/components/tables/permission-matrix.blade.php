@@ -13,7 +13,7 @@
             @forelse ($permissoes as $permissao)
                 <tr>
                     <td>{{ $permissao->modulo_codigo }}</td>
-                    <td>{{ str_replace('_', ' ', $permissao->acao_codigo) }}</td>
+                    <td>{{ str_replace('_',' ',$permissao->acao_codigo) }}</td>
                     <td>{{ $permissao->alcance }}</td>
                     <td>{{ $permissao->delegavel ? 'Sim' : 'Não' }}</td>
                 </tr>

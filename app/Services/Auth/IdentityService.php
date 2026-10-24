@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Support\Value;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,9 @@ class IdentityService
 {
     public function __construct(private PasswordVerifier $passwords, private SecurityAudit $securityAudit) {}
 
-    /** CLI bootstrap: identity, first grant and encrypted mail intent share one commit. */
+    /** CLI bootstrap: identity, first grant and encrypted mail intent share one commit.
+     * @return array<array-key, mixed>
+     */
     public function createInitialAdministrator(string $identifier, string $name, string $email, string $password): array
     {
         return DB::transaction(function () use ($identifier, $name, $email, $password): array {
@@ -26,13 +29,13 @@ class IdentityService
                 'unidade_id' => 1, 'identificador' => mb_strtolower(trim($identifier)), 'nome' => trim($name), 'email' => $email,
                 'senha_hash' => $this->passwords->make($password), 'estado_identidade' => 'pendente',
                 'deve_trocar_senha' => 1, 'senha_temporaria_emitida_em' => $now,
-                'senha_temporaria_expira_em' => $now->copy()->addHours(max(1, min(72, (int) config('identity.temporary_password_hours', 24)))),
+                'senha_temporaria_expira_em' => $now->copy()->addHours(max(1, min(72, Value::integer(config('identity.temporary_password_hours', 24))))),
             ]);
             DB::table('preferencias_usuario')->insert(['usuario_id' => $id]);
             $linkId = (int) DB::table('usuario_perfis')->insertGetId([
                 'usuario_id' => $id, 'perfil_id' => $role, 'unidade_id' => 1, 'vigente_desde' => $now, 'concedido_por' => $id,
             ]);
-            $user = DB::table('usuarios')->where('id', $id)->lockForUpdate()->first();
+            $user = DB::table('usuarios')->where('id', $id)->lockForUpdate()->firstOrFail();
             $this->issueActivation($user, $linkId);
             DB::table('configuracao_sistema')->where('id', 1)->update(['bootstrap_concluido' => 1]);
             $this->audit($id, 'administrador_inicial_criado');
@@ -46,7 +49,7 @@ class IdentityService
         DB::transaction(function () use ($identifier): void {
             $user = DB::table('usuarios')->where('identificador', mb_strtolower(trim($identifier)))->lockForUpdate()->first();
             if ($user && $user->estado_identidade === 'pendente') {
-                $this->resend((int) $user->id);
+                $this->resend(Value::integer($user->id));
             }
         });
     }
@@ -58,16 +61,16 @@ class IdentityService
             if (! $user || ! $this->eligible($user) || $user->estado_identidade === 'pendente') {
                 return;
             }
-            $this->revokeTokens((int) $user->id, 'recuperacao');
+            $this->revokeTokens(Value::integer($user->id), 'recuperacao');
             $token = bin2hex(random_bytes(32));
-            $expires = now('UTC')->addMinutes((int) config('identity.recovery_minutes', 30));
+            $expires = now('UTC')->addMinutes(Value::integer(config('identity.recovery_minutes', 30)));
             $id = (int) DB::table('recuperacoes_senha')->insertGetId([
                 'usuario_id' => $user->id, 'token_hash' => hash('sha256', $token, true),
                 'email_destino' => $user->email, 'versao_seguranca' => $user->versao_seguranca,
                 'criado_em' => now('UTC'), 'expira_em' => $expires,
             ]);
-            $this->outbox($user, 'recuperacao', (string) $user->email, $expires, $token, $id);
-            $this->audit((int) $user->id, 'recuperacao_solicitada');
+            $this->outbox($user, 'recuperacao', Value::string($user->email), $expires, $token, $id);
+            $this->audit(Value::integer($user->id), 'recuperacao_solicitada');
         });
     }
 
@@ -78,7 +81,7 @@ class IdentityService
         if ($user->estado_identidade !== 'pendente' || ! $this->eligible($user)) {
             return;
         }
-        $this->issueConfirmation($user, 'ativacao', (string) $user->email, $linkId);
+        $this->issueConfirmation($user, 'ativacao', Value::string($user->email), $linkId);
     }
 
     public function resend(int $userId): void
@@ -91,10 +94,10 @@ class IdentityService
             if ($user->estado_identidade === 'pendente') {
                 $linkId = DB::table('vw_vinculos_ativos')->where('usuario_id', $userId)->value('vinculo_id');
                 if ($linkId) {
-                    $this->issueActivation($user, (int) $linkId);
+                    $this->issueActivation($user, Value::integer($linkId));
                 }
             } elseif ($user->email_pendente || ! $user->email_verificado_em) {
-                $this->issueConfirmation($user, 'email', (string) ($user->email_pendente ?: $user->email), null);
+                $this->issueConfirmation($user, 'email', Value::string($user->email_pendente ?: $user->email), null);
             }
         });
     }
@@ -103,7 +106,7 @@ class IdentityService
     {
         DB::transaction(function () use ($userId, $email, $password): void {
             $user = DB::table('usuarios')->where('id', $userId)->lockForUpdate()->first();
-            if (! $user || ! $user->ativo || ! $this->passwords->verify($password, $user->senha_hash)) {
+            if (! $user || ! $user->ativo || ! $this->passwords->verify($password, Value::string($user->senha_hash))) {
                 throw ValidationException::withMessages(['senha_atual' => 'Não foi possível confirmar a alteração.']);
             }
             abort_if($user->estado_identidade === 'pendente', 403);
@@ -112,12 +115,12 @@ class IdentityService
                 throw ValidationException::withMessages(['email' => 'Não foi possível utilizar este endereço.']);
             }
             DB::table('usuarios')->where('id', $userId)->update([
-                'email_pendente' => $email, 'versao_seguranca' => (int) $user->versao_seguranca + 1,
+                'email_pendente' => $email, 'versao_seguranca' => Value::integer($user->versao_seguranca) + 1,
             ]);
             $this->invalidate($userId, 'revogacao');
-            $fresh = DB::table('usuarios')->where('id', $userId)->first();
+            $fresh = DB::table('usuarios')->where('id', $userId)->firstOrFail();
             $this->issueConfirmation($fresh, 'email', $email, null);
-            $this->securityNotice($fresh, 'alteracao_email_solicitada', (string) $user->email);
+            $this->securityNotice($fresh, 'alteracao_email_solicitada', Value::string($user->email));
             $this->audit($userId, 'alteracao_email_solicitada');
         });
     }
@@ -141,14 +144,14 @@ class IdentityService
     {
         DB::transaction(function () use ($userId, $current, $new): void {
             $user = DB::table('usuarios')->where('id', $userId)->lockForUpdate()->first();
-            if (! $user || ! $user->ativo || ! $this->passwords->verify($current, $user->senha_hash)) {
+            if (! $user || ! $user->ativo || ! $this->passwords->verify($current, Value::string($user->senha_hash))) {
                 throw ValidationException::withMessages(['senha_atual' => 'Senha atual inválida.']);
             }
             if ($user->estado_identidade === 'pendente') {
                 throw ValidationException::withMessages(['senha_atual' => 'Conclua a ativação pelo convite individual.']);
             }
             if ($user->deve_trocar_senha && ($user->senha_temporaria_revogada_em
-                || ($user->senha_temporaria_expira_em && CarbonImmutable::parse($user->senha_temporaria_expira_em, 'UTC')->lessThanOrEqualTo(now('UTC'))))) {
+                || ($user->senha_temporaria_expira_em && CarbonImmutable::parse(Value::date($user->senha_temporaria_expira_em), 'UTC')->lessThanOrEqualTo(now('UTC'))))) {
                 throw ValidationException::withMessages(['senha_atual' => 'Credencial inicial vencida. Solicite novo convite.']);
             }
             $this->rejectSamePassword($user, $new);
@@ -171,7 +174,7 @@ class IdentityService
     {
         $destination ??= $user->email;
         if ($destination && filter_var($destination, FILTER_VALIDATE_EMAIL)) {
-            $this->outbox($user, 'aviso', $destination, now('UTC')->addDay(), null, null, $event);
+            $this->outbox($user, 'aviso', Value::string($destination), now('UTC')->addDay(), null, null, $event);
         }
     }
 
@@ -191,8 +194,8 @@ class IdentityService
             $record = DB::table($table)->where('token_hash', $hash)->where('usuario_id', $owner)->lockForUpdate()->first();
             $expected = $purpose === 'email' ? ($user?->email_pendente ?: $user?->email) : $user?->email;
             if (! $user || ! $user->ativo || ! $record || $record->usado_em || $record->invalidado_em
-                || CarbonImmutable::parse($record->expira_em, 'UTC')->lessThanOrEqualTo(now('UTC'))
-                || (int) $record->versao_seguranca !== (int) $user->versao_seguranca
+                || CarbonImmutable::parse(Value::date($record->expira_em), 'UTC')->lessThanOrEqualTo(now('UTC'))
+                || Value::integer($record->versao_seguranca) !== Value::integer($user->versao_seguranca)
                 || ! is_string($expected) || $expected !== $record->email_destino
                 || ($table === 'confirmacoes_identidade' && $record->finalidade !== $purpose)) {
                 $this->invalidToken();
@@ -212,18 +215,18 @@ class IdentityService
                 $changed = $expected !== $user->email;
                 DB::table('usuarios')->where('id', $owner)->update([
                     'email' => $expected, 'email_pendente' => null, 'email_verificado_em' => now('UTC'),
-                    'versao_seguranca' => (int) $user->versao_seguranca + ($changed ? 1 : 0),
+                    'versao_seguranca' => Value::integer($user->versao_seguranca) + ($changed ? 1 : 0),
                 ]);
                 if ($changed) {
-                    $this->invalidate((int) $owner);
-                    $this->securityNotice(DB::table('usuarios')->where('id', $owner)->first(), 'email_confirmado', (string) $user->email);
+                    $this->invalidate(Value::integer($owner));
+                    $this->securityNotice(DB::table('usuarios')->where('id', $owner)->firstOrFail(), 'email_confirmado', Value::string($user->email));
                 } else {
-                    $this->revokeTokens((int) $owner, 'email');
+                    $this->revokeTokens(Value::integer($owner), 'email');
                 }
             } else {
                 $this->writePassword($user, (string) $password, $purpose === 'ativacao');
             }
-            $this->audit((int) $owner, match ($purpose) {
+            $this->audit(Value::integer($owner), match ($purpose) {
                 'ativacao' => 'ativacao_concluida', 'email' => 'email_confirmado', default => 'senha_recuperada',
             });
         });
@@ -234,20 +237,20 @@ class IdentityService
         $changes = [
             'senha_hash' => $this->passwords->make($password), 'deve_trocar_senha' => 0,
             'senha_alterada_em' => now('UTC'), 'senha_temporaria_usada_em' => $user->senha_temporaria_usada_em ?: now('UTC'),
-            'versao_seguranca' => (int) $user->versao_seguranca + 1,
+            'versao_seguranca' => Value::integer($user->versao_seguranca) + 1,
         ];
         if ($activation) {
             $changes['estado_identidade'] = 'ativa';
             $changes['email_verificado_em'] = now('UTC');
         }
         DB::table('usuarios')->where('id', $user->id)->update($changes);
-        $this->invalidate((int) $user->id, 'troca_senha');
-        $this->securityNotice(DB::table('usuarios')->where('id', $user->id)->first(), 'senha_alterada');
+        $this->invalidate(Value::integer($user->id), 'troca_senha');
+        $this->securityNotice(DB::table('usuarios')->where('id', $user->id)->firstOrFail(), 'senha_alterada');
     }
 
     private function rejectSamePassword(stdClass $user, string $password): void
     {
-        if ($this->passwords->verify($password, $user->senha_hash)) {
+        if ($this->passwords->verify($password, Value::string($user->senha_hash))) {
             throw ValidationException::withMessages(['nova_senha' => 'Escolha uma senha diferente da senha atual.']);
         }
     }
@@ -259,18 +262,18 @@ class IdentityService
 
     private function issueConfirmation(stdClass $user, string $purpose, string $destination, ?int $linkId): void
     {
-        $this->revokeTokens((int) $user->id, $purpose);
+        $this->revokeTokens(Value::integer($user->id), $purpose);
         $token = bin2hex(random_bytes(32));
         $expires = $purpose === 'ativacao'
-            ? now('UTC')->addHours(max(1, min(72, (int) config('identity.activation_hours', 24))))
-            : now('UTC')->addMinutes(max(5, min(1440, (int) config('identity.verification_minutes', 60))));
+            ? now('UTC')->addHours(max(1, min(72, Value::integer(config('identity.activation_hours', 24)))))
+            : now('UTC')->addMinutes(max(5, min(1440, Value::integer(config('identity.verification_minutes', 60)))));
         $id = (int) DB::table('confirmacoes_identidade')->insertGetId([
             'usuario_id' => $user->id, 'vinculo_id' => $linkId, 'finalidade' => $purpose,
             'email_destino' => $destination, 'versao_seguranca' => $user->versao_seguranca,
             'token_hash' => hash('sha256', $token, true), 'criado_em' => now('UTC'), 'expira_em' => $expires,
         ]);
         $this->outbox($user, $purpose, $destination, $expires, $token, $id);
-        $this->audit((int) $user->id, $purpose === 'ativacao' ? 'ativacao_emitida' : 'confirmacao_email_emitida');
+        $this->audit(Value::integer($user->id), $purpose === 'ativacao' ? 'ativacao_emitida' : 'confirmacao_email_emitida');
     }
 
     private function revokeTokens(int $userId, ?string $purpose = null): void

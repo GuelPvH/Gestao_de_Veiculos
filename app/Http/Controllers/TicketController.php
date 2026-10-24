@@ -7,6 +7,7 @@ use App\Http\Requests\TicketOpenRequest;
 use App\Services\Authorization\AccessContext;
 use App\Services\Read\FleetReadRepository;
 use App\Services\Tickets\TicketService;
+use App\Support\Value;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,7 @@ class TicketController extends Controller
     public function index(Request $requisicao, FleetReadRepository $leituras, TicketService $chamados): View
     {
         $chamados->authorizeList();
+        /** @var array<string, mixed> $filtros */
         $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'page' => 'nullable|integer|min:1']);
         $paginacao = $leituras->page('tickets', $filtros);
 
@@ -34,7 +36,7 @@ class TicketController extends Controller
         $chamado = $chamados->ticket($registro);
         $mensagens = DB::table('chamado_mensagens as m')->join('usuario_perfis as v', 'v.id', '=', 'm.autor_vinculo_id')
             ->join('usuarios as u', 'u.id', '=', 'v.usuario_id')->where('m.chamado_id', $registro);
-        if (! $acesso->can('chamados', 'atender', (int) $chamado->__owner, (int) $chamado->__unit)) {
+        if (! $acesso->can('chamados', 'atender', Value::integer($chamado->__owner), Value::integer($chamado->__unit))) {
             $mensagens->where('m.interna', 0);
         }
         $anexos = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id')
@@ -43,7 +45,7 @@ class TicketController extends Controller
 
         return view('tickets.show', [
             'chamado' => $chamado,
-            'valores' => $leituras->rows('tickets', collect([$chamado]))->first()['valores'],
+            'valores' => $leituras->rows('tickets', collect([$chamado]))->sole()['valores'],
             'tela' => $leituras->definition('tickets'),
             'mensagens' => $mensagens->orderBy('m.id')->limit(100)->get(['u.nome as autor', 'm.mensagem', 'm.interna', 'm.criado_em']),
             'anexos' => $anexos,
@@ -83,7 +85,7 @@ class TicketController extends Controller
 
         return view('tickets.form', [
             'acao' => $acao, 'chamado' => $chamado, 'titulo' => $rotulos[$acao],
-            'categorias' => [], 'atendentes' => $acao === 'assign' ? $chamados->attendants((int) $chamado->__unit) : [],
+            'categorias' => [], 'atendentes' => $acao === 'assign' ? $chamados->attendants(Value::integer($chamado->__unit)) : [],
         ]);
     }
 
@@ -91,15 +93,15 @@ class TicketController extends Controller
     {
         $dados = $requisicao->validated();
         if ($acao === 'respond' || $acao === 'note') {
-            $chamados->reply($registro, $dados['mensagem'], $acao === 'note');
+            $chamados->reply($registro, Value::string($dados['mensagem']), $acao === 'note');
             $status = $acao === 'note' ? 'Nota interna registrada.' : 'Resposta registrada.';
         } elseif ($acao === 'assign') {
-            if (! $chamados->assign($registro, (int) $dados['versao'], $dados['situacao'], (int) $dados['responsavel'], $dados['motivo'])) {
+            if (! $chamados->assign($registro, Value::integer($dados['versao']), Value::string($dados['situacao']), Value::integer($dados['responsavel']), Value::string($dados['motivo']))) {
                 return $this->conflict($registro);
             }
             $status = 'Atendimento atualizado.';
         } elseif ($acao === 'resolve') {
-            if (! $chamados->resolve($registro, (int) $dados['versao'], $dados['motivo'])) {
+            if (! $chamados->resolve($registro, Value::integer($dados['versao']), Value::string($dados['motivo']))) {
                 return $this->conflict($registro);
             }
             $status = 'Chamado resolvido.';
@@ -114,9 +116,9 @@ class TicketController extends Controller
     public function download(int $registro, int $anexo, TicketService $chamados): StreamedResponse
     {
         $arquivo = $chamados->attachment($registro, $anexo);
-        abort_unless(Storage::disk('local')->exists($arquivo->chave_armazenamento), 404);
+        abort_unless(Storage::disk('local')->exists(Value::string($arquivo->chave_armazenamento)), 404);
 
-        return Storage::disk('local')->download($arquivo->chave_armazenamento, $arquivo->nome_original, ['Content-Type' => 'application/octet-stream']);
+        return Storage::disk('local')->download(Value::string($arquivo->chave_armazenamento), Value::nullableString($arquivo->nome_original), ['Content-Type' => 'application/octet-stream']);
     }
 
     private function conflict(int $registro): RedirectResponse

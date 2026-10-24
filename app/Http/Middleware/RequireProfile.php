@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\Authorization\AccessContext;
+use App\Services\Read\FleetReadRepository;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -11,15 +12,17 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RequireProfile
 {
+    /** @param Closure(Request): Response $proximo */
     public function handle(Request $requisicao, Closure $proximo): Response
     {
         $acesso = app(AccessContext::class);
         if (! $acesso->link()) {
             return redirect()->route('profiles.index');
         }
+        /** @var list<array{label: string, route: string, active: string, icon: string}> $menu */
         $menu = [['label' => 'Painel', 'route' => 'dashboard', 'active' => 'dashboard', 'icon' => 'home']];
-        foreach (config('screens', []) as $codigo => $tela) {
-            if (is_array($tela) && $acesso->level($tela['module']) > 0 && Route::has(($tela['route'] ?? $codigo).'.index')) {
+        foreach (FleetReadRepository::definitions() as $codigo => $tela) {
+            if ($acesso->level($tela['module']) > 0 && Route::has(($tela['route'] ?? $codigo).'.index')) {
                 $menu[] = ['label' => $tela['title'], 'route' => ($tela['route'] ?? $codigo).'.index', 'active' => ($tela['route'] ?? $codigo).'.*', 'icon' => $tela['icon']];
             }
         }
@@ -30,15 +33,15 @@ class RequireProfile
         }
         if (($acesso->link()->perfil_codigo ?? '') === 'gestor') {
             $ordem = ['dashboard', 'solicitacoes.index', 'agenda.index', 'vehicles.index', 'monitoring.index', 'history.index', 'trips.index', 'reports.index', 'tickets.index'];
-            foreach ($menu as &$item) {
-                $item['label'] = match ($item['route']) {
+            foreach ($menu as $indice => $menuItem) {
+                $menu[$indice]['label'] = match ($menuItem['route']) {
                     'dashboard' => 'Visão geral',
                     'trips.index' => 'Viagens e ocorrências',
-                    default => $item['label'],
+                    default => $menuItem['label'],
                 };
             }
-            unset($item);
-            usort($menu, fn ($a, $b) => (array_search($a['route'], $ordem, true) === false ? 99 : array_search($a['route'], $ordem, true)) <=> (array_search($b['route'], $ordem, true) === false ? 99 : array_search($b['route'], $ordem, true)));
+            $posicoes = array_flip($ordem);
+            usort($menu, fn ($a, $b): int => ($posicoes[$a['route']] ?? 99) <=> ($posicoes[$b['route']] ?? 99));
         }
         View::share('itensMenu', $menu);
 

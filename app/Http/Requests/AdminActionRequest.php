@@ -27,6 +27,9 @@ class AdminActionRequest extends FormRequest
         return $permissao !== null && $acesso->level($permissao[0], $permissao[1]) > 0;
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure|\Illuminate\Contracts\Validation\Rule>>
+     */
     public function rules(): array
     {
         $operacao = $this->route('area').'.'.$this->route('operacao');

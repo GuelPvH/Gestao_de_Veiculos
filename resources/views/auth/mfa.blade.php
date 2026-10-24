@@ -13,11 +13,7 @@
         >
             <p data-webauthn-error class="text-danger" role="alert" hidden></p>
             <button type="button" class="btn btn-primary" data-webauthn-start>
-                {{
-                    $registered
-                        ? 'Confirmar com minha passkey'
-                        : 'Cadastrar passkey ou chave de segurança'
-                }}
+                {{ $registered ? 'Confirmar com minha passkey' : 'Cadastrar passkey ou chave de segurança' }}
             </button>
         </div>
         @if ($canRecover)
@@ -34,13 +30,13 @@
                     Cadastrar outra passkey ou chave de segurança
                 </button>
             </div>
-            <hr>
+            <hr />
             <h2 class="h5">Recuperação de fatores</h2>
             <p>Exige justificativa e duas aprovações de pessoas distintas do titular e do solicitante.</p>
             <form action="{{ route('mfa.recover') }}" method="post">
                 @csrf
                 <label class="form-label" for="mfa-target">ID do usuário</label
-                ><input class="form-control" type="number" id="mfa-target" name="usuario_id" required min="1">
+                ><input class="form-control" type="number" id="mfa-target" name="usuario_id" required min="1" />
                 <label class="form-label mt-2" for="mfa-reason">Justificativa da verificação administrativa</label
                 ><textarea
                     class="form-control"

@@ -40,7 +40,7 @@ try {
         'queue.connections.redis.driver' => 'redis', 'queue.connections.redis.connection' => 'default',
         'queue.connections.redis.retry_after' => 120,
         'fleet.recovery_mail_enabled' => true, 'fleet.recovery_queue_enabled' => true,
-        'fleet.recovery_queue_connection' => 'redis', 'mail.default' => 'smtp',
+        'fleet.recovery_queue_connection' => 'redis', 'cache.default' => 'redis', 'mail.default' => 'smtp',
         'mail.mailers.smtp.scheme' => 'smtp', 'mail.mailers.smtp.url' => null,
         'mail.mailers.smtp.host' => '127.0.0.1', 'mail.mailers.smtp.port' => $options['smtp_port'],
         'mail.mailers.smtp.timeout' => 15, 'mail.from.address' => 'no-reply@frota.example.test',

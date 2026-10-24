@@ -64,7 +64,7 @@
             rotulo="Resultado da conferência"
             tipo="select"
             :obrigatorio="true"
-            :opcoes="['aceito' => 'Aprovar', 'correcao_solicitada' => 'Solicitar correção']"
+            :opcoes="['aceito'=>'Aprovar','correcao_solicitada'=>'Solicitar correção']"
         />
         <x-forms.field
             nome="justificativa"
@@ -95,7 +95,7 @@
                 value="1"
                 id="finance-confirmar"
                 required
-            ><label class="form-check-label" for="finance-confirmar">Confirmo o pagamento e o comprovante.</label>
+            /><label class="form-check-label" for="finance-confirmar">Confirmo o pagamento e o comprovante.</label>
         </div>
     @elseif ($acao === 'cancel')
         <x-forms.field
@@ -113,7 +113,7 @@
                 value="1"
                 id="finance-confirmar"
                 required
-            ><label class="form-check-label" for="finance-confirmar">Confirmo o cancelamento desta despesa.</label>
+            /><label class="form-check-label" for="finance-confirmar">Confirmo o cancelamento desta despesa.</label>
         </div>
     @endif
 @elseif ($codigo === 'fuel')
@@ -128,14 +128,7 @@
         tipo="select"
         :valor="$registro->combustivel ?? ''"
         :obrigatorio="true"
-        :opcoes="[
-            'gasolina' => 'Gasolina',
-            'etanol' => 'Etanol',
-            'diesel' => 'Diesel',
-            'gnv' => 'GNV',
-            'eletricidade' => 'Eletricidade',
-            'outro' => 'Outro',
-        ]"
+        :opcoes="['gasolina'=>'Gasolina','etanol'=>'Etanol','diesel'=>'Diesel','gnv'=>'GNV','eletricidade'=>'Eletricidade','outro'=>'Outro']"
         data-fuel-type
     />
     <div class="row">
@@ -157,7 +150,7 @@
                 tipo="select"
                 :valor="$registro->unidade_medida ?? ''"
                 :obrigatorio="true"
-                :opcoes="['litro' => 'Litro', 'm3' => 'Metro cúbico', 'kwh' => 'Quilowatt-hora']"
+                :opcoes="['litro'=>'Litro','m3'=>'Metro cúbico','kwh'=>'Quilowatt-hora']"
                 data-fuel-unit
             />
         </div>
@@ -201,7 +194,7 @@
             value="1"
             id="fuel-completo"
             @checked (old('tanque_completo', $registro->tanque_completo ?? 0))
-        ><label class="form-check-label" for="fuel-completo">Tanque completo</label>
+        /><label class="form-check-label" for="fuel-completo">Tanque completo</label>
     </div>
     <x-forms.field nome="fornecedor" rotulo="Fornecedor" :valor="$registro->fornecedor ?? ''" maxlength="150" />
     <x-forms.field
@@ -230,7 +223,7 @@
             tipo="select"
             :valor="$registro->tipo ?? ''"
             :obrigatorio="true"
-            :opcoes="['preventiva' => 'Preventiva', 'corretiva' => 'Corretiva', 'vistoria' => 'Vistoria']"
+            :opcoes="['preventiva'=>'Preventiva','corretiva'=>'Corretiva','vistoria'=>'Vistoria']"
         />
         <div class="row">
             <div class="col-md-6">
@@ -238,13 +231,7 @@
                     nome="inicio_previsto"
                     rotulo="Início previsto"
                     tipo="datetime-local"
-                    :valor="
-                        $registro && $registro->inicio_previsto
-        ? \Carbon\CarbonImmutable::parse($registro->inicio_previsto, 'UTC')
-            ->setTimezone(config('fleet.timezone'))
-            ->format('Y-m-d\TH:i')
-        : ''
-                    "
+                    :valor="$registro && $registro->inicio_previsto ? \Carbon\CarbonImmutable::parse($registro->inicio_previsto,'UTC')->setTimezone(config('fleet.timezone'))->format('Y-m-d\TH:i') : ''"
                     :obrigatorio="true"
                     data-date-start
                 />
@@ -254,13 +241,7 @@
                     nome="fim_previsto"
                     rotulo="Fim previsto"
                     tipo="datetime-local"
-                    :valor="
-                        $registro && $registro->fim_previsto
-        ? \Carbon\CarbonImmutable::parse($registro->fim_previsto, 'UTC')
-            ->setTimezone(config('fleet.timezone'))
-            ->format('Y-m-d\TH:i')
-        : ''
-                    "
+                    :valor="$registro && $registro->fim_previsto ? \Carbon\CarbonImmutable::parse($registro->fim_previsto,'UTC')->setTimezone(config('fleet.timezone'))->format('Y-m-d\TH:i') : ''"
                     :obrigatorio="true"
                     data-date-end
                 />
@@ -320,7 +301,7 @@
                 value="1"
                 id="finance-confirmar"
                 required
-            ><label class="form-check-label" for="finance-confirmar">Confirmo o cancelamento desta manutenção.</label>
+            /><label class="form-check-label" for="finance-confirmar">Confirmo o cancelamento desta manutenção.</label>
         </div>
     @endif
 @endif

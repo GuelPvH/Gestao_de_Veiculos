@@ -21,20 +21,14 @@ services:
             DB_DATABASE: '${DB_DATABASE:?Configure DB_DATABASE no arquivo privado}'
             DB_USERNAME: '${DB_USERNAME:?Configure DB_USERNAME no arquivo privado}'
             DB_PASSWORD: '${DB_PASSWORD:?Configure DB_PASSWORD no arquivo privado}'
-            CACHE_STORE: redis
+            CACHE_STORE: database
             SESSION_DRIVER: file
-            QUEUE_CONNECTION: redis
-            FLEET_RECOVERY_QUEUE_CONNECTION: redis
-            REDIS_CLIENT: phpredis
-            REDIS_HOST: redis
-            REDIS_PASSWORD: '${REDIS_PASSWORD:?Configure a senha privada do Redis}'
-            REDIS_QUEUE_RETRY_AFTER: '120'
+            QUEUE_CONNECTION: database
+            FLEET_RECOVERY_QUEUE_CONNECTION: database
+            DB_QUEUE_RETRY_AFTER: '120'
             SESSION_ENCRYPT: 'true'
             MAIL_MAILER: '${MAIL_MAILER:-log}'
             LOG_CHANNEL: stderr
-        depends_on:
-            redis:
-                condition: service_healthy
         restart: unless-stopped
         ports:
             - '127.0.0.1:${APP_PORT:-8080}:8080'
@@ -42,29 +36,6 @@ services:
             - app_storage:/var/www/html/storage
         security_opt:
             - no-new-privileges:true
-
-    redis:
-        image: redis:8.2-alpine
-        user: redis
-        environment:
-            REDIS_PASSWORD: '${REDIS_PASSWORD:?Configure a senha privada do Redis}'
-            REDIS_MAXMEMORY: '${REDIS_MAXMEMORY:-256mb}'
-        command:
-            [
-                'sh',
-                '-c',
-                'exec redis-server --appendonly yes --appendfsync everysec --maxmemory "$${REDIS_MAXMEMORY}" --maxmemory-policy noeviction --requirepass "$${REDIS_PASSWORD}"',
-            ]
-        volumes:
-            - redis_data:/data
-        restart: unless-stopped
-        security_opt:
-            - no-new-privileges:true
-        healthcheck:
-            test: ['CMD-SHELL', 'REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli ping | grep -q PONG']
-            interval: 10s
-            timeout: 3s
-            retries: 5
 
     worker-auth: &mail_worker
         image: gestao-de-veiculos:local
@@ -81,18 +52,15 @@ services:
                 'php',
                 'artisan',
                 'queue:work',
-                'redis',
+                'database',
                 '--queue=auth-mails',
-                '--sleep=1',
+                '--sleep=5',
                 '--tries=3',
                 '--timeout=60',
                 '--max-time=3600',
             ]
         volumes:
             - app_storage:/var/www/html/storage
-        depends_on:
-            redis:
-                condition: service_healthy
         restart: unless-stopped
         stop_grace_period: 75s
         security_opt:
@@ -111,9 +79,9 @@ services:
                 'php',
                 'artisan',
                 'queue:work',
-                'redis',
+                'database',
                 '--queue=security-mails',
-                '--sleep=1',
+                '--sleep=5',
                 '--tries=3',
                 '--timeout=60',
                 '--max-time=3600',
@@ -164,5 +132,4 @@ services:
             - no-new-privileges:true
 
 volumes:
-    redis_data:
     app_storage:

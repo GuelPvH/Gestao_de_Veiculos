@@ -1,15 +1,12 @@
-@php ($titulo = match ($etapa) { 'preparar' => 'Preparar exportação', 'previa' => 'Pré-visualização do relatório', default => 'Relatórios' })
+@php ($titulo = match($etapa) {'preparar'=>'Preparar exportação', 'previa'=>'Pré-visualização do relatório', default=>'Relatórios'})
 <x-layouts.authenticated
     :titulo="$titulo"
-    :breadcrumbs="[
-        ['label' => 'Relatórios', 'href' => route('reports.index')],
-        ...$etapa === 'catalogo' ? [] : [['label' => $titulo]],
-    ]"
+    :breadcrumbs="[['label'=>'Relatórios','href'=>route('reports.index')], ...($etapa === 'catalogo' ? [] : [['label'=>$titulo]])]"
 >
     <x-ui.title :titulo="$titulo" subtitulo="Escolha as informações e confira os dados antes de exportar." />
     @if ($etapa === 'catalogo')
         <x-ui.panel titulo="Relatórios disponíveis">
-            @foreach ($catalogo as $chave => $area)
+            @foreach ($catalogo as $chave=>$area)
                 <a
                     class="row-summary text-decoration-none"
                     href="{{ route('reports.index', ['modulo'=>$chave, 'etapa'=>'preparar']) }}"
@@ -33,7 +30,7 @@
                             tipo="select"
                             :valor="$codigo"
                             :obrigatorio="true"
-                            :opcoes="array_map(fn($item) => $item['title'], $catalogo)"
+                            :opcoes="array_map(fn($item)=>$item['title'],$catalogo)"
                         />
                     </div>
                     <div class="col-md-6">
@@ -68,8 +65,8 @@
                                         id="report-{{ $campo->chave }}"
                                         name="campos[]"
                                         value="{{ $campo->chave }}"
-                                        @checked (in_array($campo->chave, $selecionados, true))
-                                    ><label
+                                        @checked (in_array($campo->chave,$selecionados,true))
+                                    /><label
                                         class="form-check-label"
                                         for="report-{{ $campo->chave }}"
                                         >{{ $campo->rotulo }}</label
@@ -105,7 +102,7 @@
                 <x-tables.records
                     :colunas="$colunas"
                     :registros="$registros"
-                    :rota-detalhe="(config('screens.' . $codigo . '.route') ?? $codigo) . '.show'"
+                    :rota-detalhe="(config('screens.'.$codigo.'.route') ?? $codigo).'.show'"
 
                 /><x-navigation.pagination :paginacao="$paginacao" />
             @else
@@ -118,13 +115,13 @@
                 @if ($podeExportar && $paginacao && $paginacao->total() > 0 && count($selecionados))
                     <form method="post" action="{{ route('reports.export') }}">
                         @csrf
-                        <input type="hidden" name="modulo" value="{{ $codigo }}">
+                        <input type="hidden" name="modulo" value="{{ $codigo }}" />
                         @foreach ($selecionados as $chave)
-                            <input type="hidden" name="campos[]" value="{{ $chave }}">
+                            <input type="hidden" name="campos[]" value="{{ $chave }}" />
                         @endforeach
-                        @foreach (['de', 'ate', 'q', 'formato'] as $filtro)
+                        @foreach (['de','ate','q','formato'] as $filtro)
                             @if (!empty($validado[$filtro]))
-                                <input type="hidden" name="{{ $filtro }}" value="{{ $validado[$filtro] }}">
+                                <input type="hidden" name="{{ $filtro }}" value="{{ $validado[$filtro] }}" />
                             @endif
                         @endforeach
                         <button class="btn btn-primary" type="submit">

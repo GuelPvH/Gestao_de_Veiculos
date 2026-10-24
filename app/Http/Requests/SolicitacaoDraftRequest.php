@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Services\Requests\RequestReadRepository;
+use App\Support\Value;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -16,6 +17,9 @@ class SolicitacaoDraftRequest extends FormRequest
         return $this->isMethod('POST') ? $leituras->canCreate() : isset($leituras->allowed($leituras->findById((int) $this->route('registro')))['edit']);
     }
 
+    /**
+     * @return array<string, list<string|\Stringable|\Closure>>
+     */
     public function rules(): array
     {
         return [
@@ -39,14 +43,17 @@ class SolicitacaoDraftRequest extends FormRequest
         ];
     }
 
+    /**
+     * @return array<array-key, mixed>
+     */
     public function after(): array
     {
         return [function (Validator $validator): void {
             if ($validator->errors()->has('passageiros') || $validator->errors()->has('quantidade_passageiros')) {
                 return;
             }
-            $nomes = collect(preg_split('/\r\n|\r|\n/', (string) $this->input('passageiros', '')))->map(fn (string $nome) => trim($nome))->filter(fn (string $nome) => $nome !== '');
-            if ($nomes->count() > (int) $this->input('quantidade_passageiros') || $nomes->contains(fn (string $nome) => mb_strlen($nome) > 150)) {
+            $nomes = collect(preg_split('/\r\n|\r|\n/', Value::string($this->input('passageiros', ''))) ?: [])->map(fn (string $nome) => trim($nome))->filter(fn (string $nome) => $nome !== '');
+            if ($nomes->count() > Value::integer($this->input('quantidade_passageiros')) || $nomes->contains(fn (string $nome) => mb_strlen($nome) > 150)) {
                 $validator->errors()->add('passageiros', 'Informe até a quantidade declarada de passageiros, com um nome de até 150 caracteres por linha.');
             }
         }];

@@ -1,10 +1,10 @@
-<x-layouts.authenticated titulo="Apresentação visual" :breadcrumbs="[['label' => 'Apresentação visual']]">
+<x-layouts.authenticated titulo="Apresentação visual" :breadcrumbs="[['label'=>'Apresentação visual']]">
     <x-ui.title
         titulo="Apresentação visual"
         subtitulo="Compare os temas no computador e no celular. A navegação de cada painel permanece disponível."
     />
     <div class="review-grid">
-        @foreach (['light' => 'Modo claro', 'dark' => 'Modo escuro'] as $tema => $rotulo)
+        @foreach (['light'=>'Modo claro','dark'=>'Modo escuro'] as $tema=>$rotulo)
             <section class="review-section">
                 <h2 class="h5">{{ $rotulo }}</h2>
                 <div class="device-stage" data-device-stage="1440">
@@ -14,7 +14,7 @@
                     <iframe title="Celular · {{ $rotulo }}" src="{{ route('dashboard',['tema'=>$tema]) }}"></iframe>
                 </div>
                 <nav aria-label="Telas · {{ $rotulo }}" class="d-flex flex-wrap gap-2 mt-3">
-                    @foreach ($links as $rota => $titulo)
+                    @foreach ($links as $rota=>$titulo)
                         <a
                             class="btn btn-outline-secondary"
                             href="{{ route($rota,['tema'=>$tema]) }}"

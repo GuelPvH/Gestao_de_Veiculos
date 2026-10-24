@@ -1,4 +1,4 @@
-@if ($acao === 'create')
+@if ($acao==='create')
     <x-forms.field
         nome="categoria"
         rotulo="Categoria"
@@ -12,6 +12,6 @@
 @else
     <x-forms.field nome="mensagem" rotulo="Mensagem" tipo="textarea" :obrigatorio="true" maxlength="5000" />
 @endif
-@if ($acao === 'assign')
+@if ($acao==='assign')
     <x-forms.field nome="responsavel" rotulo="Responsável pelo atendimento" :obrigatorio="true" maxlength="150" />
 @endif
