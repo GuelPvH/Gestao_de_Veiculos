@@ -108,6 +108,11 @@ class FleetReadRepository
     {
         $consulta = $this->query($codigo);
         $tela = $this->definition($codigo);
+        $filtrarDataRealizada = $codigo === 'requests' && $this->acesso->link()?->perfil_codigo === 'servidor';
+        if ($filtrarDataRealizada && (! empty($filtros['de']) || ! empty($filtros['ate']))) {
+            $consulta->leftJoin('viagens as viagem_filtro', 'viagem_filtro.revisao_id', '=', 'r.revisao_id');
+        }
+        $colunaData = $tela['date'] ?? null;
         if (($filtros['q'] ?? '') !== '') {
             $consulta->where(function (Builder $busca) use ($tela, $filtros): void {
                 foreach ($tela['columns'] as $chave => $campo) {
@@ -121,11 +126,11 @@ class FleetReadRepository
             $consulta->where($tela['columns']['situacao'][0], $filtros['situacao']);
         }
         foreach (['de', 'ate'] as $chave) {
-            if (empty($filtros[$chave]) || empty($tela['date'])) {
+            if (empty($filtros[$chave]) || (! $filtrarDataRealizada && empty($colunaData))) {
                 continue;
             }
             if ($tela['dateOnly'] ?? false) {
-                $consulta->where($tela['date'], $chave === 'de' ? '>=' : '<=', $filtros[$chave]);
+                $consulta->where($colunaData, $chave === 'de' ? '>=' : '<=', $filtros[$chave]);
 
                 continue;
             }
@@ -134,8 +139,10 @@ class FleetReadRepository
             $operador = $chave === 'de' ? '>=' : '<';
             if ($codigo === 'trips') {
                 $consulta->whereRaw('COALESCE(r.saida_real, r.saida_prevista) '.$operador.' ?', [$limite]);
+            } elseif ($filtrarDataRealizada) {
+                $consulta->whereRaw('COALESCE(viagem_filtro.saida_real, r.saida_prevista) '.$operador.' ?', [$limite]);
             } else {
-                $consulta->where($tela['date'], $operador, $limite);
+                $consulta->where($colunaData, $operador, $limite);
             }
         }
 

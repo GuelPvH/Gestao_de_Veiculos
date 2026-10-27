@@ -585,6 +585,19 @@ h2 {
 .filter-grid > * {
     min-width: 0;
 }
+.request-date-filters {
+    display: grid;
+    max-width: 1000px;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    gap: 30px;
+}
+.request-filter-actions {
+    display: flex;
+    align-items: end;
+    gap: 8px;
+    padding-bottom: 20px;
+}
 .review-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -658,6 +671,9 @@ h2 {
     .dashboard-grid,
     .filter-grid,
     .review-grid {
+        grid-template-columns: 1fr;
+    }
+    .request-date-filters {
         grid-template-columns: 1fr;
     }
 }

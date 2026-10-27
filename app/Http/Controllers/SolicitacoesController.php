@@ -11,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use PDOException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -32,8 +33,15 @@ class SolicitacoesController extends Controller
 
     public function index(Request $requisicao): View
     {
-        /** @var array<string, mixed> $filtros */
-        $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'page' => 'nullable|integer|min:1']);
+        $regras = [
+            'q' => ['nullable', 'string', 'max:150'],
+            'situacao' => ['nullable', 'string', Rule::in($this->model->definition()['states'])],
+            'ordem' => ['nullable', Rule::in(['recentes', 'antigos'])],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ];
+        $regras['de'] = ['nullable', 'date_format:Y-m-d'];
+        $regras['ate'] = ['nullable', 'date_format:Y-m-d', 'after_or_equal:de'];
+        $filtros = $requisicao->validate($regras);
         $paginacao = $this->model->findAll($filtros);
 
         return view('gestor.solicitacoes.index', $this->viewData() + ['filtros' => $filtros, 'paginacao' => $paginacao, 'registros' => $this->model->rows($paginacao->getCollection()), 'podeCriar' => $this->model->canCreate()]);
@@ -50,7 +58,7 @@ class SolicitacoesController extends Controller
     {
         abort_unless($this->model->canCreate(), 403);
 
-        return view('gestor.solicitacoes.create', $this->viewData() + ['acao' => 'create', 'titulo' => 'Novo registro · Solicitações', 'registro' => null, 'formAction' => route('solicitacoes.store'), 'veiculosDisponiveis' => $this->model->vehicleOptions()]);
+        return view('gestor.solicitacoes.create', $this->viewData() + ['acao' => 'create', 'titulo' => 'Nova solicitação', 'registro' => null, 'formAction' => route('solicitacoes.store'), 'veiculosDisponiveis' => $this->model->vehicleOptions()]);
     }
 
     private function actionPage(int $registro, string $acao): View
@@ -66,7 +74,7 @@ class SolicitacoesController extends Controller
         } catch (QueryException|PDOException $erro) {
             report($erro);
 
-            return back()->withErrors(['operacao' => 'Não foi possível criar o rascunho. Confira os dados e tente novamente.'])->withInput();
+            return redirect()->route('solicitacoes.create')->withErrors(['operacao' => 'Não foi possível criar o rascunho. Confira os dados e tente novamente.'])->withInput();
         }
 
         return redirect()->route('solicitacoes.show', $id)->with('status', 'Rascunho criado. Envie a solicitação quando estiver pronta para análise.');
