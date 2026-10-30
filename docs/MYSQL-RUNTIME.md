@@ -6,6 +6,8 @@ O Compose define CACHE_STORE=database, QUEUE_CONNECTION=database e FLEET_RECOVER
 
 Instalações existentes: antes de subir a aplicação, aplique database/sql/runtime-cache.sql no banco configurado; ele apenas cria cache/cache_locks se ausentes. As tabelas jobs e failed_jobs já pertencem ao esquema. O patch versionado 1.0.7 inclui o mesmo provisionamento para a atualização completa, após os patches anteriores. O provisionamento isolado não marca versões anteriores como aplicadas.
 
+O patch 1.0.8 atualiza a criação de solicitações para confirmar rascunho, coordenadas, passageiros e vínculo do anexo em uma única transação MySQL. Aplique-o pelo fluxo de atualização versionada antes de executar a versão da aplicação que envia os novos parâmetros da procedure.
+
 Ao migrar uma instalação ativa, pause o agendador e os workers, confira as filas Redis, preserve tarefas pendentes e copie entradas de cache ainda válidas (incluindo contadores de tentativas) antes de parar Redis. Nunca descarte uma fila pendente. O volume Redis antigo pode ser mantido para recuperação.
 
 Validação: fleet:check-schema, fleet:worker-health auth-mails, fleet:worker-health security-mails e fleet:delivery-health. O monitoramento usa o armazenamento de cache configurado e só coleta métricas Redis quando ele está explicitamente em uso.

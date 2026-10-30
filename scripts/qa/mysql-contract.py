@@ -173,6 +173,11 @@ def main():
             maintenance.upgrade(restore, upgrade_args)
             if restore.rows("SELECT COUNT(*) FROM versoes_modelo WHERE versao='1.0.6';")[0][0] != '1':
                 raise RuntimeError('Atualização de placas não foi registrada.')
+            if restore.rows("SELECT COUNT(*) FROM versoes_modelo WHERE versao='1.0.8';")[0][0] != '1':
+                raise RuntimeError('Atualização de criação atômica de solicitações não foi registrada.')
+            request_parameters = restore.rows("SELECT COUNT(*) FROM information_schema.PARAMETERS WHERE SPECIFIC_SCHEMA=DATABASE() AND SPECIFIC_NAME='sp_criar_solicitacao_completa' AND ORDINAL_POSITION>0;")[0][0]
+            if request_parameters != '17':
+                raise RuntimeError('Assinatura da procedure de criação atômica de solicitações divergente.')
             if restore.rows("SELECT placa FROM veiculos WHERE nome='Placa preservada no upgrade';")[0][0] != 'TST1234':
                 raise RuntimeError('Atualização de placas alterou um registro existente.')
             restore.execute("UPDATE veiculos SET placa='TST-1234' WHERE nome='Placa preservada no upgrade';")

@@ -1,6 +1,6 @@
 {
-    "sha256": "53a264e7074cc5f2743a3b521abc4743d9ba8e9a1c943b3ebc09b863da5569e5",
-    "bytes": 262386,
+    "sha256": "e9ba2855ef7060a62e35fd6a8522a6c0d958c0a56cc7d79540796236056bcd4c",
+    "bytes": 263640,
     "tables": [
         "abastecimentos",
         "acoes",
@@ -265,7 +265,7 @@
         "tg_vresposta_bi",
         "tg_vresposta_bu"
     ],
-    "schema_version": "1.0.7",
+    "schema_version": "1.0.8",
     "patches": [
         {
             "version": "1.0.3",
@@ -333,6 +333,15 @@
                 {
                     "path": "patches/1.0.7_database_cache.sql",
                     "sha256": "c3ec637c0276658f4eb16b00bd8a2e21695ab63037c0e16bf5138f7200b75de5"
+                }
+            ]
+        },
+        {
+            "version": "1.0.8",
+            "files": [
+                {
+                    "path": "patches/1.0.8_atomic_request_creation.sql",
+                    "sha256": "08522829b180add50c838adfb8f4eeddb535af73abcc3b232bb629b670e6eb58"
                 }
             ]
         }

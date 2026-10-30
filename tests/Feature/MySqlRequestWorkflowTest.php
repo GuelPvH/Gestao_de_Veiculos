@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Services\Auth\ProcedureRunner;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /** Contratos com procedures e triggers reais, exclusivamente no MySQL descartável. */
@@ -148,6 +150,8 @@ class MySqlRequestWorkflowTest extends TestCase
         $revisao = DB::table('solicitacao_revisoes')->where('solicitacao_id', $solicitacao)->first();
         $this->assertNull($revisao->motorista_sugerido_id);
         $this->assertSame(1, (int) $revisao->necessita_motorista);
+        $this->assertEquals(-8.76, (float) $revisao->origem_latitude);
+        $this->assertEquals(-63.91, (float) $revisao->destino_longitude);
         $this->assertSame(1, DB::table('solicitacao_passageiros')->where('revisao_id', $revisao->id)->count());
         $this->sendRequest($solicitacao);
         $this->post('/sair');
@@ -163,6 +167,32 @@ class MySqlRequestWorkflowTest extends TestCase
         $this->post('/sair');
         $this->login($condutor, $senhaCondutor);
         $this->get(route('trips.show', $viagem))->assertOk()->assertSee('Registrar saída');
+    }
+
+    public function test_uploaded_attachment_is_linked_with_coordinates_before_creation_commits(): void
+    {
+        [$solicitante, $senha] = $this->user('servidor');
+        $veiculo = $this->vehicle($solicitante);
+        $this->login($solicitante, $senha);
+        Storage::fake('local');
+
+        $this->post(route('solicitacoes.store'), $this->payload($veiculo, [
+            'anexo' => UploadedFile::fake()->create('autorizacao.pdf', 20, 'application/pdf'),
+        ]))->assertRedirectContains('/solicitacoes/')->assertSessionHasNoErrors();
+
+        $solicitacao = DB::table('solicitacoes')->where('solicitante_id', $solicitante)->orderByDesc('id')->first();
+        $this->assertNotNull($solicitacao);
+        $revisao = DB::table('solicitacao_revisoes')->where('id', $solicitacao->revisao_atual_id)->first();
+        $this->assertNotNull($revisao);
+        $anexo = DB::table('anexos')->where('revisao_id', $revisao->id)->first();
+        $this->assertNotNull($anexo);
+        $arquivo = DB::table('arquivos')->where('id', $anexo->arquivo_id)->first();
+        $this->assertNotNull($arquivo);
+
+        $this->assertSame($solicitante, (int) $arquivo->enviado_por);
+        $this->assertEquals(-8.76, (float) $revisao->origem_latitude);
+        $this->assertEquals(-63.91, (float) $revisao->destino_longitude);
+        Storage::disk('local')->assertExists($arquivo->chave_armazenamento);
     }
 
     public function test_self_driver_requires_active_license_for_category_and_entire_period(): void
@@ -201,12 +231,52 @@ class MySqlRequestWorkflowTest extends TestCase
                 CarbonImmutable::now('UTC')->addHours(2)->format('Y-m-d H:i:s.u'),
                 CarbonImmutable::now('UTC')->addHours(4)->format('Y-m-d H:i:s.u'),
                 null, 1, 1, $veiculo, null, '["Pessoa 1","Pessoa 2"]',
+                -8.76, -63.90, -8.77, -63.91, null,
             ]);
             $this->fail('A lista inválida não foi recusada.');
         } catch (\PDOException $erro) {
             $this->assertSame('45000', (string) $erro->getCode());
         }
         foreach ($contagens as $tabela => $quantidade) {
+            $this->assertSame($quantidade, DB::table($tabela)->count(), 'Resíduo indevido em '.$tabela);
+        }
+    }
+
+    public function test_creation_rolls_back_all_rows_when_attachment_cannot_be_linked(): void
+    {
+        [$solicitante] = $this->user('servidor');
+        [$outroUsuario] = $this->user('servidor');
+        $veiculo = $this->vehicle($solicitante);
+        $vinculo = (int) DB::table('usuario_perfis')->where('usuario_id', $solicitante)->value('id');
+        $arquivo = DB::table('arquivos')->insertGetId([
+            'enviado_por' => $outroUsuario,
+            'chave_armazenamento' => 'anexos/'.bin2hex(random_bytes(20)).'.pdf',
+            'nome_original' => 'autorizacao.pdf',
+            'tipo_mime' => 'application/pdf',
+            'tamanho_bytes' => 20,
+            'sha256' => hash('sha256', random_bytes(20), true),
+            'situacao' => 'disponivel',
+        ]);
+        $antes = [];
+        foreach (['solicitacoes', 'solicitacao_revisoes', 'solicitacao_passageiros', 'solicitacao_eventos', 'auditoria', 'anexos'] as $tabela) {
+            $antes[$tabela] = DB::table($tabela)->count();
+        }
+        $dados = $this->payload($veiculo);
+
+        try {
+            app(ProcedureRunner::class)->call('sp_criar_solicitacao_completa', [
+                $vinculo, $dados['finalidade'], $dados['origem'], $dados['destino'],
+                CarbonImmutable::parse($dados['saida_prevista'], config('fleet.timezone'))->utc()->format('Y-m-d H:i:s.u'),
+                CarbonImmutable::parse($dados['retorno_previsto'], config('fleet.timezone'))->utc()->format('Y-m-d H:i:s.u'),
+                null, $dados['quantidade_passageiros'], 1, $veiculo, null, '["Pessoa QA"]',
+                $dados['origem_latitude'], $dados['origem_longitude'], $dados['destino_latitude'], $dados['destino_longitude'], $arquivo,
+            ]);
+            $this->fail('O anexo de outro usuário foi aceito.');
+        } catch (\PDOException $erro) {
+            $this->assertSame('45000', (string) $erro->getCode());
+        }
+
+        foreach ($antes as $tabela => $quantidade) {
             $this->assertSame($quantidade, DB::table($tabela)->count(), 'Resíduo indevido em '.$tabela);
         }
     }

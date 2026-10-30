@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
+use App\Services\RequestWorkflow;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -118,9 +119,15 @@ class RequestWorkflowTest extends TestCase
         $procedimentos->shouldReceive('call')->once()->with('sp_criar_solicitacao_completa', [
             10, 'Visita técnica', 'Sede', 'Unidade operacional', '2026-10-10 12:00:00.000000', '2026-10-10 21:00:00.000000',
             'Sede e unidade', 2, 1, 1, 'Acesso pela portaria principal', '["Ana","Bruno"]',
-        ])->andReturnUsing(function (): array {
+            -8.76, -63.90, -8.77, -63.91, 3,
+        ])->andReturnUsing(function (string $procedimento, array $parametros): array {
             DB::table('solicitacoes')->insert(['id' => 4, 'solicitante_id' => 1, 'unidade_id' => 1, 'situacao' => 'rascunho', 'versao' => 2, 'revisao_atual_id' => 4]);
-            DB::table('solicitacao_revisoes')->insert(['id' => 4, 'solicitacao_id' => 4, 'numero' => 1, 'enviado_em' => null]);
+            DB::table('solicitacao_revisoes')->insert([
+                'id' => 4, 'solicitacao_id' => 4, 'numero' => 1, 'enviado_em' => null,
+                'origem_latitude' => $parametros[12], 'origem_longitude' => $parametros[13],
+                'destino_latitude' => $parametros[14], 'destino_longitude' => $parametros[15],
+            ]);
+            DB::table('anexos')->insert(['arquivo_id' => $parametros[16], 'revisao_id' => 4]);
 
             return [['solicitacao_id' => 4, 'revisao_id' => 4]];
         });
@@ -137,6 +144,35 @@ class RequestWorkflowTest extends TestCase
         $this->get(route('solicitacoes.download', ['registro' => 4, 'anexo' => $anexo->id]))->assertOk();
         DB::table('vw_solicitacoes_atuais')->where('id', 4)->update(['solicitante_id' => 2]);
         $this->get(route('solicitacoes.download', ['registro' => 4, 'anexo' => $anexo->id]))->assertNotFound();
+    }
+    public function test_failed_creation_returns_to_the_form_if_the_previous_url_is_session_status(): void
+    {
+        $workflow = Mockery::mock(RequestWorkflow::class);
+        $workflow->shouldReceive('create')->once()->andThrow(new PDOException('Database operation failed.'));
+        app()->instance(RequestWorkflow::class, $workflow);
+
+        $this->from(route('session.status'))
+            ->post(route('solicitacoes.store'), $this->formData())
+            ->assertRedirect(route('solicitacoes.create'))
+            ->assertSessionHasErrors('operacao');
+    }
+
+    public function test_failed_atomic_creation_discards_unlinked_upload_without_creating_a_request(): void
+    {
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->once()->andThrow(new PDOException('Database operation failed.'));
+        app()->instance(ProcedureRunner::class, $procedimentos);
+        Storage::fake('local');
+
+        $this->post(route('solicitacoes.store'), $this->formData([
+            'anexo' => UploadedFile::fake()->create('autorizacao.pdf', 20, 'application/pdf'),
+        ]))->assertRedirect(route('solicitacoes.create'))->assertSessionHasErrors('operacao');
+
+        $this->assertSame(0, DB::table('solicitacoes')->count());
+        $arquivo = DB::table('arquivos')->where('enviado_por', 1)->first();
+        $this->assertNotNull($arquivo);
+        $this->assertSame('arquivado', $arquivo->situacao);
+        Storage::disk('local')->assertMissing($arquivo->chave_armazenamento);
     }
 
     public function test_driver_is_derived_from_requester_and_must_be_eligible(): void

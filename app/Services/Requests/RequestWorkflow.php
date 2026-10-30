@@ -41,26 +41,12 @@ class RequestWorkflow
             $dados['saida_prevista'], $dados['retorno_previsto'], $dados['trajeto_planejado'],
             $dados['quantidade_passageiros'], $dados['necessita_motorista'], $dados['veiculo_pretendido_id'],
             $dados['observacoes'], json_encode($this->passengerNames(Value::nullableString($dados['passageiros']))->all(), JSON_THROW_ON_ERROR),
+            $localizacao['origem_latitude'], $localizacao['origem_longitude'],
+            $localizacao['destino_latitude'], $localizacao['destino_longitude'], $arquivoId,
         ]);
         $id = Value::integer($resultado[0]['solicitacao_id'] ?? 0);
         if ($id < 1) {
             throw new \RuntimeException('A criação da solicitação não retornou identificador.');
-        }
-        // A procedure existente confirma o núcleo do rascunho. Os dados de mapa e
-        // o anexo da interface atual são associados à revisão ainda não enviada.
-        if ($localizacao !== [] || $arquivoId !== null) {
-            DB::transaction(function () use ($id, $localizacao, $arquivoId): void {
-                $solicitacao = DB::table('solicitacoes')->where('id', $id)->lockForUpdate()->first(['situacao', 'revisao_atual_id']);
-                abort_unless($solicitacao && $solicitacao->situacao === 'rascunho', 409);
-                $revisao = DB::table('solicitacao_revisoes')->where('id', $solicitacao->revisao_atual_id)->where('solicitacao_id', $id)->whereNull('enviado_em')->lockForUpdate()->first(['id']);
-                abort_unless($revisao !== null, 409);
-                if ($localizacao !== []) {
-                    DB::table('solicitacao_revisoes')->where('id', $revisao->id)->update($localizacao);
-                }
-                if ($arquivoId !== null) {
-                    DB::table('anexos')->insert(['arquivo_id' => $arquivoId, 'revisao_id' => $revisao->id]);
-                }
-            });
         }
 
         return $id;

@@ -1,4 +1,4 @@
--- Frota · PF / Frota Pública RO — modelo relacional 1.0.5
+-- Frota · PF / Frota Pública RO — modelo relacional 1.0.8
 -- Instalação nova: MySQL 8.0.16+ / MariaDB 10.11+. Importar em banco vazio.
 -- Instalação vazia com módulos incrementais versionados; sem senha padrão nem dados operacionais fictícios.
 -- No phpMyAdmin: selecionar o banco, Importar, formato SQL, UTF-8.
@@ -4077,11 +4077,15 @@ CREATE PROCEDURE sp_criar_solicitacao_completa(
   IN p_vinculo BIGINT UNSIGNED, IN p_finalidade TEXT, IN p_origem VARCHAR(255), IN p_destino VARCHAR(255),
   IN p_saida DATETIME(6), IN p_retorno DATETIME(6), IN p_trajeto TEXT,
   IN p_quantidade SMALLINT UNSIGNED, IN p_necessita_motorista TINYINT UNSIGNED,
-  IN p_veiculo BIGINT UNSIGNED, IN p_observacoes TEXT, IN p_passageiros JSON)
+  IN p_veiculo BIGINT UNSIGNED, IN p_observacoes TEXT, IN p_passageiros JSON,
+  IN p_origem_latitude DECIMAL(10,7), IN p_origem_longitude DECIMAL(10,7),
+  IN p_destino_latitude DECIMAL(10,7), IN p_destino_longitude DECIMAL(10,7),
+  IN p_arquivo BIGINT UNSIGNED)
 SQL SECURITY INVOKER
 BEGIN
   DECLARE v_usuario BIGINT UNSIGNED; DECLARE v_unidade BIGINT UNSIGNED;
   DECLARE v_id BIGINT UNSIGNED; DECLARE v_revisao BIGINT UNSIGNED; DECLARE v_nivel INT;
+  DECLARE v_arquivo BIGINT UNSIGNED DEFAULT NULL;
   DECLARE v_veiculo_unidade BIGINT UNSIGNED; DECLARE v_capacidade INT; DECLARE v_situacao VARCHAR(30);
   DECLARE v_categoria CHAR(1); DECLARE v_categoria_ativa TINYINT;
   DECLARE v_motorista BIGINT UNSIGNED DEFAULT NULL; DECLARE v_cnh VARCHAR(5); DECLARE v_validade DATE;
@@ -4094,6 +4098,10 @@ BEGIN
     OR p_saida IS NULL OR p_retorno IS NULL OR p_retorno<=p_saida
     OR p_quantidade IS NULL OR p_quantidade NOT BETWEEN 1 AND 100
     OR p_necessita_motorista IS NULL OR p_necessita_motorista NOT IN (0,1)
+    OR p_origem_latitude IS NULL OR p_origem_latitude NOT BETWEEN -90 AND 90
+    OR p_origem_longitude IS NULL OR p_origem_longitude NOT BETWEEN -180 AND 180
+    OR p_destino_latitude IS NULL OR p_destino_latitude NOT BETWEEN -90 AND 90
+    OR p_destino_longitude IS NULL OR p_destino_longitude NOT BETWEEN -180 AND 180
     OR CHAR_LENGTH(COALESCE(p_trajeto,''))>3000 OR CHAR_LENGTH(COALESCE(p_observacoes,''))>3000 THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Formulário da solicitação incompleto ou inválido.';
   END IF;
@@ -4119,9 +4127,11 @@ BEGIN
   INSERT INTO solicitacoes(protocolo,solicitante_id,unidade_id)
   VALUES(CONCAT('SOL-',REPLACE(UUID(),'-','')),v_usuario,v_unidade);
   SET v_id=LAST_INSERT_ID();
-  INSERT INTO solicitacao_revisoes(solicitacao_id,numero,criado_por,finalidade,origem,destino,saida_prevista,retorno_previsto,
+  INSERT INTO solicitacao_revisoes(solicitacao_id,numero,criado_por,finalidade,origem,destino,origem_latitude,origem_longitude,
+    destino_latitude,destino_longitude,saida_prevista,retorno_previsto,
     trajeto_planejado,quantidade_passageiros,necessita_motorista,motorista_sugerido_id,veiculo_pretendido_id,observacoes,etapa_atual)
-  VALUES(v_id,1,v_usuario,p_finalidade,p_origem,p_destino,p_saida,p_retorno,p_trajeto,p_quantidade,p_necessita_motorista,v_motorista,p_veiculo,p_observacoes,4);
+  VALUES(v_id,1,v_usuario,p_finalidade,p_origem,p_destino,p_origem_latitude,p_origem_longitude,
+    p_destino_latitude,p_destino_longitude,p_saida,p_retorno,p_trajeto,p_quantidade,p_necessita_motorista,v_motorista,p_veiculo,p_observacoes,4);
   SET v_revisao=LAST_INSERT_ID();
   -- A validação e inserção da lista ainda fazem parte da mesma transação do cabeçalho e revisão.
   IF p_passageiros IS NULL OR JSON_TYPE(p_passageiros)<>'ARRAY' OR JSON_LENGTH(p_passageiros)>p_quantidade THEN
@@ -4134,6 +4144,14 @@ BEGIN
   END IF;
   INSERT INTO solicitacao_passageiros(revisao_id,nome)
   SELECT v_revisao,nomes.nome FROM JSON_TABLE(p_passageiros,'$[*]' COLUMNS(nome VARCHAR(150) PATH '$' ERROR ON ERROR)) nomes;
+  IF p_arquivo IS NOT NULL THEN
+    SELECT id INTO v_arquivo FROM arquivos
+    WHERE id=p_arquivo AND enviado_por=v_usuario AND situacao='disponivel' FOR UPDATE;
+    IF v_arquivo IS NULL THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Anexo indisponível para esta solicitação.';
+    END IF;
+    INSERT INTO anexos(arquivo_id,revisao_id) VALUES(v_arquivo,v_revisao);
+  END IF;
   UPDATE solicitacoes SET revisao_atual_id=v_revisao,protocolo=CONCAT('SOL-',LPAD(v_id,8,'0')),versao=2 WHERE id=v_id;
   INSERT INTO solicitacao_eventos(solicitacao_id,revisao_id,ator_vinculo_id,tipo,situacao_nova)
   VALUES(v_id,v_revisao,p_vinculo,'criada','rascunho');
@@ -4309,4 +4327,6 @@ CREATE TABLE IF NOT EXISTS cache_locks (
 
 INSERT INTO versoes_modelo(versao,descricao) VALUES('1.0.7','Cache, limites e monitoramento no MySQL, sem Redis obrigatório.');
 
-SELECT 'Frota instalada: versão 1.0.7' AS resultado, COUNT(*) AS tabelas FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE';
+INSERT INTO versoes_modelo(versao,descricao) VALUES('1.0.8','Criação atômica de solicitações com coordenadas e anexos vinculados antes da confirmação.');
+
+SELECT 'Frota instalada: versão 1.0.8' AS resultado, COUNT(*) AS tabelas FROM information_schema.tables WHERE table_schema=DATABASE() AND table_type='BASE TABLE';

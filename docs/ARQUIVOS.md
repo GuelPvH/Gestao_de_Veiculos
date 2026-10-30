@@ -857,6 +857,7 @@ Arquivos incorporados na atualização de tipagem, cache, filas e documentação
 | [app/Support/RequestState.php](../app/Support/RequestState.php)                                                     | Lê os registros de contexto da requisição e verifica seus tipos.                     |
 | [app/Support/Value.php](../app/Support/Value.php)                                                                   | Normaliza valores recebidos de HTTP, configuração e banco em tipos explícitos.       |
 | [database/sql/patches/1.0.7_database_cache.sql](../database/sql/patches/1.0.7_database_cache.sql)                   | Provisiona o cache e os bloqueios MySQL na atualização versionada 1.0.7.             |
+| [database/sql/patches/1.0.8_atomic_request_creation.sql](../database/sql/patches/1.0.8_atomic_request_creation.sql) | Confirma rascunhos, coordenadas e anexos de solicitações em uma transação.            |
 | [database/sql/runtime-cache.sql](../database/sql/runtime-cache.sql)                                                 | Cria somente as tabelas de cache e bloqueios para instalações existentes.            |
 | [docs/MYSQL-RUNTIME.md](../docs/MYSQL-RUNTIME.md)                                                                   | Descreve provisionamento, transição e verificação de cache e filas no MySQL.         |
 | [docs/database-model/LEIA-ME.md](../docs/database-model/LEIA-ME.md)                                                 | Apresenta os artefatos e a data do retrato estrutural do banco remoto.               |
