@@ -4,11 +4,12 @@ namespace Tests\Feature;
 
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
-use App\Services\RequestWorkflow;
+use App\Services\Requests\RequestWorkflow as RequestWorkflowService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
+use PDOException;
 use Tests\Support\ReadFixture;
 use Tests\TestCase;
 
@@ -58,13 +59,83 @@ class RequestWorkflowTest extends TestCase
 
     public function test_module_pages_use_dedicated_views_and_explicit_actions(): void
     {
-        $this->get(route('solicitacoes.index'))->assertOk()->assertViewIs('gestor.solicitacoes.index')->assertSee(route('solicitacoes.show', 1), false);
-        $this->get(route('solicitacoes.create'))->assertOk()->assertViewIs('gestor.solicitacoes.create')->assertSee(route('solicitacoes.store'), false);
+        $this->get(route('solicitacoes.index'))->assertOk()->assertViewIs('gestor.solicitacoes.index')
+            ->assertSee(route('solicitacoes.show', 1), false)
+            ->assertDontSee(route('solicitacoes.show', 2), false)
+            ->assertSee('name="q"', false)
+            ->assertSee('name="situacao"', false)
+            ->assertSee('name="ordem"', false)
+            ->assertSee('name="de"', false)
+            ->assertSee('name="ate"', false);
+        $this->get(route('solicitacoes.create'))->assertOk()->assertViewIs('gestor.solicitacoes.create')
+            ->assertSee(route('solicitacoes.store'), false)
+            ->assertSee('name="veiculo_pretendido_id"', false);
         $this->draft();
         $this->get(route('solicitacoes.edit', 1))->assertOk()->assertViewIs('gestor.solicitacoes.edit')->assertSee('name="_method" value="PATCH"', false);
         $this->get('/solicitacoes/1/unknown')->assertNotFound();
         $this->post('/solicitacoes/1/edit', $this->formData(['versao' => 1]))->assertStatus(405);
         $this->assertSame(1, DB::table('solicitacoes')->where('id', 1)->value('versao'));
+    }
+
+    public function test_server_request_filters_are_validated_and_preserved_for_the_repository(): void
+    {
+        $response = $this->get(route('solicitacoes.index', [
+            'q' => 'QA-REQUESTS-1',
+            'situacao' => 'aguardando_analise',
+            'ordem' => 'antigos',
+            'de' => '2026-10-05',
+            'ate' => '2026-10-05',
+        ]));
+
+        $response->assertOk()->assertViewHas('filtros', fn (array $filtros): bool =>
+            $filtros['q'] === 'QA-REQUESTS-1'
+            && $filtros['situacao'] === 'aguardando_analise'
+            && $filtros['ordem'] === 'antigos'
+            && $filtros['de'] === '2026-10-05'
+            && $filtros['ate'] === '2026-10-05'
+        )->assertViewHas('paginacao', fn ($paginacao): bool =>
+            $paginacao->total() === 1
+            && (int) $paginacao->getCollection()->first()->id === 1
+        );
+
+        $this->get(route('solicitacoes.index', ['ordem' => 'arbitraria']))->assertSessionHasErrors('ordem');
+        $this->get(route('solicitacoes.index', ['situacao' => 'estado-inexistente']))->assertSessionHasErrors('situacao');
+    }
+
+    public function test_server_date_filters_use_actual_departure_or_planned_fallback(): void
+    {
+        DB::table('vw_solicitacoes_atuais')->where('id', 1)->update([
+            'saida_prevista' => '2026-10-06 12:00:00',
+        ]);
+        DB::table('viagens')->insert([
+            'id' => 100,
+            'revisao_id' => 1,
+            'saida_real' => '2026-10-07 12:00:00',
+        ]);
+
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-07', 'ate' => '2026-10-07']))
+            ->assertOk()
+            ->assertSee(route('solicitacoes.show', 1), false)
+            ->assertSee('A partir de')
+            ->assertSee('Até')
+            ->assertSee('name="de"', false)->assertSee('value="2026-10-07"', false)
+            ->assertSee('name="ate"', false)->assertSee('value="2026-10-07"', false);
+
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-06', 'ate' => '2026-10-06']))
+            ->assertOk()
+            ->assertDontSee(route('solicitacoes.show', 1), false);
+
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-05', 'ate' => '2026-10-05']))
+            ->assertOk()
+            ->assertDontSee(route('solicitacoes.show', 2), false);
+
+        ReadFixture::profile(2);
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-05', 'ate' => '2026-10-05']))
+            ->assertOk()
+            ->assertSee(route('solicitacoes.show', 2), false);
+        $this->get(route('solicitacoes.index', ['de' => '2026-10-06', 'ate' => '2026-10-06']))
+            ->assertOk()
+            ->assertSee(route('solicitacoes.show', 1), false);
     }
 
     public function test_decisions_use_modals_and_cancel_routes_are_removed(): void
@@ -147,9 +218,9 @@ class RequestWorkflowTest extends TestCase
     }
     public function test_failed_creation_returns_to_the_form_if_the_previous_url_is_session_status(): void
     {
-        $workflow = Mockery::mock(RequestWorkflow::class);
+        $workflow = Mockery::mock(RequestWorkflowService::class);
         $workflow->shouldReceive('create')->once()->andThrow(new PDOException('Database operation failed.'));
-        app()->instance(RequestWorkflow::class, $workflow);
+        app()->instance(RequestWorkflowService::class, $workflow);
 
         $this->from(route('session.status'))
             ->post(route('solicitacoes.store'), $this->formData())
