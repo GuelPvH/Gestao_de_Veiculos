@@ -76,6 +76,13 @@ class SafetyTest(unittest.TestCase):
         with self.assertRaises(RuntimeError): maintenance.private(target)
         with self.assertRaises(RuntimeError): maintenance.private(maintenance.CANONICAL)
 
+    def test_manifest_checksums_match_versioned_patch_files(self):
+        manifest = maintenance.canonical()
+        for patch in manifest['patches']:
+            for item in patch['files']:
+                with self.subTest(path=item['path']):
+                    self.assertEqual(item['sha256'], maintenance.sha(maintenance.ROOT / 'database/sql' / item['path']))
+
     def test_secondary_native_client_cannot_reconnect_and_continue_without_original_owner(self):
         options = self.write('native.cnf', '[client]\nuser=test\npassword=private\n')
         command = maintenance.Client(options, 'frota_pf_contract_tests').command()
@@ -192,6 +199,21 @@ class SafetyTest(unittest.TestCase):
                 self.assertEqual([], calls)
                 self.assertFalse(args.marker.exists())
 
+    def test_upgrade_accepts_optional_requests_hotfix_1051_in_existing_history(self):
+        backup, proof, meta = self.proof()
+        versions = ['1.0.2', '1.0.3', '1.0.4', '1.0.5', '1.0.5.1', '1.0.5.2', '1.0.6', '1.0.7']
+        client = SimpleNamespace(
+            database=meta['identity']['database'],
+            inventory=lambda data=False: meta['inventory'],
+            rows=lambda sql: [[version] for version in versions],
+        )
+        args = SimpleNamespace(maintenance_confirmed=True, backup=backup, proof=proof, apply=False)
+
+        with patch.object(maintenance, 'verified', return_value=(backup, meta)):
+            with patch('builtins.print') as output:
+                maintenance.upgrade(client, args)
+
+        output.assert_any_call('Atualizações planejadas: 1.0.8')
 
     def test_denied_acquisition_never_validates_or_restores_for_any_operation(self):
         self.lock.acquire_fails = True

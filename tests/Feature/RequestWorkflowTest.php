@@ -87,14 +87,12 @@ class RequestWorkflowTest extends TestCase
             'ate' => '2026-10-05',
         ]));
 
-        $response->assertOk()->assertViewHas('filtros', fn (array $filtros): bool =>
-            $filtros['q'] === 'QA-REQUESTS-1'
+        $response->assertOk()->assertViewHas('filtros', fn (array $filtros): bool => $filtros['q'] === 'QA-REQUESTS-1'
             && $filtros['situacao'] === 'aguardando_analise'
             && $filtros['ordem'] === 'antigos'
             && $filtros['de'] === '2026-10-05'
             && $filtros['ate'] === '2026-10-05'
-        )->assertViewHas('paginacao', fn ($paginacao): bool =>
-            $paginacao->total() === 1
+        )->assertViewHas('paginacao', fn ($paginacao): bool => $paginacao->total() === 1
             && (int) $paginacao->getCollection()->first()->id === 1
         );
 
@@ -216,6 +214,7 @@ class RequestWorkflowTest extends TestCase
         DB::table('vw_solicitacoes_atuais')->where('id', 4)->update(['solicitante_id' => 2]);
         $this->get(route('solicitacoes.download', ['registro' => 4, 'anexo' => $anexo->id]))->assertNotFound();
     }
+
     public function test_failed_creation_returns_to_the_form_if_the_previous_url_is_session_status(): void
     {
         $workflow = Mockery::mock(RequestWorkflowService::class);

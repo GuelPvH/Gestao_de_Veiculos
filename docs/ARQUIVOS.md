@@ -50,7 +50,7 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 
 | Arquivo                                                                                           | Responsabilidade e propósito                                                                                           |
 | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| [app/Console/Commands/CheckSchema.php](../app/Console/Commands/CheckSchema.php)                   | Implementa fleet:check-schema para recusar um contrato de identidade/solicitação/sessão incompatível antes do runtime. |
+| [app/Console/Commands/CheckSchema.php](../app/Console/Commands/CheckSchema.php)                   | Implementa fleet:check-schema para exigir o contrato do banco até a versão 1.0.8 antes do runtime.                     |
 | [app/Console/Commands/DeliveryHealth.php](../app/Console/Commands/DeliveryHealth.php)             | Implementa fleet:delivery-health e retorna o estado agregado dos serviços de entrega e processos supervisionados.      |
 | [app/Console/Commands/DispatchIdentityMail.php](../app/Console/Commands/DispatchIdentityMail.php) | Implementa fleet:dispatch-mail e limita o lote encaminhado pelo relay da outbox.                                       |
 | [app/Console/Commands/WorkerHealth.php](../app/Console/Commands/WorkerHealth.php)                 | Implementa fleet:worker-health para conferir o sinal de vida da fila ou do scheduler indicado.                         |
@@ -326,6 +326,7 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | [database/sql/patches/1.0.5.1_requests_json_width-postcheck.sql](../database/sql/patches/1.0.5.1_requests_json_width-postcheck.sql) | Confere a assinatura e a largura JSON_TABLE após o hotfix de solicitações 1.0.5.1. |
 | [database/sql/patches/1.0.5.1_requests_json_width-precheck.sql](../database/sql/patches/1.0.5.1_requests_json_width-precheck.sql)   | Confere a versão e a procedure de solicitações antes do hotfix 1.0.5.1.             |
 | [database/sql/patches/1.0.5.1_requests_json_width.sql](../database/sql/patches/1.0.5.1_requests_json_width.sql)                     | Corrige a largura incompatível de JSON_TABLE na criação de solicitações em MariaDB. |
+| [database/sql/patches/1.0.5.2_tracking_canonical_reconciliation.sql](../database/sql/patches/1.0.5.2_tracking_canonical_reconciliation.sql) | Restaura a tabela, chave estrangeira e triggers canônicos de instalações de rastreadores. |
 | [database/sql/patches/1.0.6_vehicle_plate.sql](../database/sql/patches/1.0.6_vehicle_plate.sql)                       | Altera o modelo/rotinas para compatibilidade do formato de placa; integra a evolução incremental identificada como 1.0.6.             |
 | [database/sql/patches/vehicle-plate-format.sql](../database/sql/patches/vehicle-plate-format.sql)                     | Script legado pontual que amplia a placa e remove a restrição anterior; o patch 1.0.6 fornece a alternativa versionada.               |
 

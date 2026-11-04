@@ -17,9 +17,9 @@ class CheckSchema extends Command
     public function handle(): int
     {
         try {
-            foreach (['1.0.3', '1.0.4', '1.0.5'] as $version) {
+            foreach (['1.0.3', '1.0.4', '1.0.5', '1.0.8'] as $version) {
                 if (! DB::table('versoes_modelo')->where('versao', $version)->exists()) {
-                    $this->error('Banco requer os patches versionados de segurança e solicitações.');
+                    $this->error('Banco incompatível. Aplique os patches versionados até 1.0.8 antes de iniciar a aplicação.');
 
                     return self::FAILURE;
                 }
@@ -45,7 +45,7 @@ class CheckSchema extends Command
 
             return self::FAILURE;
         }
-        $this->info('Esquema compatível: 1.0.5.');
+        $this->info('Esquema compatível: 1.0.8.');
 
         return self::SUCCESS;
     }
