@@ -293,7 +293,7 @@
                 },
                 {
                     "path": "patches/1.0.4_requests.sql",
-                    "sha256": "441efdf4812f1eb9e064cb54e574f3d8597c18788ef075bdb5c9e4dea54d8d31"
+                    "sha256": "7eed8bf56cfc5fcfa6a518824ecd642032f6a5bb4dc771746c05abd8df2e9d7d"
                 },
                 {
                     "path": "patches/1.0.4_requests-postcheck.sql",
@@ -341,7 +341,7 @@
             "files": [
                 {
                     "path": "patches/1.0.8_atomic_request_creation.sql",
-                    "sha256": "08522829b180add50c838adfb8f4eeddb535af73abcc3b232bb629b670e6eb58"
+                    "sha256": "7e0d6ff3c6f263f70ba38da6d2db4b78791cfc6889f374ecd42c98b229c5c7cd"
                 }
             ]
         }
