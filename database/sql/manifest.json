@@ -319,6 +319,15 @@
             ]
         },
         {
+            "version": "1.0.5.2",
+            "files": [
+                {
+                    "path": "patches/1.0.5.2_tracking_canonical_reconciliation.sql",
+                    "sha256": "b1ede9734a8d0df6164f16928198b8253b74dcd015d0dfe8af97d56282ae9734"
+                }
+            ]
+        },
+        {
             "version": "1.0.6",
             "files": [
                 {

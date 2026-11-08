@@ -130,7 +130,8 @@ class FleetReadRepository
             if (empty($filtros[$chave]) || (! $filtrarDataRealizada && empty($colunaData))) {
                 continue;
             }
-            if ($colunaData !== null && ($tela['dateOnly'] ?? false)) {
+
+            if (($tela['dateOnly'] ?? false) && $colunaData !== null) {
                 $consulta->where($colunaData, $chave === 'de' ? '>=' : '<=', $filtros[$chave]);
 
                 continue;

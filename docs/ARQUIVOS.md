@@ -48,12 +48,12 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 
 ## app/Console/Commands
 
-| Arquivo                                                                                           | Responsabilidade e propósito                                                                                           |
-| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| [app/Console/Commands/CheckSchema.php](../app/Console/Commands/CheckSchema.php)                   | Implementa fleet:check-schema para recusar um contrato de identidade/solicitação/sessão incompatível antes do runtime. |
-| [app/Console/Commands/DeliveryHealth.php](../app/Console/Commands/DeliveryHealth.php)             | Implementa fleet:delivery-health e retorna o estado agregado dos serviços de entrega e processos supervisionados.      |
-| [app/Console/Commands/DispatchIdentityMail.php](../app/Console/Commands/DispatchIdentityMail.php) | Implementa fleet:dispatch-mail e limita o lote encaminhado pelo relay da outbox.                                       |
-| [app/Console/Commands/WorkerHealth.php](../app/Console/Commands/WorkerHealth.php)                 | Implementa fleet:worker-health para conferir o sinal de vida da fila ou do scheduler indicado.                         |
+| Arquivo                                                                                           | Responsabilidade e propósito                                                                                      |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [app/Console/Commands/CheckSchema.php](../app/Console/Commands/CheckSchema.php)                   | Implementa fleet:check-schema para exigir o contrato do banco até a versão 1.0.8 antes do runtime.                |
+| [app/Console/Commands/DeliveryHealth.php](../app/Console/Commands/DeliveryHealth.php)             | Implementa fleet:delivery-health e retorna o estado agregado dos serviços de entrega e processos supervisionados. |
+| [app/Console/Commands/DispatchIdentityMail.php](../app/Console/Commands/DispatchIdentityMail.php) | Implementa fleet:dispatch-mail e limita o lote encaminhado pelo relay da outbox.                                  |
+| [app/Console/Commands/WorkerHealth.php](../app/Console/Commands/WorkerHealth.php)                 | Implementa fleet:worker-health para conferir o sinal de vida da fila ou do scheduler indicado.                    |
 
 ## app/Http/Controllers
 
