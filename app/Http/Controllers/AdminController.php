@@ -4,15 +4,36 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AdminActionRequest;
 use App\Services\Admin\AdminWorkflow;
+use App\Support\CurrentUser;
+use App\Support\Value;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AdminController extends Controller
 {
     public function storeUser(AdminActionRequest $requisicao, AdminWorkflow $fluxo): RedirectResponse
     {
-        $id = $fluxo->storeUser($requisicao->validated());
+        $usuario = $fluxo->storeUser($requisicao->validated());
 
-        return redirect()->route('users.show', $id)->with('status', 'Usuário criado. A senha temporária deve ser entregue por canal privado; o primeiro acesso exigirá troca.');
+        return $this->showCredential($usuario['id'], $usuario['codigo'], 'Usuário criado. Atribua um perfil para liberar o acesso ao painel.');
+    }
+
+    public function issueTemporaryCredential(AdminActionRequest $requisicao, AdminWorkflow $fluxo, int $registro): RedirectResponse
+    {
+        $chave = 'fleet-admin-credential:'.hash('sha256', Value::string(CurrentUser::get($requisicao)->getAuthIdentifier()));
+        abort_if(RateLimiter::tooManyAttempts($chave, 5), 429);
+        RateLimiter::hit($chave, 60);
+        $codigo = $fluxo->issueTemporaryCredential($registro, $requisicao->validated());
+        RateLimiter::clear($chave);
+
+        return $this->showCredential($registro, $codigo, 'Código temporário emitido. O usuário deverá definir uma nova senha.');
+    }
+
+    private function showCredential(int $id, string $codigo, string $status): RedirectResponse
+    {
+        return redirect()->route('users.show', $id)->with('status', $status)
+            ->with('fleet.temporary_credential.'.$id, Crypt::encryptString($codigo));
     }
 
     public function updateUser(AdminActionRequest $requisicao, AdminWorkflow $fluxo, int $registro): RedirectResponse

@@ -63,8 +63,8 @@ class ValidateFleetSession
         $fuso = $configuracao ? $configuracao->fuso_horario : DB::table('configuracao_sistema')->where('id', 1)->value('fuso_horario');
         config(['fleet.timezone' => in_array($fuso, timezone_identifiers_list(), true) ? $fuso : 'America/Porto_Velho']);
         View::share(['usuarioAtual' => $usuario, 'vinculoAtual' => $vinculo, 'acesso' => app(AccessContext::class)]);
-        if (($usuario->estado_identidade ?? 'legado') === 'pendente' && ! $requisicao->routeIs('identity.resend', 'logout', 'session.status')) {
-            return $requisicao->expectsJson() ? response()->json(['state' => 'ACTIVATION_REQUIRED'], 403) : redirect()->route('access.restricted')->with('status', 'Conclua a ativação pelo link individual enviado ao e-mail cadastrado.');
+        if (($usuario->estado_identidade ?? 'legado') === 'pendente' && ! $requisicao->routeIs('logout', 'session.status')) {
+            return $requisicao->expectsJson() ? response()->json(['state' => 'ACTIVATION_REQUIRED'], 403) : redirect()->route('access.restricted')->with('status', 'Solicite um código temporário à administração para concluir seu acesso.');
         }
         if ($usuario->deve_trocar_senha && ! $requisicao->routeIs('password.edit', 'password.update', 'logout', 'session.status')) {
             return $requisicao->expectsJson() ? response()->json(['state' => 'PASSWORD_CHANGE_REQUIRED'], 403) : redirect()->route('password.edit');

@@ -114,31 +114,30 @@ class IdentityWorkflowTest extends TestCase
         }
     }
 
-    public function test_initial_admin_is_pending_until_individual_email_proof_and_a_new_password(): void
+    public function test_initial_admin_is_provisioned_without_email_and_must_change_temporary_password(): void
     {
-        $result = app(IdentityService::class)->createInitialAdministrator('admin-isolado', 'Administrador inicial', 'admin-isolado@local.test', 'SenhaInicial!123');
+        $result = app(IdentityService::class)->createInitialAdministrator('11144477735', 'Administrador inicial', null);
         $user = DB::table('usuarios')->where('id', $result['usuario_id'])->first();
-        $this->assertSame('pendente', $user->estado_identidade);
+        $this->assertSame('ativa', $user->estado_identidade);
         $this->assertSame(1, (int) $user->deve_trocar_senha);
-        $this->assertNull($user->email_verificado_em);
+        $this->assertNull($user->email);
         $this->assertSame(1, DB::table('usuario_perfis')->where('id', $result['vinculo_id'])->count());
         $this->assertSame(1, (int) DB::table('configuracao_sistema')->value('bootstrap_concluido'));
-        DB::table('vw_vinculos_ativos')->insert(['vinculo_id' => $result['vinculo_id'], 'usuario_id' => $result['usuario_id']]);
-        app(IdentityService::class)->consumeActivation($this->token('ativacao'), 'SenhaDefinitiva!987');
-        $this->assertSame('ativa', DB::table('usuarios')->where('id', $result['usuario_id'])->value('estado_identidade'));
-        $this->assertGuest();
+        app(IdentityService::class)->changePassword($result['usuario_id'], $result['codigo'], 'SenhaDefinitiva!987');
+        $this->assertSame(0, (int) DB::table('usuarios')->where('id', $result['usuario_id'])->value('deve_trocar_senha'));
+        $this->assertSame(0, DB::table('email_outbox')->count());
         $this->expectException(HttpException::class);
-        app(IdentityService::class)->createInitialAdministrator('outro-admin', 'Outro', 'outro@local.test', 'SenhaInicial!123');
+        app(IdentityService::class)->createInitialAdministrator('52998224725', 'Outro', null);
     }
 
-    public function test_initial_admin_creation_rolls_back_user_grant_and_bootstrap_when_outbox_fails(): void
+    public function test_initial_admin_creation_rolls_back_when_preferences_cannot_be_persisted(): void
     {
-        DB::statement('DROP TABLE email_outbox');
+        DB::statement("CREATE TRIGGER rejeitar_preferencias BEFORE INSERT ON preferencias_usuario BEGIN SELECT RAISE(ABORT, 'Falha sintética'); END");
         try {
-            app(IdentityService::class)->createInitialAdministrator('admin-rollback', 'Administrador inicial', 'admin-rollback@local.test', 'SenhaInicial!123');
+            app(IdentityService::class)->createInitialAdministrator('11144477735', 'Administrador inicial', null);
             $this->fail('Bootstrap incompleto foi confirmado.');
         } catch (QueryException) {
-            $this->assertFalse(DB::table('usuarios')->where('identificador', 'admin-rollback')->exists());
+            $this->assertFalse(DB::table('usuarios')->where('identificador', '11144477735')->exists());
             $this->assertSame(0, DB::table('usuario_perfis')->count());
             $this->assertSame(0, DB::table('preferencias_usuario')->count());
             $this->assertSame(0, DB::table('confirmacoes_identidade')->count());

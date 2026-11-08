@@ -26,9 +26,6 @@ services:
             FLEET_VERIFICATION_MAIL_ENABLED: 'false'
             FLEET_SECURITY_MAIL_ENABLED: 'false'
             # Temporariamente desligado para desenvolvimento. Reative com true.
-            FLEET_MFA_ENABLED: '${FLEET_LOCAL_MFA_ENABLED:-false}'
-            FLEET_MFA_ORIGIN: '${FLEET_LOCAL_MFA_ORIGIN:-}'
-            FLEET_MFA_RP_ID: '${FLEET_LOCAL_MFA_RP_ID:-}'
         depends_on:
             mysql-local:
                 condition: service_healthy

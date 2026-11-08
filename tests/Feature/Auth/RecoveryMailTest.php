@@ -11,11 +11,9 @@ use App\Services\Auth\OutboxDelivery;
 use App\Services\Auth\RecoverySettings;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
-use Mockery;
 use Tests\Support\IdentityFixture;
 use Tests\TestCase;
 
@@ -31,13 +29,11 @@ class RecoveryMailTest extends TestCase
         RateLimiter::clear('fleet-recovery-ip:'.hash('sha256', '127.0.0.1'));
     }
 
-    public function test_public_response_is_uniform_and_only_eligible_requests_are_durable(): void
+    public function test_legacy_mail_service_only_persists_requests_for_eligible_accounts(): void
     {
         Mail::shouldReceive('send')->never();
         foreach (['qa-recuperacao', 'nao-existe', 'qa-inativo', 'qa-sem-email'] as $identifier) {
-            $this->from('/recuperar-acesso')->post('/recuperar-acesso', ['identificador' => $identifier])
-                ->assertRedirect('/recuperar-acesso')
-                ->assertSessionHas('status', 'Se houver um acesso elegível, você receberá as orientações no e-mail cadastrado.');
+            app(IdentityService::class)->requestRecovery($identifier);
         }
         $this->assertSame(1, DB::table('recuperacoes_senha')->count());
         $this->assertSame(1, DB::table('email_outbox')->count());
@@ -184,30 +180,43 @@ class RecoveryMailTest extends TestCase
         $this->assertSame('pendente', DB::table('email_outbox')->where('id', 1)->value('estado'));
     }
 
-    public function test_captured_database_outage_keeps_uniform_response_and_safe_internal_diagnostics(): void
+    public function test_public_recovery_requires_individual_code_and_does_not_queue_email(): void
     {
-        DB::statement('DROP TABLE email_outbox');
-        Log::spy();
-        $this->from('/recuperar-acesso')->post('/recuperar-acesso', ['identificador' => 'qa-recuperacao'])
-            ->assertRedirect('/recuperar-acesso')
-            ->assertSessionHas('status', 'Se houver um acesso elegível, você receberá as orientações no e-mail cadastrado.');
-        $this->assertSame(0, DB::table('recuperacoes_senha')->count());
-        Log::shouldHaveReceived('error')->once()->with('security.database_unavailable', Mockery::on(function ($context): bool {
-            $this->assertSame(['correlation', 'operation', 'category', 'code'], array_keys($context));
-            $this->assertMatchesRegularExpression('/^[a-f0-9-]{36}$/', $context['correlation']);
-            $this->assertSame('query', $context['category']);
-            $this->assertStringNotContainsString('qa-recuperacao', json_encode($context));
-            $this->assertStringNotContainsString('INSERT', json_encode($context));
-
-            return true;
-        }));
+        $cpf = '11144477735';
+        $credencial = app(IdentityService::class)->temporaryCredential();
+        DB::table('usuarios')->where('id', 1)->update($credencial['campos'] + ['identificador' => $cpf]);
+        $dados = ['identificador' => '111.444.777-35', 'nova_senha' => 'SenhaPessoal!7890', 'nova_senha_confirmation' => 'SenhaPessoal!7890'];
+        $this->post(route('recovery.verify'), $dados)->assertSessionHasErrors('senha_atual');
+        $this->post(route('recovery.verify'), $dados + ['senha_atual' => '12345'])->assertSessionHasErrors('senha_atual');
+        $this->post(route('recovery.verify'), $dados + ['senha_atual' => $credencial['codigo']])->assertRedirect(route('login'));
+        $this->assertGuest();
+        $this->assertSame(0, (int) DB::table('usuarios')->where('id', 1)->value('deve_trocar_senha'));
+        $this->assertTrue(password_verify($dados['nova_senha'], DB::table('usuarios')->where('id', 1)->value('senha_hash')));
+        $this->post(route('recovery.verify'), $dados + ['senha_atual' => $credencial['codigo']])->assertSessionHasErrors('senha_atual');
+        $this->assertSame(0, DB::table('email_outbox')->count());
     }
 
     public function test_recovery_attempts_are_limited_by_identity_and_ip(): void
     {
-        for ($i = 0; $i < 3; $i++) {
-            $this->from('/recuperar-acesso')->post('/recuperar-acesso', ['identificador' => 'conta-alvo'])->assertRedirect();
+        $dados = [
+            'identificador' => '11144477735', 'senha_atual' => 'codigo-incorreto',
+            'nova_senha' => 'SenhaPessoal!7890', 'nova_senha_confirmation' => 'SenhaPessoal!7890',
+        ];
+        for ($i = 0; $i < 5; $i++) {
+            $this->post(route('recovery.verify'), $dados)->assertSessionHasErrors('senha_atual');
         }
-        $this->post('/recuperar-acesso', ['identificador' => 'conta-alvo'])->assertStatus(429);
+        $this->post(route('recovery.verify'), $dados)->assertStatus(429);
+    }
+
+    public function test_expired_code_cannot_reset_password(): void
+    {
+        $credencial = app(IdentityService::class)->temporaryCredential();
+        DB::table('usuarios')->where('id', 1)->update($credencial['campos'] + ['identificador' => '11144477735']);
+        $this->travel(25)->hours();
+        $this->post(route('recovery.verify'), [
+            'identificador' => '11144477735', 'senha_atual' => $credencial['codigo'],
+            'nova_senha' => 'SenhaPessoal!7890', 'nova_senha_confirmation' => 'SenhaPessoal!7890',
+        ])->assertSessionHasErrors('senha_atual');
+        $this->assertSame(1, (int) DB::table('usuarios')->where('id', 1)->value('deve_trocar_senha'));
     }
 }

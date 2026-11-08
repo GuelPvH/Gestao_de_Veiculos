@@ -7,7 +7,7 @@ compartilham a aplicação, a autenticação, os componentes Blade e o banco MyS
 Os workers e o agendador executam o mesmo código em processos separados.
 
 O servidor monta o HTML com Blade; JavaScript complementa formulários, modais,
-mapas, WebAuthn e acompanhamento da sessão. As rotas de sessão e MFA também
+mapas e acompanhamento da sessão. As rotas de sessão também
 trocam JSON. A interface não mantém uma cópia autônoma do domínio no navegador.
 
 ```mermaid
@@ -53,8 +53,7 @@ essas regras com constraints, triggers e procedures.
 2. `routes/web.php` identifica a rota, seus parâmetros e middlewares. O grupo
    web do Laravel fornece sessão, cookies, proteção CSRF e tratamento de erros.
 3. Nas áreas autenticadas, `ValidateFleetSession` confere a identidade, a sessão
-   de negócio e o vínculo. `RequireProfile`, `RequireFleetMfa` e
-   `RequireEnabledRoute` acrescentam as restrições dos grupos que os utilizam.
+   de negócio e o vínculo. `RequireProfile` e `RequireEnabledRoute` acrescentam as restrições dos grupos que os utilizam.
 4. O controller consulta um repositório ou encaminha a entrada validada ao
    serviço do módulo. Filtros, paginação e projeções são aplicados no servidor.
 5. A resposta é uma view Blade, redirecionamento, JSON ou download autorizado.
@@ -86,14 +85,26 @@ A projeção de valores financeiros e localização possui verificações própr
 quando o endpoint precisa das duas informações. Esse contexto não sobrevive à
 requisição, permitindo que mudanças de acesso sejam observadas nas seguintes.
 
-`FleetMfa` e `WebAuthnVerifier` implementam desafios e validação WebAuthn para
-sessões administrativas. A confirmação é vinculada à sessão HTTP, ao vínculo e
-à versão de segurança da identidade. A recuperação administrativa usa um fluxo
-de solicitação e aprovações. A possibilidade de pausar a exigência está limitada
-ao ambiente `local`; a implementação continua presente nos demais ambientes.
+O perfil administrador usa identificador e senha, com sessão válida e as permissões
+do vínculo ativo. O cadastro e a confirmação por passkey/chave de segurança foram
+removidos em 07/11/2026. A URL antiga `/seguranca/mfa` redireciona ao painel;
+os endpoints de cadastro, confirmação e recuperação do fator não existem mais.
+As tabelas e os campos históricos de MFA permanecem no contrato SQL versionado
+para compatibilidade com instalações existentes, sem uso no fluxo da aplicação.
 
-`IdentityService` coordena ativação, recuperação de acesso, confirmação e troca
-de e-mail, alteração de senha, invalidação de estados e avisos de segurança.
+Novos usuários entram com CPF e código temporário individual. O administrador
+vê o código ao criar a conta ou ao reemitir a credencial após confirmar a
+identidade do titular. O painel exige uma senha pessoal antes de liberar o
+primeiro acesso. O vínculo de perfil continua ligado à conta pelo seu ID.
+
+Em **Esqueci minha senha**, o usuário informa CPF, código temporário e nova
+senha. A emissão encerra sessões anteriores. O código tem validade limitada
+e é substituído pelo hash da senha pessoal ao concluir a troca. Cadastro e
+recuperação por código funcionam sem e-mail. Contas antigas continuam usando
+seus identificadores até o administrador cadastrar o CPF correspondente.
+
+`IdentityService` também mantém o tratamento de links já emitidos, a
+confirmação de e-mail de contato e a invalidação de credenciais e sessões.
 `SecurityAudit` registra eventos sem incluir credenciais ou tokens de acesso.
 
 ## Módulos de negócio
@@ -186,8 +197,7 @@ obter o resultado. `ReportPdfRenderer` usa Dompdf e a view `reports/pdf.blade.ph
 com carregamento remoto, PHP embutido e JavaScript desabilitados no renderizador.
 
 `resources/js/app.js` coordena a interação geral; `session.js` sincroniza o
-acompanhamento e a confirmação de senha entre abas; `webauthn.js` converte os
-dados e invoca a API de credenciais do navegador. Estado local de tema e
+acompanhamento e a confirmação de senha entre abas. Estado local de tema e
 coordenação entre abas não concede permissões no servidor.
 
 Os componentes de mapas atendem finalidades diferentes. A busca de locais usa

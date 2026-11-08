@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Services\Auth\FleetMfa;
 use App\Services\Auth\FleetSession;
 use App\Services\Auth\PasswordVerifier;
 use App\Support\RequestState;
@@ -57,7 +56,7 @@ class SessionController extends Controller
             $now = CarbonImmutable::now('UTC');
             $minutes = Value::integer(DB::table('configuracao_sistema')->where('id', 1)->value('sessao_inatividade_minutos'));
             abort_unless($minutes > 0, 503);
-            $changes = ['token_hash' => hash('sha256', $token, true), 'autenticada_em' => $now->format('Y-m-d H:i:s.u'), 'reautenticar_ate' => $now->addMinutes(30)->format('Y-m-d H:i:s.u'), 'ultima_atividade_em' => $now->format('Y-m-d H:i:s.u'), 'expira_em' => $now->addMinutes($minutes)->format('Y-m-d H:i:s.u'), 'mfa_verificada_em' => null, 'mfa_vinculo_id' => null, 'mfa_versao' => null, 'mfa_http_hash' => null];
+            $changes = ['token_hash' => hash('sha256', $token, true), 'autenticada_em' => $now->format('Y-m-d H:i:s.u'), 'reautenticar_ate' => $now->addMinutes(30)->format('Y-m-d H:i:s.u'), 'ultima_atividade_em' => $now->format('Y-m-d H:i:s.u'), 'expira_em' => $now->addMinutes($minutes)->format('Y-m-d H:i:s.u')];
             DB::table('sessoes')->where('id', $row->id)->update($changes);
             $sessions->audit($row, 'reautenticacao', 'senha_confirmada');
 
@@ -68,7 +67,7 @@ class SessionController extends Controller
         $request->session()->migrate(true);
         RateLimiter::clear($ipKey);
 
-        return $this->state($sessions, $row)->setData($this->payload($sessions, $row) + ['mfa_required' => app(FleetMfa::class)->requiredForSession($row, RequestState::record($request, 'fleet.link'))]);
+        return $this->state($sessions, $row);
     }
 
     private function state(FleetSession $sessions, \stdClass $row): JsonResponse

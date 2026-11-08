@@ -122,7 +122,7 @@ services:
             dockerfile: docker/database/Dockerfile
         profiles: [tools]
         working_dir: /project
-        entrypoint: [python3, scripts/database/database.py]
+        entrypoint: [python3.12, scripts/database/database.py]
         environment:
             FLEET_REMOTE_DB_DATABASE: '${FLEET_REMOTE_DB_DATABASE:-}'
         volumes:

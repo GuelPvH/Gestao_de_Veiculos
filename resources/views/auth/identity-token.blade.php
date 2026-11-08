@@ -46,23 +46,6 @@
                 </button>
                 <x-ui.loading />
             </form>
-            @if ($activation)
-                <hr />
-                <p>Convite vencido? Solicite outro para o endereço cadastrado.</p>
-                <form action="{{ route('identity.requestActivation') }}" method="post">
-                    @csrf
-                    <label for="activation-identifier">Identificador institucional</label>
-                    <input
-                        id="activation-identifier"
-                        class="form-control"
-                        name="identificador"
-                        maxlength="100"
-                        required
-                        autocomplete="username"
-                    />
-                    <button class="btn btn-outline-primary mt-2" type="submit">Solicitar convite</button>
-                </form>
-            @endif
             <a href="{{ route('login') }}">Voltar ao acesso</a>
         </x-ui.panel>
     </main>

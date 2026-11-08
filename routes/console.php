@@ -1,7 +1,7 @@
 <?php
 
 use App\Services\Auth\IdentityService;
-use App\Services\Auth\PasswordPolicy;
+use App\Support\Cpf;
 use App\Support\Value;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -14,28 +14,29 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Artisan::command('fleet:create-admin', function (): int {
-    $identificador = $this->ask('Identificador institucional');
-    $nome = $this->ask('Nome');
-    $email = $this->ask('E-mail');
-    $senha = $this->secret('Senha privada (mínimo 12 caracteres)');
-    $dados = ['identificador' => $identificador, 'nome' => $nome, 'email' => $email, 'nova_senha' => $senha, 'nova_senha_confirmation' => $senha];
-    $validacao = Validator::make($dados, ['identificador' => 'required|string|max:100', 'nome' => 'required|string|max:150', 'email' => 'required|email|max:254', 'nova_senha' => PasswordPolicy::rules()]);
+    $cpf = Cpf::normalize(Value::string($this->ask('CPF')));
+    $nome = Value::string($this->ask('Nome'));
+    $email = Value::nullableString($this->ask('E-mail de contato (opcional)'));
+    $validacao = Validator::make(['cpf' => $cpf, 'nome' => $nome, 'email' => $email], [
+        'cpf' => 'required', 'nome' => 'required|string|max:150', 'email' => 'nullable|email|max:254',
+    ]);
     if ($validacao->fails()) {
-        $this->error('Dados inválidos. Revise a política de senha e os campos.');
+        $this->error('Dados inválidos. Confira o CPF, o nome e o e-mail de contato.');
 
         return 1;
     }
-    if (! $this->confirm('Criar o administrador inicial no banco configurado, sem registrar a senha?')) {
+    if (! $this->confirm('Criar o administrador inicial no banco configurado e emitir um código temporário?')) {
         return 1;
     }
     try {
-        app(IdentityService::class)->createInitialAdministrator(Value::string($identificador), Value::string($nome), Value::string($email), Value::string($senha));
+        $administrador = app(IdentityService::class)->createInitialAdministrator(Value::string($cpf), $nome, $email);
     } catch (Throwable) {
         $this->error('Inicialização recusada. Confira o provisionamento e os privilégios privadamente.');
 
         return 1;
     }
-    $this->info('Administrador inicial pendente de ativação individual e MFA. Confira a outbox e o transporte antes do primeiro acesso.');
+    $this->info('Administrador criado. Use o CPF e este código temporário no primeiro acesso.');
+    $this->line($administrador['codigo']);
 
     return 0;
 })->purpose('Inicializar somente o primeiro administrador, após provisionamento conferido');

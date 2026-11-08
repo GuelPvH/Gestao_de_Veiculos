@@ -125,24 +125,24 @@ class MySqlIdentityTest extends TestCase
         $this->assertTrue(app(AccessContext::class)->can('usuarios', 'criar', null, 1));
         $this->assertGreaterThanOrEqual(1, app(AccessContext::class)->delegationLevel('conta', 'consultar'));
 
-        $newIdentifier = 'rollback-'.$this->identifier;
+        $newIdentifier = '11144477735';
         $before = [];
         foreach (['usuarios', 'preferencias_usuario', 'usuario_perfis', 'confirmacoes_identidade', 'email_outbox', 'auditoria'] as $table) {
             $before[$table] = DB::table($table)->count();
         }
-        $realIdentity = app(IdentityService::class);
-        $syntheticFailure = new \RuntimeException('Falha sintética após persistência da intenção.');
-        $identity = Mockery::mock(IdentityService::class);
-        $identity->shouldReceive('issueActivation')->once()->andReturnUsing(function ($user, $linkId) use ($realIdentity, $syntheticFailure): void {
-            $this->assertGreaterThan(0, DB::transactionLevel());
-            $this->assertSame('pendente', $user->estado_identidade);
-            $this->assertSame(1, DB::table('usuario_perfis')->where('id', $linkId)->where('usuario_id', $user->id)->count());
-            $realIdentity->issueActivation($user, $linkId);
-            $this->assertSame(1, DB::table('confirmacoes_identidade')->where('usuario_id', $user->id)->count());
-            $this->assertSame(1, DB::table('email_outbox')->where('usuario_id', $user->id)->count());
-            throw $syntheticFailure;
+        $runner = app(ProcedureRunner::class);
+        $syntheticFailure = new \RuntimeException('Falha sintética após a atribuição do vínculo.');
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->andReturnUsing(function (string $nome, array $argumentos) use ($runner, $syntheticFailure): array {
+            $retorno = $runner->call($nome, $argumentos);
+            if ($nome === 'sp_auditar' && ($argumentos[1] ?? null) === 'perfil_atribuido') {
+                $this->assertGreaterThan(0, DB::transactionLevel());
+                throw $syntheticFailure;
+            }
+
+            return $retorno;
         });
-        app()->instance(IdentityService::class, $identity);
+        app()->instance(ProcedureRunner::class, $procedimentos);
         $caught = null;
         try {
             app(AdminWorkflow::class)->storeUser([
@@ -154,7 +154,7 @@ class MySqlIdentityTest extends TestCase
         } catch (\Throwable $error) {
             $caught = $error;
         } finally {
-            app()->instance(IdentityService::class, $realIdentity);
+            app()->instance(ProcedureRunner::class, $runner);
         }
         $this->assertSame($syntheticFailure, $caught);
         $this->assertFalse(DB::table('usuarios')->where('identificador', $newIdentifier)->exists());
@@ -163,24 +163,21 @@ class MySqlIdentityTest extends TestCase
         }
     }
 
-    public function test_real_initial_admin_is_pending_with_atomic_grant_and_activation_intent(): void
+    public function test_real_initial_admin_can_change_temporary_credential_without_email(): void
     {
         DB::beginTransaction();
         try {
             DB::table('configuracao_sistema')->where('id', 1)->update(['bootstrap_concluido' => 0]);
-            $result = app(IdentityService::class)->createInitialAdministrator('bootstrap-'.$this->identifier,
-                'Bootstrap descartável', 'bootstrap-'.$this->identifier.'@local.test', 'SenhaInicial!123');
+            $result = app(IdentityService::class)->createInitialAdministrator('52998224725', 'Bootstrap descartável', null);
             $user = DB::table('usuarios')->where('id', $result['usuario_id'])->first();
-            $this->assertSame('pendente', $user->estado_identidade);
+            $this->assertSame('ativa', $user->estado_identidade);
             $this->assertSame(1, (int) $user->deve_trocar_senha);
-            $this->assertNull($user->email_verificado_em);
+            $this->assertNull($user->email);
             $this->assertNotNull($user->senha_temporaria_expira_em);
             $this->assertSame(1, DB::table('usuario_perfis')->where('id', $result['vinculo_id'])->count());
-            $outbox = DB::table('email_outbox')->where('usuario_id', $user->id)->where('finalidade', 'ativacao')->first();
-            $this->assertNotNull($outbox);
-            app(IdentityService::class)->consumeActivation(Crypt::decryptString($outbox->token_cifrado), 'SenhaDefinitiva!987');
-            $this->assertSame('ativa', DB::table('usuarios')->where('id', $user->id)->value('estado_identidade'));
-            $this->assertNotNull(DB::table('usuarios')->where('id', $user->id)->value('email_verificado_em'));
+            app(IdentityService::class)->changePassword($result['usuario_id'], $result['codigo'], 'SenhaDefinitiva!987');
+            $this->assertSame(0, (int) DB::table('usuarios')->where('id', $user->id)->value('deve_trocar_senha'));
+            $this->assertSame(0, DB::table('email_outbox')->where('usuario_id', $user->id)->count());
         } finally {
             DB::rollBack();
         }

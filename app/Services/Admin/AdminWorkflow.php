@@ -6,11 +6,12 @@ use App\Services\Auth\IdentityService;
 use App\Services\Auth\PasswordVerifier;
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
+use App\Services\Authorization\RequestAccessReader;
 use App\Services\Read\FleetReadRepository;
+use App\Support\Cpf;
 use App\Support\Value;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use stdClass;
@@ -23,39 +24,72 @@ class AdminWorkflow
         private ProcedureRunner $procedimentos,
         private IdentityService $identidades,
         private PasswordVerifier $senhas,
+        private TechnicalRouteCatalog $catalogoRotas,
     ) {}
 
     /**
      * @param  array<string, mixed>  $dados
+     * @return array{id: int, codigo: string}
      */
-    public function storeUser(array $dados): int
+    public function storeUser(array $dados): array
     {
         $unidade = Value::integer($dados['unidade_id']);
         abort_unless($this->acesso->can('usuarios', 'criar', null, $unidade), 403);
+        $cpf = $this->requireCpf(Value::string($dados['identificador']));
 
-        return DB::transaction(function () use ($dados, $unidade): int {
+        return DB::transaction(function () use ($dados, $unidade, $cpf): array {
             $this->lockAdmin();
             $this->requirePermission('usuarios', 'criar', null, $unidade);
             abort_unless(DB::table('unidades')->where('id', $unidade)->where('ativa', 1)->exists(), 422);
-            $now = now('UTC');
-            $id = (int) DB::table('usuarios')->insertGetId([
-                'unidade_id' => $unidade, 'identificador' => mb_strtolower(trim(Value::string($dados['identificador']))),
-                'nome' => trim(Value::string($dados['nome'])), 'email' => ($dados['email'] ?? null) ?: null,
-                'senha_hash' => $this->senhas->make(Value::string($dados['senha_temporaria'] ?? bin2hex(random_bytes(32)))),
-                'deve_trocar_senha' => 1, 'estado_identidade' => 'pendente', 'versao_seguranca' => 1,
-                'senha_temporaria_emitida_em' => $now,
-                'senha_temporaria_expira_em' => $now->copy()->addHours(max(1, min(72, Value::integer(config('identity.temporary_password_hours', 24))))),
+            $credencial = $this->identidades->temporaryCredential();
+            $id = $this->identidades->provisionUser($credencial['campos'] + [
+                'unidade_id' => $unidade, 'identificador' => $cpf, 'nome' => trim(Value::string($dados['nome'])),
+                'email' => ($dados['email'] ?? null) ?: null,
             ]);
-            DB::table('preferencias_usuario')->insert(['usuario_id' => $id]);
-            $this->audit('usuario_criado', 'usuarios', $id, 'Conta pendente; ativação depende de vínculo autorizado e prova individual.');
-            // When the initial grant is supplied, creation + grant + mail intent
-            // share this transaction. No procedure here commits independently.
+            $this->audit('usuario_criado', 'usuarios', $id, 'Cadastro por CPF com troca obrigatória de senha.');
             if (isset($dados['perfil_id'])) {
                 $this->grantLink($id, $dados);
             }
 
-            return $id;
+            return ['id' => $id, 'codigo' => $credencial['codigo']];
         });
+    }
+
+    /** @param array<string, mixed> $dados */
+    public function issueTemporaryCredential(int $id, array $dados): string
+    {
+        $this->visible('users', $id);
+        $atorId = Value::integer($this->acesso->requireLink()->usuario_id);
+        abort_unless($atorId !== $id && $this->acesso->can('usuarios', 'gerenciar'), 403);
+
+        return DB::transaction(function () use ($id, $dados, $atorId): string {
+            $this->lockAdmin();
+            $usuario = DB::table('usuarios')->where('id', $id)->lockForUpdate()->first();
+            abort_unless($usuario !== null && $usuario->ativo, 404);
+            $unidade = Value::integer($usuario->unidade_id);
+            $this->requirePermission('usuarios', 'gerenciar');
+            $this->requirePermission('usuarios', 'editar', $id, $unidade);
+            $ator = DB::table('usuarios')->where('id', $atorId)->where('ativo', 1)->lockForUpdate()->first(['senha_hash']);
+            if (! $ator || ! $this->senhas->verify(Value::string($dados['senha_atual']), Value::string($ator->senha_hash))) {
+                throw ValidationException::withMessages(['senha_atual' => 'Sua senha atual está incorreta.']);
+            }
+            $cpf = $this->requireCpf(Value::string($usuario->identificador));
+            $this->identidades->requireAvailableCpf($cpf, $id);
+            $credencial = $this->identidades->temporaryCredential();
+            DB::table('usuarios')->where('id', $id)->update($credencial['campos'] + [
+                'identificador' => $cpf, 'versao_seguranca' => Value::integer($usuario->versao_seguranca) + 1,
+            ]);
+            $this->identidades->invalidate($id, 'troca_senha');
+            $this->audit('codigo_temporario_emitido', 'usuarios', $id, Value::string($dados['justificativa']));
+
+            return $credencial['codigo'];
+        });
+    }
+
+    private function requireCpf(string $identificador): string
+    {
+        return Cpf::normalize($identificador)
+            ?? throw ValidationException::withMessages(['identificador' => 'Informe um CPF válido no cadastro do usuário.']);
     }
 
     /**
@@ -77,11 +111,16 @@ class AdminWorkflow
             $this->requirePermission('usuarios', 'editar', $id, Value::integer($usuario->unidade_id));
             $this->requirePermission('usuarios', 'editar', $id, $novaUnidade);
             $email = ($dados['email'] ?? null) ?: null;
+            $identificador = trim(Value::string($dados['identificador']));
+            if ($identificador !== $usuario->identificador) {
+                $identificador = $this->requireCpf($identificador);
+                $this->identidades->requireAvailableCpf($identificador, $id);
+            }
             $securityChanged = $usuario->email !== $email || $usuario->email_pendente !== null || Value::integer($usuario->ativo) !== Value::integer($dados['ativo'])
-                || $usuario->identificador !== trim(Value::string($dados['identificador'])) || Value::integer($usuario->unidade_id) !== $novaUnidade;
+                || $usuario->identificador !== $identificador || Value::integer($usuario->unidade_id) !== $novaUnidade;
             DB::table('usuarios')->where('id', $id)->update([
                 'unidade_id' => $novaUnidade,
-                'identificador' => trim(Value::string($dados['identificador'])), 'nome' => trim(Value::string($dados['nome'])),
+                'identificador' => $identificador, 'nome' => trim(Value::string($dados['nome'])),
                 'email' => $email, 'email_pendente' => null,
                 'email_verificado_em' => $usuario->email === $email ? $usuario->email_verificado_em : null,
                 'versao_seguranca' => Value::integer($usuario->versao_seguranca) + ($securityChanged ? 1 : 0), 'telefone' => ($dados['telefone'] ?? null) ?: null,
@@ -91,9 +130,6 @@ class AdminWorkflow
                 $this->identidades->invalidate($id);
                 $fresh = DB::table('usuarios')->where('id', $id)->firstOrFail();
                 $this->identidades->securityNotice($fresh, 'identidade_alterada', Value::nullableString($usuario->email));
-                if ($email && Value::integer($dados['ativo']) === 1) {
-                    $this->identidades->resend($id);
-                }
             }
             $this->audit('usuario_editado', 'usuarios', $id, Value::string($dados['justificativa']));
         });
@@ -147,7 +183,6 @@ class AdminWorkflow
             'vigente_desde' => $inicio, 'vigente_ate' => $fim, 'concedido_por' => Value::integer($actor->usuario_id),
         ]);
         $this->audit('perfil_atribuido', 'usuario_perfis', $link, trim(Value::string($dados['justificativa'])));
-        $this->identidades->issueActivation($user, $link);
 
         return $link;
     }
@@ -233,10 +268,18 @@ class AdminWorkflow
      */
     public function grantRole(int $id, array $dados): void
     {
-        $perfil = $this->visible('roles', $id);
+        $this->visible('roles', $id);
         abort_unless($this->acesso->can('perfis', 'delegar'), 403);
         $permissao = DB::table('permissoes')->where('id', Value::integer($dados['permissao_id']))->first(['modulo_codigo', 'acao_codigo', 'alcance']);
         abort_unless($permissao !== null, 404);
+        if (isset($dados['rota_id'])) {
+            $rotaId = Value::integer($dados['rota_id']);
+            $this->visible('technical-routes', $rotaId);
+            if (! DB::table('rota_permissoes')->where('rota_id', $rotaId)
+                ->where('modulo_codigo', $permissao->modulo_codigo)->where('acao_codigo', $permissao->acao_codigo)->exists()) {
+                throw ValidationException::withMessages(['permissao_id' => 'Selecione uma permissão exigida pela rota escolhida.']);
+            }
+        }
         $nivel = match ($permissao->alcance) {
             'proprios' => 1, 'unidade' => 2, default => 3,
         };
@@ -279,12 +322,15 @@ class AdminWorkflow
     public function storeRoute(array $dados): int
     {
         abort_unless($this->acesso->can('rotas', 'criar'), 403);
-        $moduloImplementado = $this->registeredModule(trim(Value::string($dados['caminho'])), Value::string($dados['metodo_http']));
-        if ($moduloImplementado === null || $moduloImplementado !== $dados['modulo_codigo']) {
+        $rota = $this->catalogoRotas->find(Value::string($dados['metodo_http']).' '.trim(Value::string($dados['caminho'])));
+        if ($rota === null || $rota['modulo'] !== $dados['modulo_codigo']) {
             throw ValidationException::withMessages(['caminho' => 'Selecione um caminho e método já implementados neste módulo.']);
         }
 
-        return DB::transaction(function () use ($dados): int {
+        $protegida = in_array($rota['nome'], RequestAccessReader::ROUTE_RECOVERY, true);
+        $this->validateProtectedRoute($protegida, $dados);
+
+        return DB::transaction(function () use ($dados, $protegida, $rota): int {
             $this->lockAdmin();
             $this->requirePermission('rotas', 'criar');
             $id = (int) DB::table('rotas_sistema')->insertGetId([
@@ -297,11 +343,12 @@ class AdminWorkflow
                 'ativa' => Value::integer($dados['ativa']),
                 'visivel_menu' => Value::integer($dados['visivel_menu']),
                 'implementada' => 1,
-                'protegida' => 0,
+                'protegida' => (int) $protegida,
                 'ordem' => Value::integer($dados['ordem']),
                 'criado_por' => Value::integer($this->acesso->requireLink()->usuario_id),
             ]);
-            $this->audit('rota_criada', 'rotas_sistema', $id, 'Metadados da rota técnica cadastrados.');
+            $this->storeRouteRequirement($id, $rota['modulo'], $rota['acao']);
+            $this->audit('rota_criada', 'rotas_sistema', $id, 'Metadados e requisitos da rota técnica cadastrados.');
 
             return $id;
         });
@@ -315,21 +362,35 @@ class AdminWorkflow
         $this->visible('technical-routes', $id);
         DB::transaction(function () use ($id, $dados): void {
             $this->lockAdmin();
-            $rota = DB::table('rotas_sistema')->where('id', $id)->lockForUpdate()->first(['criado_por', 'protegida']);
+            $rota = DB::table('rotas_sistema')->where('id', $id)->lockForUpdate()->first(['criado_por', 'protegida', 'caminho', 'metodo_http']);
             abort_unless($rota !== null, 404);
             $dono = $rota->criado_por === null ? null : Value::integer($rota->criado_por);
             abort_unless($this->acesso->can('rotas', 'editar', $dono), 403);
-            if (Value::integer($rota->protegida) === 1 && (Value::integer($dados['ativa']) !== 1 || Value::integer($dados['visivel_menu']) !== 1)) {
-                throw ValidationException::withMessages(['ativa' => 'Uma rota administrativa protegida deve permanecer ativa e visível.']);
-            }
+            $registrada = $this->catalogoRotas->find(Value::string($rota->metodo_http).' '.Value::string($rota->caminho));
+            $protegida = Value::integer($rota->protegida) === 1
+                || in_array($registrada['nome'] ?? '', RequestAccessReader::ROUTE_RECOVERY, true);
+            $this->validateProtectedRoute($protegida, $dados);
             $this->requirePermission('rotas', 'editar', $dono);
             DB::table('rotas_sistema')->where('id', $id)->update([
                 'nome' => trim(Value::string($dados['nome'])), 'descricao' => ($dados['descricao'] ?? null) ?: null,
                 'ativa' => Value::integer($dados['ativa']), 'visivel_menu' => Value::integer($dados['visivel_menu']),
                 'ordem' => Value::integer($dados['ordem']),
+                'protegida' => (int) $protegida,
             ]);
+            if ($registrada !== null && ! DB::table('rota_permissoes')->where('rota_id', $id)->exists()) {
+                $this->storeRouteRequirement($id, $registrada['modulo'], $registrada['acao']);
+            }
             $this->audit('rota_editada', 'rotas_sistema', $id, Value::string($dados['justificativa']));
         });
+    }
+
+    private function storeRouteRequirement(int $id, string $modulo, ?string $acao): void
+    {
+        if ($acao !== null) {
+            DB::table('rota_permissoes')->insert([
+                'rota_id' => $id, 'modulo_codigo' => $modulo, 'acao_codigo' => $acao,
+            ]);
+        }
     }
 
     private function visible(string $codigo, int $id): stdClass
@@ -337,35 +398,12 @@ class AdminWorkflow
         return $this->leituras->record($codigo, $id);
     }
 
-    private function registeredModule(string $caminho, string $metodo): ?string
+    /** @param array<string, mixed> $dados */
+    private function validateProtectedRoute(bool $protegida, array $dados): void
     {
-        foreach (Route::getRoutes()->getRoutes() as $rota) {
-            if ('/'.ltrim($rota->uri(), '/') !== $caminho || ! in_array($metodo, $rota->methods(), true)) {
-                continue;
-            }
-            $nome = $rota->getName();
-            if (! is_string($nome)) {
-                continue;
-            }
-            $prefixo = explode('.', $nome, 2)[0];
-            $tela = config('screens.'.$prefixo);
-            if (is_array($tela)) {
-                return Value::string($tela['module']);
-            }
-
-            return match ($prefixo) {
-                'dashboard' => 'painel',
-                'agenda' => 'frota',
-                'tyres' => 'despesas',
-                'reports' => 'relatorios',
-                'configuration' => 'configuracoes',
-                'notifications' => 'notificacoes',
-                'account' => 'conta',
-                default => null,
-            };
+        if ($protegida && (Value::integer($dados['ativa']) !== 1 || Value::integer($dados['visivel_menu']) !== 1)) {
+            throw ValidationException::withMessages(['ativa' => 'Uma rota administrativa protegida deve permanecer ativa e visível.']);
         }
-
-        return null;
     }
 
     private function linkId(): int

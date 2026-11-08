@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Admin\TechnicalRouteCatalog;
 use App\Services\Authorization\AccessContext;
 use App\Services\Finance\FinanceService;
 use App\Services\Fines\FineWorkflow;
@@ -11,6 +12,7 @@ use App\Services\Read\OperationalReadRepository;
 use App\Services\Read\OperationCatalog;
 use App\Support\Value;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -28,6 +30,8 @@ class RecordController extends Controller
         $codigo = $this->screen($requisicao);
         $tela = $this->leituras->definition($codigo);
         if ($codigo === 'monitoring') {
+            abort_unless($this->acesso->level($tela['module']) > 0, 403);
+
             return view('monitoring.index', compact('tela'));
         }
         /** @var array<string, mixed> $filtros */
@@ -70,7 +74,9 @@ class RecordController extends Controller
             $trajeto = DB::table('vw_trajetos_observados')->where('veiculo_id', $registro)->orderByDesc('ocorrido_em')->limit(200)->get(['ocorrido_em', 'fonte', 'latitude', 'longitude']);
         }
 
-        return view('records.show', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->sole()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $detalhes['eventos'], 'leituras' => $this->leituras, 'vistoria' => $detalhes['vistoria'] ?? collect(), 'ocorrencias' => $detalhes['ocorrencias'] ?? collect(), 'pneus' => $detalhes['pneus'] ?? collect(), 'trajeto' => $trajeto, 'mensagens' => $mensagens, 'vinculos' => $codigo === 'users' ? app(AdminReadRepository::class)->links($registro) : collect(), 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'arquivos' => $detalhes['arquivos'], 'comprovantes' => $comprovantes, 'conferencias' => $conferencias, 'podeBaixarComprovante' => $podeBaixarComprovante]);
+        $credencial = $codigo === 'users' ? $requisicao->session()->pull('fleet.temporary_credential.'.$registro) : null;
+
+        return view('records.show', ['codigoTemporario' => is_string($credencial) ? Crypt::decryptString($credencial) : null, 'codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->sole()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $detalhes['eventos'], 'leituras' => $this->leituras, 'vistoria' => $detalhes['vistoria'] ?? collect(), 'ocorrencias' => $detalhes['ocorrencias'] ?? collect(), 'pneus' => $detalhes['pneus'] ?? collect(), 'trajeto' => $trajeto, 'mensagens' => $mensagens, 'vinculos' => $codigo === 'users' ? app(AdminReadRepository::class)->links($registro) : collect(), 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'rotasPerfil' => $codigo === 'roles' ? app(AdminReadRepository::class)->routeOptions($registro) : [], 'requisitosRota' => $codigo === 'technical-routes' ? app(AdminReadRepository::class)->routeRequirements($registro) : collect(), 'arquivos' => $detalhes['arquivos'], 'comprovantes' => $comprovantes, 'conferencias' => $conferencias, 'podeBaixarComprovante' => $podeBaixarComprovante]);
     }
 
     public function create(Request $requisicao): View
@@ -79,7 +85,7 @@ class RecordController extends Controller
         $tela = $this->leituras->definition($codigo);
         abort_unless($this->canCreate($codigo, $tela), 403);
 
-        return view('records.form', ['codigo' => $codigo, 'tela' => $tela, 'acao' => 'create', 'titulo' => 'Novo registro · '.$tela['title'], 'registro' => null, 'formAction' => $codigo === 'fines' ? route('fines.store') : null, 'veiculosMulta' => $codigo === 'fines' ? app(FineWorkflow::class)->vehicleOptions() : [], 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix(null) : collect(), 'perfisDisponiveis' => [], 'unidadesDisponiveis' => $codigo === 'users' ? DB::table('unidades')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all() : [], 'modulosDisponiveis' => $codigo === 'technical-routes' ? DB::table('modulos')->where('ativo', 1)->orderBy('ordem')->pluck('nome', 'codigo')->all() : [], 'veiculosDisponiveis' => [], 'categoriasChamado' => $codigo === 'tickets' ? DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all() : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->where('codigo', '<>', 'abastecimento')->pluck('nome', 'id')->all() : []]);
+        return view('records.form', ['codigo' => $codigo, 'tela' => $tela, 'acao' => 'create', 'titulo' => 'Novo registro · '.$tela['title'], 'registro' => null, 'formAction' => $codigo === 'fines' ? route('fines.store') : null, 'veiculosMulta' => $codigo === 'fines' ? app(FineWorkflow::class)->vehicleOptions() : [], 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix(null) : collect(), 'perfisDisponiveis' => [], 'unidadesDisponiveis' => $codigo === 'users' ? DB::table('unidades')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all() : [], 'rotasDisponiveis' => $codigo === 'technical-routes' ? app(TechnicalRouteCatalog::class)->available() : [], 'veiculosDisponiveis' => [], 'categoriasChamado' => $codigo === 'tickets' ? DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all() : [], 'categoriasDespesa' => $codigo === 'expenses' ? DB::table('categorias_despesa')->where('ativa', 1)->where('codigo', '<>', 'abastecimento')->pluck('nome', 'id')->all() : []]);
     }
 
     /**
@@ -149,14 +155,38 @@ class RecordController extends Controller
             $dados->solicitacao_versao = $versoes->solicitacao_versao;
         }
 
-        if ($codigo === 'users') {
+        if ($codigo === 'users' && ! property_exists($dados, 'versao')) {
             $dados->versao = DB::table('usuarios')->where('id', $registro)->value('versao') ?? 1;
         }
 
-        if ($codigo === 'roles') {
+        if ($codigo === 'roles' && ! property_exists($dados, 'atualizado_em')) {
             $dados->atualizado_em = DB::table('perfis')->where('id', $registro)->value('atualizado_em');
         }
 
-        return view('records.form', ['codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'acao' => $acao, 'titulo' => $permitidas[$acao], 'registro' => $dados, 'formAction' => $codigo === 'fines' ? route('fines.perform', ['registro' => $registro, 'acao' => $acao]) : null, 'viagensMulta' => $codigo === 'fines' && $acao === 'assign' ? app(FineWorkflow::class)->tripOptions($registro) : [], 'responsaveisMulta' => $codigo === 'fines' && $acao === 'assign' ? app(FineWorkflow::class)->responsibleOptions($registro) : [], 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'perfisDisponiveis' => $codigo === 'users' && $acao === 'links' ? app(AdminReadRepository::class)->assignableRoles() : [], 'unidadesDisponiveis' => $codigo === 'users' ? DB::table('unidades')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all() : [], 'checklist' => $codigo === 'trips' && in_array($acao, ['departure', 'return'], true) ? DB::table('checklist_itens')->where('ativo', 1)->orderBy('ordem')->get(['id', 'descricao', 'obrigatorio']) : [], 'veiculosDisponiveis' => $veiculosDisponiveis, 'motoristasDisponiveis' => $motoristasDisponiveis, 'categoriasChamado' => [], 'categoriasDespesa' => []]);
+        $admin = app(AdminReadRepository::class);
+        $operacaoAdmin = $codigo.'.'.$acao;
+        $rotaSelecionada = null;
+        $opcoesRotas = [];
+        if ($operacaoAdmin === 'roles.grant') {
+            /** @var array{rota?: int|string|null} $filtros */
+            $filtros = $requisicao->validate(['rota' => ['nullable', 'integer', 'min:1']]);
+            $opcoesRotas = $admin->routeOptions();
+            if (isset($filtros['rota'])) {
+                $rotaSelecionada = Value::integer($filtros['rota']);
+                abort_unless(isset($opcoesRotas[$rotaSelecionada]), 404);
+            }
+        }
+        $opcoesAdmin = match ($operacaoAdmin) {
+            'users.revoke' => $admin->revocableLinks($registro),
+            'roles.grant' => $admin->permissionOptions(null, $rotaSelecionada),
+            'roles.revoke' => $admin->permissionOptions($registro),
+            default => [],
+        };
+        $formAction = match ($operacaoAdmin) {
+            'users.revoke', 'roles.grant', 'roles.revoke' => route($operacaoAdmin, $registro),
+            default => $codigo === 'fines' ? route('fines.perform', ['registro' => $registro, 'acao' => $acao]) : null,
+        };
+
+        return view('records.form', ['opcoesAdmin' => $opcoesAdmin, 'opcoesRotas' => $opcoesRotas, 'rotaSelecionada' => $rotaSelecionada, 'codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'acao' => $acao, 'titulo' => $permitidas[$acao], 'registro' => $dados, 'formAction' => $formAction, 'viagensMulta' => $codigo === 'fines' && $acao === 'assign' ? app(FineWorkflow::class)->tripOptions($registro) : [], 'responsaveisMulta' => $codigo === 'fines' && $acao === 'assign' ? app(FineWorkflow::class)->responsibleOptions($registro) : [], 'permissoes' => $operacaoAdmin === 'roles.duplicate' ? $admin->matrix($registro) : collect(), 'perfisDisponiveis' => $codigo === 'users' && $acao === 'links' ? app(AdminReadRepository::class)->assignableRoles() : [], 'unidadesDisponiveis' => $codigo === 'users' ? DB::table('unidades')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all() : [], 'checklist' => $codigo === 'trips' && in_array($acao, ['departure', 'return'], true) ? DB::table('checklist_itens')->where('ativo', 1)->orderBy('ordem')->get(['id', 'descricao', 'obrigatorio']) : [], 'veiculosDisponiveis' => $veiculosDisponiveis, 'motoristasDisponiveis' => $motoristasDisponiveis, 'categoriasChamado' => [], 'categoriasDespesa' => []]);
     }
 }

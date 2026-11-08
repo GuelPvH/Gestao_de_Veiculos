@@ -72,7 +72,7 @@ await context.route('**/*', async (route) => {
         if (!route.request().postData()?.includes('CorrectForHarness'))
             return route.fulfill({ status: 422, json: { state: 'INVALID_CREDENTIAL' } });
         deadline = elapsed + 30 * 60000;
-        return route.fulfill({ json: { ...state(), mfa_required: false } });
+        return route.fulfill({ json: state() });
     }
     if (url.pathname === '/entrar')
         return route.fulfill({

@@ -12,7 +12,8 @@ services:
                 condition: service_healthy
         volumes:
             - ./app:/var/www/html/app:ro
-            - ./bootstrap:/var/www/html/bootstrap:ro
+            - ./bootstrap/app.php:/var/www/html/bootstrap/app.php:ro
+            - ./bootstrap/providers.php:/var/www/html/bootstrap/providers.php:ro
             - ./config:/var/www/html/config:ro
             - ./routes:/var/www/html/routes:ro
             - ./resources:/var/www/html/resources:ro

@@ -114,8 +114,9 @@ class FleetReadRepository
         }
         $colunaData = $tela['date'] ?? null;
         if (($filtros['q'] ?? '') !== '') {
-            $consulta->where(function (Builder $busca) use ($tela, $filtros): void {
-                foreach ($tela['columns'] as $chave => $campo) {
+            $camposBusca = $codigo === 'audit' ? $tela['columns'] + $tela['details'] : $tela['columns'];
+            $consulta->where(function (Builder $busca) use ($camposBusca, $filtros): void {
+                foreach ($camposBusca as $chave => $campo) {
                     if (! isset($campo[3]) && ! in_array($campo[2] ?? '', ['money', 'date', 'datetime'], true) && $chave !== 'situacao') {
                         $busca->orWhere($campo[0], 'like', '%'.Value::string($filtros['q']).'%');
                     }
@@ -129,6 +130,7 @@ class FleetReadRepository
             if (empty($filtros[$chave]) || (! $filtrarDataRealizada && empty($colunaData))) {
                 continue;
             }
+            
             if (($tela['dateOnly'] ?? false) && $colunaData !== null) {
                 $consulta->where($colunaData, $chave === 'de' ? '>=' : '<=', $filtros[$chave]);
 
@@ -161,6 +163,11 @@ class FleetReadRepository
         $consulta = $this->select($codigo, $this->filtered($codigo, $filtros), $campos ?? array_keys($tela['columns']));
         $consulta->orderBy($tela['id'] ?? 'r.id', $ordenacao === 'antigos' ? 'asc' : 'desc');
 
+        if ($this->acesso->link()?->perfil_codigo === 'administrador'
+            && in_array($codigo, ['users', 'roles', 'technical-routes', 'audit'], true)) {
+            return app(AdminReadRepository::class)->paginate($consulta);
+        }
+
         return $consulta->paginate(10)->withQueryString();
     }
 
@@ -168,6 +175,13 @@ class FleetReadRepository
     {
         $tela = $this->definition($codigo);
         $consulta = $this->select($codigo, $this->query($codigo))->where($tela['id'] ?? 'r.id', $id);
+        if ($this->acesso->link()?->perfil_codigo === 'administrador') {
+            if ($codigo === 'users') {
+                $consulta->addSelect('r.versao');
+            } elseif ($codigo === 'roles') {
+                $consulta->addSelect('r.atualizado_em');
+            }
+        }
         if ($codigo === 'requests') {
             $consulta->addSelect('r.versao', 'r.revisao_id', 'r.necessita_motorista', 'r.veiculo_pretendido_id');
         }

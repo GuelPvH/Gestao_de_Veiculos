@@ -22,6 +22,7 @@ class ConfigurationUpdateTest extends TestCase
     public function test_admin_updates_only_operational_settings_with_audit(): void
     {
         $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->once()->with('sp_exigir_permissao', [10, 'configuracoes', 'editar', null, null])->andReturn([]);
         $procedimentos->shouldReceive('call')->once()->withArgs(fn ($nome, $dados) => $nome === 'sp_auditar' && $dados[0] === 10 && $dados[1] === 'configuracao_atualizada')->andReturn([]);
         app()->instance(ProcedureRunner::class, $procedimentos);
         $this->post(route('configuration.update'), [
@@ -37,6 +38,23 @@ class ConfigurationUpdateTest extends TestCase
         $this->assertSame(20, (int) $configuracao->limite_sem_comunicacao_minutos);
         $this->assertSame('BRL', $configuracao->moeda);
         $this->assertSame(0, (int) $configuracao->bootstrap_concluido);
+    }
+
+    public function test_admin_downloads_only_operational_settings_with_audit(): void
+    {
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->once()->with('sp_exigir_permissao', [10, 'configuracoes', 'consultar', null, null])->andReturn([]);
+        $procedimentos->shouldReceive('call')->once()->with('sp_exigir_permissao', [10, 'configuracoes', 'exportar', null, null])->andReturn([]);
+        $procedimentos->shouldReceive('call')->once()->withArgs(fn ($nome, $dados) => $nome === 'sp_auditar' && $dados[1] === 'configuracao_exportada')->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+
+        $download = $this->post(route('configuration.export'))->assertDownload('frota-pf-configuracao.json');
+        $dados = json_decode($download->streamedContent(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame(['fuso_horario', 'sessao_inatividade_minutos', 'limite_sem_comunicacao_minutos', 'moeda'], array_keys($dados));
+        $this->assertSame('BRL', $dados['moeda']);
+
+        ReadFixture::profile(1);
+        $this->post(route('configuration.export'))->assertForbidden();
     }
 
     public function test_invalid_settings_and_non_admin_cannot_update(): void

@@ -6,10 +6,9 @@
     aria-label="Percursos planejados das solicitações aprovadas"
 ></div>
 <p class="small text-body-secondary mt-3" id="approved-route-status" role="status">{{ ! $consultado ? 'Selecione o veículo e o período e clique em Consultar.' : ($trajetos->isEmpty() ? 'Nenhuma viagem aprovada para esse veículo no período.' : 'Percursos das solicitações aprovadas.') }}</p>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+@vite ('resources/js/leaflet.js')
 <script>
-(async () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const status = document.getElementById('approved-route-status');
     try {
         const map = L.map('approved-route-map', {scrollWheelZoom:false}).setView([-8.7608,-63.8910],13);
@@ -85,5 +84,5 @@
         if (routes.length) status.textContent = `${routes.length} viagens aprovadas · ${calculated} percursos calculados pelas ruas${missing ? ' · ' + missing + ' sem coordenadas completas' : ''}${pending.length > 20 ? ' · selecione um período menor para calcular todos' : ''}.`;
 
     } catch (_) {status.textContent = 'Não foi possível carregar o mapa. Confira sua conexão e atualize a página.';}
-})();
+});
 </script>

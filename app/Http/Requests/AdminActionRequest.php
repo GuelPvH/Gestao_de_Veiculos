@@ -2,13 +2,34 @@
 
 namespace App\Http\Requests;
 
-use App\Services\Auth\PasswordPolicy;
+use App\Services\Admin\TechnicalRouteCatalog;
 use App\Services\Authorization\AccessContext;
+use App\Support\Cpf;
+use App\Support\Value;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class AdminActionRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->route('area') === 'users' && in_array($this->route('operacao'), ['store', 'update'], true)) {
+            $cpf = Cpf::normalize(Value::string($this->input('identificador')));
+            if ($cpf !== null) {
+                $this->merge(['identificador' => $cpf]);
+            }
+        }
+        if ($this->route('operacao') !== 'store' || $this->route('area') !== 'technical-routes' || ! $this->has('endpoint')) {
+            return;
+        }
+        $rota = app(TechnicalRouteCatalog::class)->find(Value::string($this->input('endpoint')));
+        $this->merge([
+            'caminho' => $rota['caminho'] ?? null,
+            'metodo_http' => $rota['metodo'] ?? null,
+            'modulo_codigo' => $rota['modulo'] ?? null,
+        ]);
+    }
+
     public function authorize(): bool
     {
         $acesso = app(AccessContext::class);
@@ -16,6 +37,7 @@ class AdminActionRequest extends FormRequest
             'users.store' => ['usuarios', 'criar'],
             'users.update', 'users.revoke' => ['usuarios', 'editar'],
             'users.link' => ['usuarios', 'delegar'],
+            'users.temporary' => ['usuarios', 'gerenciar'],
             'roles.store', 'roles.duplicate' => ['perfis', 'criar'],
             'roles.update' => ['perfis', 'editar'],
             'roles.grant', 'roles.revoke' => ['perfis', 'delegar'],
@@ -25,6 +47,14 @@ class AdminActionRequest extends FormRequest
         };
 
         return $permissao !== null && $acesso->level($permissao[0], $permissao[1]) > 0;
+    }
+
+    public function messages(): array
+    {
+        return [
+            'caminho.required' => 'Selecione um caminho e método disponíveis na aplicação.',
+            'caminho.unique' => 'Este caminho já está cadastrado para o método selecionado. Edite a rota existente.',
+        ];
     }
 
     /**
@@ -42,13 +72,17 @@ class AdminActionRequest extends FormRequest
         return match ($operacao) {
             'users.store' => [
                 'unidade_id' => $unidade, 'identificador' => $identificador, 'nome' => ['required', 'string', 'max:150'],
-                'email' => $email, 'senha_temporaria' => PasswordPolicy::rules(),
+                'email' => $email,
             ],
             'users.update' => [
                 'versao' => ['required', 'integer', 'min:1'], 'unidade_id' => $unidade,
                 'identificador' => $identificador, 'nome' => ['required', 'string', 'max:150'],
                 'email' => $email, 'telefone' => ['nullable', 'string', 'max:30'],
                 'ativo' => ['required', 'boolean'], 'justificativa' => ['required', 'string', 'min:5', 'max:1000'],
+            ],
+            'users.temporary' => [
+                'senha_atual' => ['required', 'string', 'max:256'],
+                'justificativa' => ['required', 'string', 'min:5', 'max:1000'],
             ],
             'users.link' => [
                 'perfil_id' => ['required', 'integer', Rule::exists('perfis', 'id')->where('ativo', 1)],
@@ -76,6 +110,7 @@ class AdminActionRequest extends FormRequest
             'roles.grant' => [
                 'permissao_id' => ['required', 'integer', Rule::exists('permissoes', 'id')],
                 'delegavel' => ['required', 'boolean'],
+                'rota_id' => ['nullable', 'integer', Rule::exists('rotas_sistema', 'id')->where('implementada', 1)],
             ],
             'roles.revoke' => [
                 'permissao_id' => ['required', 'integer', Rule::exists('permissoes', 'id')],
@@ -84,9 +119,9 @@ class AdminActionRequest extends FormRequest
             'technical-routes.store' => [
                 'chave' => ['required', 'string', 'max:80', 'regex:/^[a-z0-9_.-]+$/', Rule::unique('rotas_sistema', 'chave')],
                 'nome' => ['required', 'string', 'max:120'],
-                'caminho' => ['required', 'string', 'max:255', 'starts_with:/'],
+                'caminho' => ['required', 'string', 'max:255', 'starts_with:/', Rule::unique('rotas_sistema', 'caminho')->where('metodo_http', Value::string($this->input('metodo_http')))],
                 'metodo_http' => ['required', Rule::in(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])],
-                'modulo_codigo' => ['required', 'string', Rule::exists('modulos', 'codigo')],
+                'modulo_codigo' => ['required', 'string', Rule::exists('modulos', 'codigo')->where('ativo', 1)],
                 'descricao' => ['nullable', 'string', 'max:3000'],
                 'ativa' => ['required', 'boolean'],
                 'visivel_menu' => ['required', 'boolean'],

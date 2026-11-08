@@ -103,7 +103,7 @@ class SessionSecurityTest extends TestCase
         });
 
         $this->postJson('/sessao/reautenticar', ['senha' => SecurityFixture::PASSWORD])
-            ->assertOk()->assertJsonPath('mfa_required', true);
+            ->assertOk()->assertJsonMissingPath('mfa_required');
 
         // actingAs loads the identity before measurement; both remaining reads belong to validation locks.
         $this->assertCount(2, array_filter($queries, fn ($sql) => str_starts_with($sql, 'select ') && str_contains($sql, 'from usuarios')));

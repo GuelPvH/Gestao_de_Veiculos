@@ -5,14 +5,13 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Services\Auth\IdentityService;
 use App\Services\Auth\PasswordPolicy;
-use App\Services\Auth\RecoverySettings;
+use App\Support\Cpf;
 use App\Support\CurrentUser;
 use App\Support\Value;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -48,41 +47,35 @@ class PasswordController extends Controller
         return redirect()->route('login')->with('status', 'Senha alterada. Entre novamente com a nova senha.');
     }
 
-    public function recover(RecoverySettings $settings): View
+    public function recover(): View
     {
-        return view('auth.recover', ['disponivel' => $settings->available()]);
+        return view('auth.recover');
     }
 
-    public function sendRecovery(Request $requisicao, RecoverySettings $settings, IdentityService $identidades): RedirectResponse
+    public function recoverWithCode(Request $requisicao, IdentityService $identidades): RedirectResponse
     {
         /** @var array<string, mixed> $dados */
-        $dados = $requisicao->validate(['identificador' => ['required', 'string', 'max:100']]);
-        $identificador = mb_strtolower(trim(Value::string($dados['identificador'])));
-        $ip = (string) $requisicao->ip();
-        $chaveIp = 'fleet-recovery-ip:'.hash('sha256', $ip);
-        $chaveIdentidade = 'fleet-recovery-identity:'.hash('sha256', $identificador);
-        $chavePar = 'fleet-recovery-identity-ip:'.hash('sha256', $identificador.'|'.$ip);
-        abort_if(RateLimiter::tooManyAttempts($chaveIp, 5)
-            || RateLimiter::tooManyAttempts($chaveIdentidade, 5)
-            || RateLimiter::tooManyAttempts($chavePar, 3), 429);
+        $dados = $requisicao->validate([
+            'identificador' => ['required', 'string', 'max:14'],
+            'senha_atual' => ['required', 'string', 'max:256'],
+            'nova_senha' => PasswordPolicy::rules(),
+        ]);
+        $cpf = Cpf::normalize(Value::string($dados['identificador']));
+        $chaveIp = 'fleet-recovery-ip:'.hash('sha256', (string) $requisicao->ip());
+        $chaveCpf = 'fleet-recovery-identity:'.hash('sha256', $cpf ?? '');
+        abort_if(RateLimiter::tooManyAttempts($chaveIp, 5) || RateLimiter::tooManyAttempts($chaveCpf, 5), 429);
         RateLimiter::hit($chaveIp, 60);
-        RateLimiter::hit($chaveIdentidade, 3600);
-        RateLimiter::hit($chavePar, 60);
-
-        if (! $settings->available()) {
-            return back()->with('status', 'A recuperação por e-mail está indisponível. Solicite a revisão de acesso à administração.');
+        RateLimiter::hit($chaveCpf, 60);
+        if ($cpf === null) {
+            throw ValidationException::withMessages(['identificador' => 'Informe um CPF válido.']);
         }
 
-        try {
-            $identidades->requestRecovery($identificador);
-        } catch (Throwable $error) {
-            if ($error instanceof QueryException || $error instanceof \PDOException) {
-                report($error);
-            }
-            Log::warning('Uma solicitação pública de recuperação não pôde ser persistida.');
-        }
+        $identidades->recoverWithTemporaryCredential($cpf, Value::string($dados['senha_atual']), Value::string($dados['nova_senha']));
+        RateLimiter::clear($chaveCpf);
+        $requisicao->session()->invalidate();
+        $requisicao->session()->regenerateToken();
 
-        return back()->with('status', 'Se houver um acesso elegível, você receberá as orientações no e-mail cadastrado.');
+        return redirect()->route('login')->with('status', 'Senha alterada. Entre com o CPF e a nova senha.');
     }
 
     public function reset(): View

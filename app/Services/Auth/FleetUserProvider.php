@@ -19,6 +19,21 @@ class FleetUserProvider extends EloquentUserProvider
         return User::query()->whereKey($identifier)->where('ativo', 1)->first();
     }
 
+    /** @param array<array-key, mixed> $credentials */
+    public function retrieveByCredentials(array $credentials)
+    {
+        $identificadores = $credentials['identificador'] ?? null;
+        if (is_array($identificadores)) {
+            $usuarios = User::query()->whereIn('identificador', $identificadores)->limit(2)->get();
+
+            $usuario = $usuarios->count() === 1 ? $usuarios->sole() : null;
+
+            return ($usuario->ativo ?? false) ? $usuario : null;
+        }
+
+        return parent::retrieveByCredentials($credentials);
+    }
+
     public function retrieveByToken($identifier, $token)
     {
         return null;

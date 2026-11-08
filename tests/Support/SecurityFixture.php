@@ -6,7 +6,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
-/** Real HTTP/session/WebAuthn services on SQLite; MySQL constraints are covered separately. */
+/** Real HTTP/session services on SQLite; MySQL constraints are covered separately. */
 class SecurityFixture
 {
     public const PASSWORD = 'SenhaSegura!123';
@@ -15,7 +15,7 @@ class SecurityFixture
 
     public static function create(): User
     {
-        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:', 'fleet.mfa.origin' => 'https://fleet.example.test', 'fleet.mfa.rp_id' => 'fleet.example.test']);
+        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => ':memory:']);
         DB::purge('sqlite');
         foreach ([
             'usuarios' => 'id INTEGER PRIMARY KEY, unidade_id INTEGER, identificador TEXT, nome TEXT, senha_hash TEXT, ativo INTEGER, deve_trocar_senha INTEGER, estado_identidade TEXT, versao_seguranca INTEGER, criado_em TEXT, atualizado_em TEXT',

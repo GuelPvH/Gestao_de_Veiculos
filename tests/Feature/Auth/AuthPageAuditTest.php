@@ -40,9 +40,10 @@ class AuthPageAuditTest extends TestCase
         $this->withCredentials()->withCookie(config('session.cookie'), session()->getId());
         foreach ([1 => 'administrador', 2 => 'gestor', 3 => 'financeiro', 4 => 'servidor'] as $id => $code) {
             DB::table('sessoes')->where('id', 1)->update(['vinculo_ativo_id' => $id]);
-            foreach (['/acesso-restrito', '/selecionar-perfil', '/alterar-senha', '/seguranca/mfa', '/sessao/status'] as $path) {
+            foreach (['/acesso-restrito', '/selecionar-perfil', '/alterar-senha', '/sessao/status'] as $path) {
                 $visit($code, $path);
             }
+            $this->get('/seguranca/mfa')->assertRedirect('/painel');
         }
         if ($file = getenv('FLEET_AUTH_PAGE_REPORT')) {
             if (str_starts_with(realpath(dirname($file)).DIRECTORY_SEPARATOR, realpath(base_path()).DIRECTORY_SEPARATOR)) {

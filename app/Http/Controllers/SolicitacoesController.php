@@ -18,9 +18,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SolicitacoesController extends Controller
 {
-    /**
-     * @return array<array-key, mixed>
-     */
     public function __construct(private RequestReadRepository $model, private RequestWorkflow $workflow) {}
 
     /**

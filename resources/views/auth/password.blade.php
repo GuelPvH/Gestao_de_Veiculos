@@ -1,11 +1,17 @@
 <x-layouts.base titulo="Alterar senha">
     <main id="main-content" class="auth-wrapper" tabindex="-1">
         <x-ui.panel titulo="Alterar senha" :nivel="1">
+            @if ($usuarioAtual->deve_trocar_senha ?? false)
+                <x-ui.alert>Defina uma senha pessoal antes de acessar o painel.</x-ui.alert>
+            @endif
             <p>Use pelo menos 12 caracteres, combinando letras maiúsculas, minúsculas, números e símbolos.</p>
             <x-ui.feedback />
             <form action="{{ route('password.update') }}" method="post" data-loading-form>
                 @csrf
-                <x-forms.password nome="senha_atual" rotulo="Senha atual" />
+                <x-forms.password
+                    nome="senha_atual"
+                    :rotulo="($usuarioAtual->deve_trocar_senha ?? false) ? 'Código temporário' : 'Senha atual'"
+                />
                 <x-forms.password nome="nova_senha" rotulo="Nova senha" autocomplete="new-password" />
                 <x-forms.password
                     nome="nova_senha_confirmation"

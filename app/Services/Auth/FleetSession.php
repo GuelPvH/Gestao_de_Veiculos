@@ -160,7 +160,6 @@ class FleetSession
         }
         abort_unless(($vinculos ?? $this->links($usuario))->contains('vinculo_id', $vinculo), 403);
         $this->procedimentos->call('sp_trocar_perfil_sessao', [Value::integer($requisicao->session()->get('fleet_session.id', 0)), $usuario, $vinculo]);
-        DB::table('sessoes')->where('id', Value::integer($requisicao->session()->get('fleet_session.id')))->update(['mfa_verificada_em' => null, 'mfa_vinculo_id' => null, 'mfa_versao' => null, 'mfa_http_hash' => null]);
         $requisicao->session()->regenerate(true);
         $requisicao->session()->regenerateToken();
     }

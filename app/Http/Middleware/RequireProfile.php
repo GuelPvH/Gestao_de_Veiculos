@@ -3,9 +3,12 @@
 namespace App\Http\Middleware;
 
 use App\Services\Authorization\AccessContext;
+use App\Services\Authorization\RequestAccessReader;
 use App\Services\Read\FleetReadRepository;
+use App\Support\Value;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,6 +46,19 @@ class RequireProfile
             $posicoes = array_flip($ordem);
             usort($menu, fn ($a, $b): int => ($posicoes[$a['route']] ?? 99) <=> ($posicoes[$b['route']] ?? 99));
         }
+        /** @var Collection<string, \stdClass> $rotas */
+        $rotas = $requisicao->attributes->get('fleet.menu_routes', collect());
+        $metadados = fn (array $item): ?\stdClass => $rotas->get('/'.ltrim(Route::getRoutes()->getByName(Value::string($item['route']))?->uri() ?? '', '/'));
+        $menu = array_values(array_filter($menu, function (array $item) use ($metadados): bool {
+            $rota = $metadados($item);
+
+            return $rota === null || in_array($item['route'], RequestAccessReader::ROUTE_RECOVERY, true)
+                || ((bool) $rota->ativa && (bool) $rota->visivel_menu);
+        }));
+        if ($acesso->link()->perfil_codigo === 'administrador') {
+            usort($menu, fn (array $a, array $b): int => Value::integer($metadados($a)->ordem ?? PHP_INT_MAX) <=> Value::integer($metadados($b)->ordem ?? PHP_INT_MAX));
+        }
+
         View::share('itensMenu', $menu);
 
         return $proximo($requisicao);

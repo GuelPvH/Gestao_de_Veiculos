@@ -1,3 +1,9 @@
+@if ($codigoTemporario !== null)
+    <x-ui.panel titulo="Código temporário de acesso">
+        <p>Entregue este código somente ao titular, após verificar a identidade. Ele é exibido uma vez.</p>
+        <p class="fs-5 mb-0"><code>{{ $codigoTemporario }}</code></p>
+    </x-ui.panel>
+@endif
 <x-ui.panel titulo="Vínculos de perfil">
     <div class="table-responsive" tabindex="0" role="region" aria-label="Tabela com rolagem">
         <table class="table">

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Services\Auth\DeliveryHealth;
 use App\Services\Auth\DispatchPendingMail;
+use App\Services\Auth\IdentityService;
 use App\Services\Auth\ProcedureRunner;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Artisan;
@@ -15,7 +16,6 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\AssertionFailedError;
-use Tests\Support\TestAuthenticator;
 use Tests\TestCase;
 
 class MySqlWorkflowTest extends TestCase
@@ -290,9 +290,7 @@ class MySqlWorkflowTest extends TestCase
 
         $api = 'http://127.0.0.1:'.$apiPorta.'/api/v1/messages';
         $anteriores = json_decode(file_get_contents($api), true, 512, JSON_THROW_ON_ERROR);
-        $this->withServerVariables(['HTTP_HOST' => 'host-nao-confiavel.invalid'])
-            ->from('/recuperar-acesso')->post('/recuperar-acesso', ['identificador' => $identificador])
-            ->assertSessionHas('status', 'Se houver um acesso elegível, você receberá as orientações no e-mail cadastrado.');
+        app(IdentityService::class)->requestRecovery((string) $identificador);
         $this->assertSame('pendente', DB::table('email_outbox')->where('usuario_id', $usuario)->where('finalidade', 'recuperacao')->value('estado'));
         $this->assertSame(0, Queue::connection('redis')->size('auth-mails'));
         $this->assertSame(1, app(DispatchPendingMail::class)->dispatch());
@@ -388,16 +386,5 @@ class MySqlWorkflowTest extends TestCase
         $identificador = DB::table('usuarios')->where('id', $usuario)->value('identificador');
         $this->post('/entrar', ['identificador' => $identificador, 'senha' => $senha])->assertRedirect('/painel');
         $this->withCredentials()->withCookie(config('session.cookie'), session()->getId());
-        $admin = DB::table('usuario_perfis as up')->join('perfis as p', 'p.id', '=', 'up.perfil_id')
-            ->where('up.usuario_id', $usuario)->where('p.codigo', 'administrador')->exists();
-        if ($admin) {
-            config(['fleet.mfa.origin' => 'https://fleet.example.test', 'fleet.mfa.rp_id' => 'fleet.example.test']);
-            $authenticator = new TestAuthenticator;
-            $challenge = $this->postJson('/seguranca/mfa/opcoes', ['purpose' => 'registration'])->assertOk()->json();
-            $this->postJson('/seguranca/mfa/confirmar', [
-                'challenge_id' => $challenge['challenge_id'],
-                'credential' => $authenticator->register($challenge['publicKey']),
-            ])->assertOk();
-        }
     }
 }

@@ -53,7 +53,8 @@ RUN composer dump-autoload --optimize --no-scripts --no-plugins
 FROM node:26-bookworm-slim AS assets
 
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
+RUN npm install --global --ignore-scripts --no-audit --no-fund npm@12.2.2
 RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY resources ./resources
 COPY vite.config.js ./

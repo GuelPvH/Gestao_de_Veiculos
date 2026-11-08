@@ -11,7 +11,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -44,27 +43,11 @@ class IdentityController extends Controller
     public function resend(Request $request, IdentityService $identity): RedirectResponse
     {
         $this->limit($request, 'resend', Value::string(CurrentUser::get($request)->getAuthIdentifier()), 3);
-        $identity->resend(Value::integer(CurrentUser::get($request)->getAuthIdentifier()));
+        $user = CurrentUser::get($request);
+        abort_if($user->estado_identidade === 'pendente' || $user->deve_trocar_senha, 403);
+        $identity->resend(Value::integer($user->getAuthIdentifier()));
 
-        return back()->with('status', 'Se houver um convite elegível, você receberá as orientações no e-mail cadastrado.');
-    }
-
-    public function requestActivation(Request $request, IdentityService $identity): RedirectResponse
-    {
-        /** @var array<string, mixed> $data */
-        $data = $request->validate(['identificador' => ['required', 'string', 'max:100']]);
-        $identifier = mb_strtolower(trim(Value::string($data['identificador'])));
-        $this->limit($request, 'activation', $identifier, 3);
-        try {
-            $identity->requestActivation($identifier);
-        } catch (Throwable $error) {
-            if ($error instanceof QueryException || $error instanceof \PDOException) {
-                report($error);
-            }
-            Log::warning('Não foi possível persistir uma solicitação de ativação.');
-        }
-
-        return back()->with('status', 'Se houver um convite elegível, você receberá as orientações no e-mail cadastrado.');
+        return back()->with('status', 'Se houver uma confirmação de e-mail pendente, as orientações serão enviadas ao endereço cadastrado.');
     }
 
     public function changeEmail(Request $request, IdentityService $identity): RedirectResponse
