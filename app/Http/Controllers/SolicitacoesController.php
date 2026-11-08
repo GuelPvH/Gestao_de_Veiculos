@@ -18,9 +18,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SolicitacoesController extends Controller
 {
-    /**
-     * @return array<array-key, mixed>
-     */
     public function __construct(private RequestReadRepository $model, private RequestWorkflow $workflow) {}
 
     /**
@@ -41,6 +38,7 @@ class SolicitacoesController extends Controller
         ];
         $regras['de'] = ['nullable', 'date_format:Y-m-d'];
         $regras['ate'] = ['nullable', 'date_format:Y-m-d', 'after_or_equal:de'];
+        /** @var array<string, mixed> $filtros */
         $filtros = $requisicao->validate($regras);
         $paginacao = $this->model->findAll($filtros);
 
