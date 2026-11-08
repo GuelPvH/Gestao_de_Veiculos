@@ -35,10 +35,9 @@
 </div>
 @if ($temCoordenadas)
     @once
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+        @vite ('resources/js/leaflet.js')
         <script>
-(async () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const status = document.getElementById('reservation-route-status');
     try {
         const pontos = {{ Illuminate\Support\Js::from(array_map('floatval', $coordenadas)) }};
@@ -74,7 +73,7 @@
     } catch (erro) {
         status.textContent = 'Não foi possível calcular uma rota próxima aos locais cadastrados. Os marcadores mostram as coordenadas da solicitação; confira os pontos ou abra o percurso ampliado.';
     }
-})();
+});
 </script>
     @endonce
 

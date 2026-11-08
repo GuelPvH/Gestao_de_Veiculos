@@ -46,10 +46,9 @@
         height: 22px;
     }
 </style>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+@vite ('resources/js/leaflet.js')
 <script>
-    (() => {
+    document.addEventListener('DOMContentLoaded', () => {
         const status = document.getElementById('monitoring-status');
         try {
             const center = [-8.7608, -63.891];
@@ -158,5 +157,5 @@
         } catch (error) {
             status.textContent = 'Não foi possível carregar o mapa. Confira sua conexão e atualize a página.';
         }
-    })();
+    });
 </script>

@@ -17,7 +17,7 @@ if (appUrl) {
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/leaflet.js'],
             refresh: true,
             hotFile: process.env.VITE_HOT_FILE || 'public/hot',
         }),

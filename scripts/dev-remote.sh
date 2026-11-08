@@ -71,5 +71,5 @@ echo "Alvo remoto conferido.\n";
 
 # O entrypoint também recusa versões incompatíveis; nenhuma atualização é feita.
 compose run --rm --no-deps -T app php artisan fleet:check-schema
-compose up -d --wait --wait-timeout 180 app vite phpmyadmin redis worker-auth worker-security scheduler
+compose up -d --wait --wait-timeout 180 app vite phpmyadmin worker-auth worker-security scheduler
 printf '%s\n' 'Desenvolvimento remoto iniciado. A aplicação e o phpMyAdmin usam a conexão privada do .env.'

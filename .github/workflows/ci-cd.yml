@@ -59,10 +59,12 @@ jobs:
           composer --no-plugins --no-scripts audit --locked --abandoned=fail
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version: '26'
           cache: npm
       - name: Audit npm lock
-        run: npm audit --package-lock-only --audit-level=high
+        run: |
+          npm install --global --ignore-scripts --no-audit --no-fund npm@12.2.2
+          npm audit --package-lock-only --audit-level=high
 
   php:
     name: PHP ${{ matrix.php }}
@@ -117,10 +119,12 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '22'
+          node-version: '26'
           cache: npm
       - name: Install locked frontend dependencies
-        run: npm ci --ignore-scripts
+        run: |
+          npm install --global --ignore-scripts --no-audit --no-fund npm@12.2.2
+          npm ci --ignore-scripts
       - name: Check frontend and Blade formatting
         run: npm run format:check
       - name: Build Bootstrap and Vite assets
