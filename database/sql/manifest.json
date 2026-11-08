@@ -323,7 +323,7 @@
             "files": [
                 {
                     "path": "patches/1.0.5.2_tracking_canonical_reconciliation.sql",
-                    "sha256": "c6db07a54bc7db5b6eb3594bb755b21d03f27d8bb88bd24f85e998340c63d4c9"
+                    "sha256": "b1ede9734a8d0df6164f16928198b8253b74dcd015d0dfe8af97d56282ae9734"
                 }
             ]
         },

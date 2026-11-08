@@ -22,7 +22,7 @@ class DatabaseTimingCollector
         $collector->setSlowThreshold(100);
         $collector->setDurationBackground(true);
         $collector->setFindSource(true, $router->getMiddleware());
-        $collector->mergeBacktraceExcludePaths([__FILE__]);
+        $collector->mergeBacktraceExcludePaths([str_replace('\\', '/', __FILE__)]);
         $collector->setTimeDataCollector($debugbar->getTimeCollector());
         $debugbar->addCollector($collector);
 

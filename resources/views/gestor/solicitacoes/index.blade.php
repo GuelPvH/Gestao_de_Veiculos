@@ -26,7 +26,6 @@
                     :valor="$filtros['ordem'] ?? 'recentes'"
                     :opcoes="['recentes' => 'Mais recentes', 'antigos' => 'Mais antigos']"
                 />
-                
             </form>
             @if (isset($tela['date']))
                 <form method="get" class="row g-3 mb-4">
