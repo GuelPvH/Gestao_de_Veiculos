@@ -168,7 +168,6 @@ if (panel) {
             accept(state, transit);
             shareStatus(state, transit);
             announce('renewed');
-            if (state.mfa_required) location.assign(panel.dataset.sessionMfa);
         } catch (failure) {
             error.textContent = failure.message || 'Falha de conexão. Confira sua sessão novamente.';
             error.hidden = false;

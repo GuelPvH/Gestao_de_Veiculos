@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Auth\FleetSession;
 use App\Services\Auth\SecurityAudit;
+use App\Support\Cpf;
 use App\Support\CurrentUser;
 use App\Support\Value;
 use Carbon\CarbonImmutable;
@@ -27,7 +28,8 @@ class AuthController extends Controller
     public function authenticate(Request $requisicao, FleetSession $sessoes, SecurityAudit $audit): RedirectResponse
     {
         $entrada = $requisicao->input('identificador');
-        $identificador = is_string($entrada) ? mb_strtolower(trim($entrada)) : '';
+        $cpf = is_string($entrada) ? Cpf::normalize($entrada) : null;
+        $identificador = $cpf ?? (is_string($entrada) ? mb_strtolower(trim($entrada)) : '');
         $chave = 'fleet-login:'.hash('sha256', $identificador.'|'.$requisicao->ip());
         $chaveIp = 'fleet-login-ip:'.hash('sha256', (string) $requisicao->ip());
         if (RateLimiter::tooManyAttempts($chave, 5) || RateLimiter::tooManyAttempts($chaveIp, 15)) {
@@ -39,7 +41,10 @@ class AuthController extends Controller
         /** @var array<string, mixed> $dados */
         $dados = $requisicao->validate(['identificador' => ['required', 'string', 'max:100'], 'senha' => ['required', 'string', 'max:256']]);
         try {
-            $sucesso = Auth::attempt(['identificador' => $dados['identificador'], 'password' => $dados['senha'], 'ativo' => 1], false);
+            $sucesso = Auth::attempt([
+                'identificador' => $cpf === null ? $identificador : Cpf::storedIdentifiers($cpf),
+                'password' => $dados['senha'], 'ativo' => 1,
+            ], false);
         } catch (Throwable $error) {
             if ($error instanceof QueryException || $error instanceof \PDOException) {
                 report($error);
@@ -67,6 +72,14 @@ class AuthController extends Controller
             $vinculos = $sessoes->links((int) $usuario->id);
             $audit->record('login_sucesso', (int) $usuario->id, 'usuarios', (int) $usuario->id, $requisicao);
             if ($vinculos->isEmpty()) {
+                if ($usuario->estado_identidade === 'ativa' && $usuario->deve_trocar_senha && Cpf::normalize($usuario->identificador) !== null) {
+                    Auth::logout();
+                    $requisicao->session()->invalidate();
+                    $requisicao->session()->regenerateToken();
+
+                    return redirect()->route('recovery.index')->with('status', 'Defina sua senha usando o CPF e o código temporário. O painel ficará disponível após a atribuição de um perfil.');
+                }
+
                 return redirect()->route('access.restricted');
             }
             $sessoes->start($requisicao, $usuario, $vinculos);

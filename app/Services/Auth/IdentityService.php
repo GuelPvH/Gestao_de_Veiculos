@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Support\Cpf;
 use App\Support\Value;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Crypt;
@@ -14,43 +15,73 @@ class IdentityService
 {
     public function __construct(private PasswordVerifier $passwords, private SecurityAudit $securityAudit) {}
 
-    /** CLI bootstrap: identity, first grant and encrypted mail intent share one commit.
-     * @return array<array-key, mixed>
-     */
-    public function createInitialAdministrator(string $identifier, string $name, string $email, string $password): array
+    /** @return array{codigo: string, campos: array<string, mixed>} */
+    public function temporaryCredential(): array
     {
-        return DB::transaction(function () use ($identifier, $name, $email, $password): array {
-            $configuration = DB::table('configuracao_sistema')->where('id', 1)->lockForUpdate()->first();
-            abort_unless($configuration && ! $configuration->bootstrap_concluido, 403);
-            $role = DB::table('perfis')->where('codigo', 'administrador')->where('ativo', 1)->value('id');
-            abort_unless($role && filter_var($email, FILTER_VALIDATE_EMAIL), 422);
-            $now = now('UTC');
-            $id = (int) DB::table('usuarios')->insertGetId([
-                'unidade_id' => 1, 'identificador' => mb_strtolower(trim($identifier)), 'nome' => trim($name), 'email' => $email,
-                'senha_hash' => $this->passwords->make($password), 'estado_identidade' => 'pendente',
-                'deve_trocar_senha' => 1, 'senha_temporaria_emitida_em' => $now,
-                'senha_temporaria_expira_em' => $now->copy()->addHours(max(1, min(72, Value::integer(config('identity.temporary_password_hours', 24))))),
+        $codigo = bin2hex(random_bytes(12));
+        $agora = now('UTC');
+
+        return [
+            'codigo' => $codigo,
+            'campos' => [
+                'senha_hash' => $this->passwords->make($codigo),
+                'senha_alterada_em' => $agora,
+                'senha_temporaria_emitida_em' => $agora,
+                'senha_temporaria_expira_em' => $agora->copy()->addHours(max(1, min(72, Value::integer(config('identity.temporary_password_hours', 24))))),
+                'senha_temporaria_usada_em' => null,
+                'senha_temporaria_revogada_em' => null,
+                'deve_trocar_senha' => 1,
+                'estado_identidade' => 'ativa',
+            ],
+        ];
+    }
+
+    public function requireAvailableCpf(string $cpf, ?int $usuario = null): void
+    {
+        $contas = DB::table('usuarios')->whereIn('identificador', Cpf::storedIdentifiers($cpf));
+        if ($usuario !== null) {
+            $contas->where('id', '<>', $usuario);
+        }
+        if ($contas->exists()) {
+            throw ValidationException::withMessages(['identificador' => 'Este CPF já está vinculado a uma conta.']);
+        }
+    }
+
+    /** @param array<string, mixed> $dados */
+    public function provisionUser(array $dados): int
+    {
+        // The schema sends direct inserts with deve_trocar_senha to legacy email activation.
+        // Publish the locally verified credential atomically, under the caller's transaction.
+        abort_unless(DB::transactionLevel() > 0, 500);
+        $this->requireAvailableCpf(Value::string($dados['identificador']));
+        $id = (int) DB::table('usuarios')->insertGetId(array_replace($dados, ['deve_trocar_senha' => 0]));
+        DB::table('usuarios')->where('id', $id)->update(['deve_trocar_senha' => 1]);
+        DB::table('preferencias_usuario')->insert(['usuario_id' => $id]);
+
+        return $id;
+    }
+
+    /** @return array{usuario_id: int, vinculo_id: int, codigo: string} */
+    public function createInitialAdministrator(string $cpf, string $nome, ?string $email): array
+    {
+        abort_unless(Cpf::normalize($cpf) === $cpf, 422);
+
+        return DB::transaction(function () use ($cpf, $nome, $email): array {
+            $config = DB::table('configuracao_sistema')->where('id', 1)->lockForUpdate()->first();
+            abort_unless($config && ! $config->bootstrap_concluido, 403);
+            $perfil = DB::table('perfis')->where('codigo', 'administrador')->where('ativo', 1)->value('id');
+            abort_unless(Value::integer($perfil) > 0, 422);
+            $credencial = $this->temporaryCredential();
+            $id = $this->provisionUser($credencial['campos'] + [
+                'unidade_id' => 1, 'identificador' => $cpf, 'nome' => trim($nome), 'email' => $email,
             ]);
-            DB::table('preferencias_usuario')->insert(['usuario_id' => $id]);
-            $linkId = (int) DB::table('usuario_perfis')->insertGetId([
-                'usuario_id' => $id, 'perfil_id' => $role, 'unidade_id' => 1, 'vigente_desde' => $now, 'concedido_por' => $id,
+            $vinculo = (int) DB::table('usuario_perfis')->insertGetId([
+                'usuario_id' => $id, 'perfil_id' => $perfil, 'unidade_id' => 1, 'vigente_desde' => now('UTC'), 'concedido_por' => $id,
             ]);
-            $user = DB::table('usuarios')->where('id', $id)->lockForUpdate()->firstOrFail();
-            $this->issueActivation($user, $linkId);
             DB::table('configuracao_sistema')->where('id', 1)->update(['bootstrap_concluido' => 1]);
             $this->audit($id, 'administrador_inicial_criado');
 
-            return ['usuario_id' => $id, 'vinculo_id' => $linkId];
-        });
-    }
-
-    public function requestActivation(string $identifier): void
-    {
-        DB::transaction(function () use ($identifier): void {
-            $user = DB::table('usuarios')->where('identificador', mb_strtolower(trim($identifier)))->lockForUpdate()->first();
-            if ($user && $user->estado_identidade === 'pendente') {
-                $this->resend(Value::integer($user->id));
-            }
+            return ['usuario_id' => $id, 'vinculo_id' => $vinculo, 'codigo' => $credencial['codigo']];
         });
     }
 
@@ -160,6 +191,26 @@ class IdentityService
         });
     }
 
+    public function recoverWithTemporaryCredential(string $cpf, string $code, string $password): void
+    {
+        DB::transaction(function () use ($cpf, $code, $password): void {
+            $users = DB::table('usuarios')->whereIn('identificador', Cpf::storedIdentifiers($cpf))->limit(2)->lockForUpdate()->get();
+            $user = $users->count() === 1 ? $users->sole() : null;
+            $hash = $user->senha_hash ?? '$2y$12$wKN3RivUXIZUQo/1VeTlGeUVw6eYR.zMYHGq9xsLtMjT38ijtfPpG';
+            $verified = $this->passwords->verify($code, Value::string($hash));
+            if (! $verified || ! $user || ! $user->ativo || $user->estado_identidade !== 'ativa'
+                || ! $user->deve_trocar_senha || $user->senha_temporaria_revogada_em
+                || ! $user->senha_temporaria_expira_em
+                || CarbonImmutable::parse(Value::date($user->senha_temporaria_expira_em), 'UTC')->lessThanOrEqualTo(now('UTC'))) {
+                throw ValidationException::withMessages(['senha_atual' => 'CPF ou código temporário inválido ou vencido.']);
+            }
+
+            $this->rejectSamePassword($user, $password);
+            $this->writePassword($user, $password, false);
+            $this->audit(Value::integer($user->id), 'senha_recuperada');
+        }, 3);
+    }
+
     /** Must be called under an identity lock, after updating the security epoch. */
     public function invalidate(int $userId, string $reason = 'revogacao'): void
     {
@@ -225,6 +276,7 @@ class IdentityService
                 }
             } else {
                 $this->writePassword($user, (string) $password, $purpose === 'ativacao');
+                $this->securityNotice(DB::table('usuarios')->where('id', $owner)->firstOrFail(), 'senha_alterada');
             }
             $this->audit(Value::integer($owner), match ($purpose) {
                 'ativacao' => 'ativacao_concluida', 'email' => 'email_confirmado', default => 'senha_recuperada',
@@ -245,7 +297,6 @@ class IdentityService
         }
         DB::table('usuarios')->where('id', $user->id)->update($changes);
         $this->invalidate(Value::integer($user->id), 'troca_senha');
-        $this->securityNotice(DB::table('usuarios')->where('id', $user->id)->firstOrFail(), 'senha_alterada');
     }
 
     private function rejectSamePassword(stdClass $user, string $password): void

@@ -85,6 +85,41 @@ class EnabledRouteTest extends TestCase
         }
     }
 
+    public function test_admin_menu_respects_route_visibility_and_order_without_disabling_direct_access(): void
+    {
+        ReadFixture::profile(4);
+        DB::table('rotas_sistema')->where('chave', 'auditoria')->update(['visivel_menu' => 0]);
+        DB::table('rotas_sistema')->where('chave', 'perfis')->update(['ordem' => 1]);
+
+        $this->get(route('dashboard'))->assertOk();
+        $menu = collect(view()->shared('itensMenu'))->pluck('route');
+        $this->assertSame('roles.index', $menu->first());
+        $this->assertNotContains('audit.index', $menu);
+        $this->get(route('audit.index'))->assertOk();
+    }
+
+    public function test_exact_route_requires_all_catalog_actions_without_widening_scope(): void
+    {
+        $rota = DB::table('rotas_sistema')->insertGetId([
+            'chave' => 'frota.show', 'nome' => 'Detalhes da frota', 'caminho' => '/frota/{registro}',
+            'metodo_http' => 'GET', 'modulo_codigo' => 'frota', 'ativa' => 1, 'implementada' => 1,
+        ]);
+        DB::table('rota_permissoes')->insert([
+            ['rota_id' => $rota, 'modulo_codigo' => 'frota', 'acao_codigo' => 'consultar'],
+            ['rota_id' => $rota, 'modulo_codigo' => 'frota', 'acao_codigo' => 'gerenciar'],
+        ]);
+        DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'frota')
+            ->whereIn('acao_codigo', ['consultar', 'gerenciar'])->delete();
+        ReadFixture::grant('frota', 'consultar', 2);
+
+        $this->get(route('vehicles.index'))->assertOk();
+        $this->get(route('vehicles.show', 1))->assertForbidden();
+        $this->call('HEAD', route('vehicles.show', 1))->assertForbidden();
+        ReadFixture::grant('frota', 'gerenciar', 3);
+        $this->get(route('vehicles.show', 1))->assertOk();
+        $this->get(route('vehicles.show', 3))->assertNotFound();
+    }
+
     public function test_permission_revocation_is_visible_on_the_next_request(): void
     {
         $this->get(route('vehicles.index'))->assertOk();

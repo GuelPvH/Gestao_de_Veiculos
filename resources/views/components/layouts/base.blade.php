@@ -31,7 +31,7 @@
     <a href="#main-content" class="skip-link">Pular para o conteúdo</a>
     {{ $slot }}
     @auth
-        @if (request()->attributes->has("fleet.session") && ! request()->routeIs("mfa.index"))
+        @if (request()->attributes->has("fleet.session"))
             <x-auth.session-modal />
         @endif
     @endauth

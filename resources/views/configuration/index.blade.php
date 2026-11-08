@@ -41,4 +41,10 @@
                 <button class="btn btn-primary" type="submit" data-review-submit>Revisar configuração</button>
             @endif</form></x-ui.panel
     ><x-forms.review :confirmar="true" />
+    @if ($acesso->can('configuracoes', 'exportar'))
+        <form method="post" action="{{ route('configuration.export') }}">
+            @csrf
+            <button type="submit" class="btn btn-outline-secondary">Exportar parâmetros (JSON)</button>
+        </form>
+    @endif
 </x-layouts.authenticated>

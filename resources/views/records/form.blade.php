@@ -3,7 +3,30 @@
     :breadcrumbs="[['label'=>$tela['title'],'href'=>route($codigo.'.index')],['label'=>$titulo]]"
 >
     <x-ui.title :titulo="$titulo" subtitulo="Preencha as informações e confira a revisão antes de concluir." />
+    @if ($codigo === 'roles' && $acao === 'grant' && $opcoesRotas !== [])
+        <x-ui.panel titulo="Selecionar rota técnica">
+            <form
+                method="get"
+                action="{{ route('roles.operation', ['registro' => $registro->id, 'acao' => 'grant']) }}"
+            >
+                <x-forms.field
+                    nome="rota"
+                    rotulo="Rota técnica"
+                    tipo="select"
+                    :opcoes="$opcoesRotas"
+                    :valor="$rotaSelecionada"
+                    placeholder="Todas as permissões delegáveis"
+                />
+                <button type="submit" class="btn btn-outline-secondary">Mostrar permissões da rota</button>
+            </form>
+            <p class="form-text mb-0">A concessão usa a ação e o alcance do perfil. Ela se aplica às rotas que exigem essa mesma ação.</p>
+        </x-ui.panel>
+    @endif
+    @php ($semOpcoesAdmin = isset($opcoesAdmin) && $opcoesAdmin === [] && in_array($codigo.'.'.$acao, ['users.revoke', 'roles.grant', 'roles.revoke'], true))
     <x-ui.panel>
+        @if ($semOpcoesAdmin)
+            <x-ui.alert tom="info">Nenhum vínculo ou permissão disponível para esta ação.</x-ui.alert>
+        @endif
         <form
             id="operation-form"
             method="post"
@@ -112,7 +135,7 @@
                 <x-forms.field nome="observacao" rotulo="Observações" tipo="textarea" maxlength="2000" />
             @else
                 @includeIf ('records.forms.'.$codigo)
-                @if ($acao !== 'create')
+                @if (! in_array($acao, ['create', 'grant', 'revoke'], true))
                     <x-forms.field
                         nome="justificativa"
                         rotulo="Justificativa"
@@ -132,7 +155,9 @@
                 </div>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-primary" data-step-next hidden>Continuar</button
-                    ><button type="submit" class="btn btn-primary" data-review-submit>Revisar</button>
+                    ><button type="submit" class="btn btn-primary" data-review-submit @disabled ($semOpcoesAdmin)>
+                        Revisar
+                    </button>
                 </div>
             </div>
         </form>

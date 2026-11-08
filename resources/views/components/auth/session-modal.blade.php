@@ -13,7 +13,6 @@
     data-bs-keyboard="false"
     data-session-status="{{ route('session.status') }}"
     data-session-login="{{ route('login') }}"
-    data-session-mfa="{{ route('mfa.index') }}"
     data-session-scope="{{ $sessionScope }}"
     data-session-initial="{{ $initialState ? json_encode($initialState) : '' }}"
 >

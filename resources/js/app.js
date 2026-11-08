@@ -1,5 +1,4 @@
 import './session';
-import './webauthn';
 import { Modal } from 'bootstrap';
 import 'bootstrap';
 const temaFixo = new URLSearchParams(location.search).get('tema');

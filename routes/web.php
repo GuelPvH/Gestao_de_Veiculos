@@ -5,7 +5,6 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\IdentityController;
-use App\Http\Controllers\Auth\MfaController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\SessionController;
 use App\Http\Controllers\ConfigurationController;
@@ -26,7 +25,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/ativar-acesso', [IdentityController::class, 'activate'])->name('identity.activate');
 Route::post('/ativar-acesso', [IdentityController::class, 'consumeActivation'])->name('identity.consumeActivation')->block();
-Route::post('/ativar-acesso/reenviar', [IdentityController::class, 'requestActivation'])->name('identity.requestActivation');
 Route::get('/confirmar-email', [IdentityController::class, 'verifyEmail'])->name('identity.verifyEmail');
 Route::post('/confirmar-email', [IdentityController::class, 'consumeEmail'])->name('identity.consumeEmail')->block();
 
@@ -35,7 +33,7 @@ Route::middleware('guest')->group(function (): void {
     Route::get('/entrar', [AuthController::class, 'login'])->name('login');
     Route::post('/entrar', [AuthController::class, 'authenticate'])->name('login.submit');
     Route::get('/recuperar-acesso', [PasswordController::class, 'recover'])->name('recovery.index');
-    Route::post('/recuperar-acesso', [PasswordController::class, 'sendRecovery'])->name('recovery.send');
+    Route::post('/recuperar-acesso', [PasswordController::class, 'recoverWithCode'])->name('recovery.verify')->block();
     Route::get('/redefinir-senha', [PasswordController::class, 'reset'])->name('recovery.reset');
     Route::post('/redefinir-senha', [PasswordController::class, 'consume'])->name('recovery.consume');
 });
@@ -47,11 +45,7 @@ Route::middleware('auth')->group(function (): void {
         Route::post('/conta/email', [IdentityController::class, 'changeEmail'])->name('identity.changeEmail')->block();
         Route::get('/sessao/status', [SessionController::class, 'status'])->name('session.status')->block();
         Route::post('/sessao/reautenticar', [SessionController::class, 'reauthenticate'])->name('session.reauthenticate')->block();
-        Route::get('/seguranca/mfa', [MfaController::class, 'index'])->name('mfa.index');
-        Route::post('/seguranca/mfa/opcoes', [MfaController::class, 'options'])->name('mfa.options')->middleware('throttle:10,1')->block();
-        Route::post('/seguranca/mfa/confirmar', [MfaController::class, 'verify'])->name('mfa.verify')->middleware('throttle:10,1')->block();
-        Route::post('/seguranca/mfa/recuperacoes', [MfaController::class, 'recover'])->name('mfa.recover')->middleware('throttle:5,1')->block();
-        Route::post('/seguranca/mfa/recuperacoes/{recovery}/aprovar', [MfaController::class, 'approve'])->whereNumber('recovery')->name('mfa.approve')->middleware('throttle:5,1')->block();
+        Route::redirect('/seguranca/mfa', '/painel')->name('mfa.legacy');
 
         Route::get('/selecionar-perfil', [AuthController::class, 'profiles'])->name('profiles.index');
         Route::post('/selecionar-perfil', [AuthController::class, 'select'])->name('profiles.select');
@@ -60,14 +54,16 @@ Route::middleware('auth')->group(function (): void {
     });
 });
 
-Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.mfa', 'fleet.enabled'])->group(function (): void {
+Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->group(function (): void {
     foreach (['despesas' => 'financeiro/despesas', 'multas' => 'financeiro/multas', 'usuarios' => 'administracao/usuarios', 'perfis' => 'administracao/perfis', 'rotas' => 'administracao/rotas', 'auditoria' => 'administracao/auditoria', 'configuracao' => 'administracao/configuracoes'] as $origem => $destino) {
         Route::redirect('/'.$origem, '/'.$destino);
     }
     Route::get('/administracao/configuracoes', [ConfigurationController::class, 'index'])->name('configuration.index');
+    Route::post('/administracao/configuracoes/exportar', [ConfigurationController::class, 'export'])->name('configuration.export');
     Route::post('/administracao/configuracoes', [ConfigurationController::class, 'update'])->name('configuration.update');
     Route::post('/administracao/usuarios/novo', [AdminController::class, 'storeUser'])->defaults('tela', 'users')->defaults('area', 'users')->defaults('operacao', 'store')->name('users.store');
     Route::post('/administracao/usuarios/{registro}/edit', [AdminController::class, 'updateUser'])->whereNumber('registro')->defaults('tela', 'users')->defaults('area', 'users')->defaults('operacao', 'update')->name('users.update');
+    Route::post('/administracao/usuarios/{registro}/temporary', [AdminController::class, 'issueTemporaryCredential'])->whereNumber('registro')->defaults('tela', 'users')->defaults('area', 'users')->defaults('operacao', 'temporary')->name('users.temporary')->block();
     Route::post('/administracao/usuarios/{registro}/links', [AdminController::class, 'linkUser'])->whereNumber('registro')->defaults('tela', 'users')->defaults('area', 'users')->defaults('operacao', 'link')->name('users.link');
     Route::post('/administracao/usuarios/{registro}/vinculos/revogar', [AdminController::class, 'revokeLink'])->whereNumber('registro')->defaults('tela', 'users')->defaults('area', 'users')->defaults('operacao', 'revoke')->name('users.revoke');
     Route::post('/administracao/perfis/novo', [AdminController::class, 'storeRole'])->defaults('tela', 'roles')->defaults('area', 'roles')->defaults('operacao', 'store')->name('roles.store');

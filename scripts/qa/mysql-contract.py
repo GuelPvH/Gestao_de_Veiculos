@@ -211,7 +211,7 @@ def main():
             redis_name = 'frota-contract-redis-'+secrets.token_hex(5)
             redis_environment = private(directory, 'redis.env', 'REDIS_PASSWORD='+redis_password+'\n')
             run(['docker', 'run', '--detach', '--rm', '--user', 'redis', '--name', redis_name,
-                 '--env-file', str(redis_environment), '-p', '127.0.0.1::6379', 'redis:8.2-alpine',
+                 '--env-file', str(redis_environment), '-p', '127.0.0.1::6379', 'redis:8.10.3-alpine',
                  'sh', '-c', 'exec redis-server --appendonly yes --appendfsync everysec --maxmemory 256mb --maxmemory-policy noeviction --requirepass "$REDIS_PASSWORD"'])
             containers.append(redis_name)
             redis_port = int(run(['docker', 'inspect', '--format', '{{(index (index .NetworkSettings.Ports "6379/tcp") 0).HostPort}}', redis_name]))
@@ -235,7 +235,7 @@ def main():
             mail_name = 'frota-contract-mail-'+secrets.token_hex(5)
             run(['docker', 'run', '--detach', '--rm', '--name', mail_name,
                  '-p', '127.0.0.1::1025', '-p', '127.0.0.1::8025',
-                 'axllent/mailpit@sha256:7f33095f80e901f6ad08028f06ca284aa58fe84942be5496008d041d3b9f4d4d'])
+                 'axllent/mailpit:v1.33.1@sha256:aef2aacc11f075ec0fb6874275ee4a421e688e11a96ebb296134d1735c7761ce'])
             containers.append(mail_name)
             smtp_port = int(run(['docker', 'inspect', '--format', '{{(index (index .NetworkSettings.Ports "1025/tcp") 0).HostPort}}', mail_name]))
             api_port = int(run(['docker', 'inspect', '--format', '{{(index (index .NetworkSettings.Ports "8025/tcp") 0).HostPort}}', mail_name]))
@@ -255,7 +255,7 @@ def main():
             safety_output = run(['python3', '-m', 'unittest', 'discover', '-s', 'tests/database', '-v'], env=environment, cwd=ROOT)
             print(safety_output)
             passed('native_advisory_lock_excludes_concurrent_maintenance')
-            output = run(['php', str(ROOT/'vendor/bin/phpunit'), '--filter', 'MySql(Authentication|Workflow|RequestWorkflow|Identity|SessionMfa)Test', '--no-progress'], env=environment, cwd=ROOT)
+            output = run(['php', str(ROOT/'vendor/bin/phpunit'), '--filter', 'MySql(Authentication|Workflow|RequestWorkflow|Identity|Session)Test', '--no-progress'], env=environment, cwd=ROOT)
             print(output)
             print(json.dumps({'mysql_contract':'passed','results':results}))
     finally:

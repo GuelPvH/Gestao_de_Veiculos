@@ -9,7 +9,7 @@
 │   ├── Console/Commands/    # Comandos de esquema, outbox e saúde dos processos
 │   ├── Http/
 │   │   ├── Controllers/    # Coordenação HTTP por módulo
-│   │   ├── Middleware/     # Sessão, vínculo, MFA, rotas e privacidade
+│   │   ├── Middleware/     # Sessão, vínculo, rotas e privacidade
 │   │   └── Requests/       # Validação das entradas e ações
 │   ├── Jobs/               # Entregas assíncronas da outbox
 │   ├── Models/             # Identidade e adaptador legado de solicitações
@@ -29,7 +29,7 @@
 ├── public/                 # Entrada HTTP e recursos estáticos públicos
 ├── resources/
 │   ├── css/               # Estilos e tokens visuais
-│   ├── js/                # Interação, sessão e WebAuthn no navegador
+│   ├── js/                # Interação e sessão no navegador
 │   └── views/             # Páginas e componentes Blade
 ├── routes/                 # Endpoints HTTP, comandos e agendamentos
 ├── scripts/
@@ -49,7 +49,7 @@
 | Diretório em `app/Services/` | Responsabilidade                                                                   |
 | ---------------------------- | ---------------------------------------------------------------------------------- |
 | `Admin/`                     | Usuários, vínculos, perfis, permissões delegáveis e ativação de rotas.             |
-| `Auth/`                      | Identidade, senhas, sessão de negócio, WebAuthn, outbox e saúde da entrega.        |
+| `Auth/`                      | Identidade, senhas, sessão de negócio, outbox e saúde da entrega.                  |
 | `Authorization/`             | Contexto de permissões e leitura conjunta do acesso e das rotas.                   |
 | `Files/`                     | Upload, metadados, armazenamento e descarte de arquivos privados sem vínculo.      |
 | `Finance/`                   | Despesas, pagamentos, abastecimentos, manutenção e pneus.                          |
@@ -69,7 +69,7 @@ de workflow coordenam gravações e transições. A localização de uma classe 
 
 ## Organização das views
 
-`resources/views/auth/` reúne o acesso, identidade e MFA. `components/layouts/`
+`resources/views/auth/` reúne o acesso e a identidade. `components/layouts/`
 define a composição comum das páginas. Os diretórios `navigation/`, `forms/`,
 `tables/`, `ui/`, `auth/` e `fleet/` dentro de `components/` concentram partes
 reutilizáveis.

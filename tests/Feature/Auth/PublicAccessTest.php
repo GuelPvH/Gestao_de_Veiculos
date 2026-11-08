@@ -19,8 +19,8 @@ class PublicAccessTest extends TestCase
 
     public function test_login_has_no_public_accounts_and_recovery_is_honest(): void
     {
-        $this->get('/entrar')->assertOk()->assertSee('Identificador institucional')->assertDontSee('Contas para testar')->assertDontSee('demonstração')->assertDontSee('Ajuda');
-        $this->get('/recuperar-acesso')->assertOk()->assertSee('indisponível');
+        $this->get('/entrar')->assertOk()->assertSee('CPF ou identificador institucional')->assertDontSee('Contas para testar')->assertDontSee('demonstração')->assertDontSee('Ajuda');
+        $this->get('/recuperar-acesso')->assertOk()->assertSee('Código temporário')->assertSee('CPF');
         $this->get('/painel')->assertRedirect('/entrar');
     }
 

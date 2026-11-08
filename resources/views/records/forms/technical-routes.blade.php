@@ -5,33 +5,18 @@
         :valor="old('chave')"
         :obrigatorio="true"
         maxlength="80"
-        pattern="[a-z0-9_.-]+"
+        pattern="[a-z0-9_.\-]+"
         nota="Identificador único (ex: frota.veiculos.index)"
     />
     <x-forms.field
-        nome="modulo_codigo"
-        rotulo="Módulo"
+        nome="endpoint"
+        rotulo="Rota disponível na aplicação"
         tipo="select"
-        :opcoes="$modulosDisponiveis ?? []"
+        :opcoes="$rotasDisponiveis"
         :obrigatorio="true"
+        nota="O caminho, o método e o módulo vêm do código. Caminhos já cadastrados aparecem apenas na lista de rotas."
     />
     <x-forms.field nome="nome" rotulo="Nome da rota" :valor="old('nome')" :obrigatorio="true" maxlength="120" />
-    <x-forms.field
-        nome="caminho"
-        rotulo="Caminho HTTP"
-        :valor="old('caminho')"
-        :obrigatorio="true"
-        maxlength="255"
-        pattern="/.*"
-        nota="Deve iniciar com barra (/)"
-    />
-    <x-forms.field
-        nome="metodo_http"
-        rotulo="Método HTTP"
-        tipo="select"
-        :obrigatorio="true"
-        :opcoes="['GET'=>'GET','POST'=>'POST','PUT'=>'PUT','PATCH'=>'PATCH','DELETE'=>'DELETE']"
-    />
     <x-forms.field
         nome="ativa"
         rotulo="Situação da rota"
@@ -80,7 +65,7 @@
         nome="ativa"
         rotulo="Situação da rota"
         tipo="select"
-        :valor="$registro->ativa ?? 1"
+        :valor="$registro->situacao"
         :obrigatorio="true"
         :opcoes="['1'=>'Ativa','0'=>'Desativada']"
     />

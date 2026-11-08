@@ -3,14 +3,7 @@
         <x-ui.logo />
         <h1 class="mt-4">Acesso restrito</h1>
         @if (auth()->user()?->estado_identidade === 'pendente')
-            <x-ui.alert tom="warning">
-                Conclua a ativação pelo convite individual enviado ao seu e-mail. Defina sua senha antes de acessar o
-                sistema.</x-ui.alert
-            >
-            <form action="{{ route('identity.resend') }}" method="post">
-                @csrf
-                <button class="btn btn-primary" type="submit">Reenviar convite</button>
-            </form>
+            <x-ui.alert tom="warning">Solicite à administração um código temporário para concluir o acesso.</x-ui.alert>
         @else
             <x-ui.alert tom="warning">
                 Não há vínculo vigente para acessar o sistema. Solicite a revisão à administração.</x-ui.alert

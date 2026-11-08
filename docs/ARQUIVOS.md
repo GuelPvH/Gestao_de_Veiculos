@@ -84,7 +84,6 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | [app/Http/Controllers/Auth/AuthController.php](../app/Http/Controllers/Auth/AuthController.php)         | Coordena login, seleção do vínculo/perfil, acesso restrito e encerramento da sessão.             |
 | [app/Http/Controllers/Auth/IdentityController.php](../app/Http/Controllers/Auth/IdentityController.php) | Expõe ativação, confirmação e alteração de e-mail e reenvio dos avisos de identidade.            |
-| [app/Http/Controllers/Auth/MfaController.php](../app/Http/Controllers/Auth/MfaController.php)           | Expõe cadastro, confirmação e recuperação de MFA com desafios WebAuthn e validação no servidor.  |
 | [app/Http/Controllers/Auth/PasswordController.php](../app/Http/Controllers/Auth/PasswordController.php) | Coordena alteração de senha autenticada e solicitação/consumo de recuperação de acesso.          |
 | [app/Http/Controllers/Auth/SessionController.php](../app/Http/Controllers/Auth/SessionController.php)   | Fornece JSON de validade da sessão e confirma novamente a senha com rotação dos identificadores. |
 
@@ -94,7 +93,6 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | [app/Http/Middleware/PrivateResponse.php](../app/Http/Middleware/PrivateResponse.php)           | Aplica cabeçalhos de privacidade às respostas web para limitar cache e exposição de referências.                  |
 | [app/Http/Middleware/RequireEnabledRoute.php](../app/Http/Middleware/RequireEnabledRoute.php)   | Consulta o estado da área e do endpoint/método para bloquear rotas desativadas também pelo acesso direto.         |
-| [app/Http/Middleware/RequireFleetMfa.php](../app/Http/Middleware/RequireFleetMfa.php)           | Exige confirmação administrativa de MFA vinculada à sessão válida antes de liberar a área protegida.              |
 | [app/Http/Middleware/RequireProfile.php](../app/Http/Middleware/RequireProfile.php)             | Exige um vínculo selecionado e compatível com o contexto de acesso da rota.                                       |
 | [app/Http/Middleware/ValidateFleetSession.php](../app/Http/Middleware/ValidateFleetSession.php) | Valida identidade, sessão e vínculo; prepara o acesso da requisição e distingue status/reautenticação de páginas. |
 
@@ -151,7 +149,6 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [app/Services/Auth/DeliveryHealth.php](../app/Services/Auth/DeliveryHealth.php)               | Produz indicadores agregados de outbox, filas e processos e registra alertas sem dados sensíveis de entrega. Entradas públicas: `snapshot`, `report`.                                                                                                                                                                                                                  |
 | [app/Services/Auth/DispatchPendingMail.php](../app/Services/Auth/DispatchPendingMail.php)     | Reserva entregas elegíveis da outbox e publica jobs nas filas de autenticação ou segurança. Entradas públicas: `dispatch`.                                                                                                                                                                                                                                             |
-| [app/Services/Auth/FleetMfa.php](../app/Services/Auth/FleetMfa.php)                           | Coordena a exigência de MFA, os desafios e a recuperação administrativa vinculados à sessão e à identidade. Entradas públicas: `enabled`, `requiredForSession`, `verified`, `begin`, `finish`, `requestRecovery`, `approveRecovery`.                                                                                                                                   |
 | [app/Services/Auth/FleetSession.php](../app/Services/Auth/FleetSession.php)                   | Gerencia vínculos e sessão de negócio, valida prazos/revogações e coordena criação, seleção e encerramento. Entradas públicas: `links`, `start`, `validate`, `deadline`, `locked`, `eligible`, `audit`, `select`, `end`.                                                                                                                                               |
 | [app/Services/Auth/FleetUserProvider.php](../app/Services/Auth/FleetUserProvider.php)         | Adapta a recuperação do usuário e a validação de credenciais ao provedor de autenticação Laravel. Entradas públicas: `retrieveById`, `retrieveByToken`, `updateRememberToken`, `validateCredentials`, `rehashPasswordIfRequired`.                                                                                                                                      |
 | [app/Services/Auth/IdentityService.php](../app/Services/Auth/IdentityService.php)             | Coordena identidade inicial, ativação, recuperação, troca de e-mail/senha e invalidações com outbox e auditoria. Entradas públicas: `createInitialAdministrator`, `requestActivation`, `requestRecovery`, `issueActivation`, `resend`, `requestEmailChange`, `consumeRecovery`, `consumeActivation`, `consumeEmail`, `changePassword`, `invalidate`, `securityNotice`. |
@@ -163,7 +160,6 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | [app/Services/Auth/RecoverySettings.php](../app/Services/Auth/RecoverySettings.php)           | Valida disponibilidade das entregas e configurações de transporte/fila e constrói URLs confiáveis de identidade. Entradas públicas: `queueConnection`, `available`, `baseUrl`, `resetUrl`, `tokenUrl`.                                                                                                                                                                 |
 | [app/Services/Auth/SecurityAudit.php](../app/Services/Auth/SecurityAudit.php)                 | Registra eventos de segurança e ocorrências de limitação de tentativas com contexto controlado. Entradas públicas: `record`, `rateLimited`.                                                                                                                                                                                                                            |
 | [app/Services/Auth/SessionStatusReader.php](../app/Services/Auth/SessionStatusReader.php)     | Carrega identidade, sessão e elegibilidade do vínculo em uma leitura própria para o endpoint de status. Entradas públicas: `user`.                                                                                                                                                                                                                                     |
-| [app/Services/Auth/WebAuthnVerifier.php](../app/Services/Auth/WebAuthnVerifier.php)           | Configura origem/RP e integra a biblioteca WebAuthn para verificar registro e asserções do autenticador. Entradas públicas: `serializer`, `settings`, `verify`, `encode`.                                                                                                                                                                                              |
 
 ## app/Services/Authorization
 
@@ -270,7 +266,7 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | [config/database.php](../config/database.php)       | Configura conexões relacionais e Redis, separando credenciais e opções de transporte do código de domínio.        |
 | [config/debugbar.php](../config/debugbar.php)       | Restringe Debugbar ao desenvolvimento habilitado e seleciona coletores e armazenamento de telemetria controlados. |
 | [config/filesystems.php](../config/filesystems.php) | Define discos, caminhos e visibilidade dos arquivos locais privados e dos recursos públicos.                      |
-| [config/fleet.php](../config/fleet.php)             | Concentra prazos de sessão, flags de revisão/e-mail, opções de MFA e integração local de assets.                  |
+| [config/fleet.php](../config/fleet.php)             | Concentra prazos de sessão, flags de revisão/e-mail e integração local de assets.                                 |
 | [config/geocoding.php](../config/geocoding.php)     | Define a URL de busca geográfica utilizada pelo componente de seleção de locais, com padrão Photon.               |
 | [config/identity.php](../config/identity.php)       | Define validade de convites/tokens, tentativas e reservas da outbox e limites de saúde da entrega.                |
 | [config/logging.php](../config/logging.php)         | Configura canais, destinos e níveis dos registros técnicos da aplicação.                                          |
@@ -308,26 +304,26 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 
 ## database/sql/patches
 
-| Arquivo                                                                                                               | Responsabilidade e propósito                                                                                                          |
-| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| [database/sql/patches/1.0.1-admin-procedures.sql](../database/sql/patches/1.0.1-admin-procedures.sql)                 | Altera o modelo/rotinas para procedures administrativas; integra a evolução incremental identificada como 1.0.1.                      |
-| [database/sql/patches/1.0.2-auth-hardening-postcheck.sql](../database/sql/patches/1.0.2-auth-hardening-postcheck.sql) | Consultas de conferência do estado resultante da atualização 1.0.2, referente a endurecimento de autenticação e recuperação.          |
-| [database/sql/patches/1.0.2-auth-hardening-precheck.sql](../database/sql/patches/1.0.2-auth-hardening-precheck.sql)   | Consultas de conferência do estado anterior à atualização 1.0.2, referente a endurecimento de autenticação e recuperação.             |
-| [database/sql/patches/1.0.2-auth-hardening.sql](../database/sql/patches/1.0.2-auth-hardening.sql)                     | Altera o modelo/rotinas para endurecimento de autenticação e recuperação; integra a evolução incremental identificada como 1.0.2.     |
-| [database/sql/patches/1.0.3_identity-postcheck.sql](../database/sql/patches/1.0.3_identity-postcheck.sql)             | Consultas de conferência do estado resultante da atualização 1.0.3, referente a identidade, confirmações e outbox.                    |
-| [database/sql/patches/1.0.3_identity-precheck.sql](../database/sql/patches/1.0.3_identity-precheck.sql)               | Consultas de conferência do estado anterior à atualização 1.0.3, referente a identidade, confirmações e outbox.                       |
-| [database/sql/patches/1.0.3_identity.sql](../database/sql/patches/1.0.3_identity.sql)                                 | Altera o modelo/rotinas para identidade, confirmações e outbox; integra a evolução incremental identificada como 1.0.3.               |
-| [database/sql/patches/1.0.4_requests-postcheck.sql](../database/sql/patches/1.0.4_requests-postcheck.sql)             | Consultas de conferência do estado resultante da atualização 1.0.4, referente a criação/revisão completa de solicitações.             |
-| [database/sql/patches/1.0.4_requests-precheck.sql](../database/sql/patches/1.0.4_requests-precheck.sql)               | Consultas de conferência do estado anterior à atualização 1.0.4, referente a criação/revisão completa de solicitações.                |
-| [database/sql/patches/1.0.4_requests.sql](../database/sql/patches/1.0.4_requests.sql)                                 | Altera o modelo/rotinas para criação/revisão completa de solicitações; integra a evolução incremental identificada como 1.0.4.        |
-| [database/sql/patches/1.0.5_session_mfa-postcheck.sql](../database/sql/patches/1.0.5_session_mfa-postcheck.sql)       | Consultas de conferência do estado resultante da atualização 1.0.5, referente a prazos de sessão, WebAuthn e recuperação de MFA.      |
-| [database/sql/patches/1.0.5_session_mfa-precheck.sql](../database/sql/patches/1.0.5_session_mfa-precheck.sql)         | Consultas de conferência do estado anterior à atualização 1.0.5, referente a prazos de sessão, WebAuthn e recuperação de MFA.         |
-| [database/sql/patches/1.0.5_session_mfa.sql](../database/sql/patches/1.0.5_session_mfa.sql)                           | Altera o modelo/rotinas para prazos de sessão, WebAuthn e recuperação de MFA; integra a evolução incremental identificada como 1.0.5. |
-| [database/sql/patches/1.0.5.1_requests_json_width-postcheck.sql](../database/sql/patches/1.0.5.1_requests_json_width-postcheck.sql) | Confere a assinatura e a largura JSON_TABLE após o hotfix de solicitações 1.0.5.1. |
-| [database/sql/patches/1.0.5.1_requests_json_width-precheck.sql](../database/sql/patches/1.0.5.1_requests_json_width-precheck.sql)   | Confere a versão e a procedure de solicitações antes do hotfix 1.0.5.1.             |
-| [database/sql/patches/1.0.5.1_requests_json_width.sql](../database/sql/patches/1.0.5.1_requests_json_width.sql)                     | Corrige a largura incompatível de JSON_TABLE na criação de solicitações em MariaDB. |
-| [database/sql/patches/1.0.6_vehicle_plate.sql](../database/sql/patches/1.0.6_vehicle_plate.sql)                       | Altera o modelo/rotinas para compatibilidade do formato de placa; integra a evolução incremental identificada como 1.0.6.             |
-| [database/sql/patches/vehicle-plate-format.sql](../database/sql/patches/vehicle-plate-format.sql)                     | Script legado pontual que amplia a placa e remove a restrição anterior; o patch 1.0.6 fornece a alternativa versionada.               |
+| Arquivo                                                                                                                             | Responsabilidade e propósito                                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| [database/sql/patches/1.0.1-admin-procedures.sql](../database/sql/patches/1.0.1-admin-procedures.sql)                               | Altera o modelo/rotinas para procedures administrativas; integra a evolução incremental identificada como 1.0.1.                      |
+| [database/sql/patches/1.0.2-auth-hardening-postcheck.sql](../database/sql/patches/1.0.2-auth-hardening-postcheck.sql)               | Consultas de conferência do estado resultante da atualização 1.0.2, referente a endurecimento de autenticação e recuperação.          |
+| [database/sql/patches/1.0.2-auth-hardening-precheck.sql](../database/sql/patches/1.0.2-auth-hardening-precheck.sql)                 | Consultas de conferência do estado anterior à atualização 1.0.2, referente a endurecimento de autenticação e recuperação.             |
+| [database/sql/patches/1.0.2-auth-hardening.sql](../database/sql/patches/1.0.2-auth-hardening.sql)                                   | Altera o modelo/rotinas para endurecimento de autenticação e recuperação; integra a evolução incremental identificada como 1.0.2.     |
+| [database/sql/patches/1.0.3_identity-postcheck.sql](../database/sql/patches/1.0.3_identity-postcheck.sql)                           | Consultas de conferência do estado resultante da atualização 1.0.3, referente a identidade, confirmações e outbox.                    |
+| [database/sql/patches/1.0.3_identity-precheck.sql](../database/sql/patches/1.0.3_identity-precheck.sql)                             | Consultas de conferência do estado anterior à atualização 1.0.3, referente a identidade, confirmações e outbox.                       |
+| [database/sql/patches/1.0.3_identity.sql](../database/sql/patches/1.0.3_identity.sql)                                               | Altera o modelo/rotinas para identidade, confirmações e outbox; integra a evolução incremental identificada como 1.0.3.               |
+| [database/sql/patches/1.0.4_requests-postcheck.sql](../database/sql/patches/1.0.4_requests-postcheck.sql)                           | Consultas de conferência do estado resultante da atualização 1.0.4, referente a criação/revisão completa de solicitações.             |
+| [database/sql/patches/1.0.4_requests-precheck.sql](../database/sql/patches/1.0.4_requests-precheck.sql)                             | Consultas de conferência do estado anterior à atualização 1.0.4, referente a criação/revisão completa de solicitações.                |
+| [database/sql/patches/1.0.4_requests.sql](../database/sql/patches/1.0.4_requests.sql)                                               | Altera o modelo/rotinas para criação/revisão completa de solicitações; integra a evolução incremental identificada como 1.0.4.        |
+| [database/sql/patches/1.0.5_session_mfa-postcheck.sql](../database/sql/patches/1.0.5_session_mfa-postcheck.sql)                     | Consultas de conferência do estado resultante da atualização 1.0.5, referente a prazos de sessão, WebAuthn e recuperação de MFA.      |
+| [database/sql/patches/1.0.5_session_mfa-precheck.sql](../database/sql/patches/1.0.5_session_mfa-precheck.sql)                       | Consultas de conferência do estado anterior à atualização 1.0.5, referente a prazos de sessão, WebAuthn e recuperação de MFA.         |
+| [database/sql/patches/1.0.5_session_mfa.sql](../database/sql/patches/1.0.5_session_mfa.sql)                                         | Altera o modelo/rotinas para prazos de sessão, WebAuthn e recuperação de MFA; integra a evolução incremental identificada como 1.0.5. |
+| [database/sql/patches/1.0.5.1_requests_json_width-postcheck.sql](../database/sql/patches/1.0.5.1_requests_json_width-postcheck.sql) | Confere a assinatura e a largura JSON_TABLE após o hotfix de solicitações 1.0.5.1.                                                    |
+| [database/sql/patches/1.0.5.1_requests_json_width-precheck.sql](../database/sql/patches/1.0.5.1_requests_json_width-precheck.sql)   | Confere a versão e a procedure de solicitações antes do hotfix 1.0.5.1.                                                               |
+| [database/sql/patches/1.0.5.1_requests_json_width.sql](../database/sql/patches/1.0.5.1_requests_json_width.sql)                     | Corrige a largura incompatível de JSON_TABLE na criação de solicitações em MariaDB.                                                   |
+| [database/sql/patches/1.0.6_vehicle_plate.sql](../database/sql/patches/1.0.6_vehicle_plate.sql)                                     | Altera o modelo/rotinas para compatibilidade do formato de placa; integra a evolução incremental identificada como 1.0.6.             |
+| [database/sql/patches/vehicle-plate-format.sql](../database/sql/patches/vehicle-plate-format.sql)                                   | Script legado pontual que amplia a placa e remove a restrição anterior; o patch 1.0.6 fornece a alternativa versionada.               |
 
 ## docker/apache
 
@@ -435,11 +431,10 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 
 ## resources/js
 
-| Arquivo                                                 | Responsabilidade e propósito                                                                                             |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| [resources/js/app.js](../resources/js/app.js)           | Ponto de entrada da interface: importa sessão/WebAuthn e coordena tema, formulários, etapas, modais e interações comuns. |
-| [resources/js/session.js](../resources/js/session.js)   | Acompanha a validade da sessão, coordena abas e controla o modal de confirmação de senha sem conceder acesso localmente. |
-| [resources/js/webauthn.js](../resources/js/webauthn.js) | Integra os desafios do servidor à API de credenciais do navegador, convertendo os dados binários do protocolo WebAuthn.  |
+| Arquivo                                               | Responsabilidade e propósito                                                                                             |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| [resources/js/app.js](../resources/js/app.js)         | Ponto de entrada da interface: importa sessão e coordena tema, formulários, etapas, modais e interações comuns.          |
+| [resources/js/session.js](../resources/js/session.js) | Acompanha a validade da sessão, coordena abas e controla o modal de confirmação de senha sem conceder acesso localmente. |
 
 ## resources/views
 
@@ -467,7 +462,6 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | [resources/views/auth/identity-email.blade.php](../resources/views/auth/identity-email.blade.php) | Formulário para solicitar a alteração e confirmação do e-mail da identidade.                    |
 | [resources/views/auth/identity-token.blade.php](../resources/views/auth/identity-token.blade.php) | Apresenta o fluxo de consumo do token individual de ativação/confirmação.                       |
 | [resources/views/auth/login.blade.php](../resources/views/auth/login.blade.php)                   | Formulário público de autenticação e acesso ao fluxo de recuperação.                            |
-| [resources/views/auth/mfa.blade.php](../resources/views/auth/mfa.blade.php)                       | Apresenta cadastro/verificação WebAuthn e os estados do segundo fator administrativo.           |
 | [resources/views/auth/password.blade.php](../resources/views/auth/password.blade.php)             | Formulário autenticado para trocar a senha e cumprir a alteração obrigatória.                   |
 | [resources/views/auth/profiles.blade.php](../resources/views/auth/profiles.blade.php)             | Apresenta os vínculos disponíveis para seleção do contexto ativo de trabalho.                   |
 | [resources/views/auth/recover.blade.php](../resources/views/auth/recover.blade.php)               | Formulário público de solicitação de recuperação com resposta uniforme.                         |
@@ -815,19 +809,19 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 
 ## tests/Feature/Auth
 
-| Arquivo                                                                                             | Responsabilidade e propósito                                                                                |
-| --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| [tests/Feature/Auth/AuthPageAuditTest.php](../tests/Feature/Auth/AuthPageAuditTest.php)             | Confere a renderização dos estados de autenticação e sessão para os diferentes perfis.                      |
-| [tests/Feature/Auth/DeliveryHealthTest.php](../tests/Feature/Auth/DeliveryHealthTest.php)           | Valida indicadores, limites de saúde, falhas e deduplicação de alertas sem informações sensíveis.           |
-| [tests/Feature/Auth/IdentityWorkflowTest.php](../tests/Feature/Auth/IdentityWorkflowTest.php)       | Confere ativação, troca de e-mail/senha, consumo único e revogação de tokens e sessões.                     |
-| [tests/Feature/Auth/MfaSecurityTest.php](../tests/Feature/Auth/MfaSecurityTest.php)                 | Exercita registro, assinatura, origem e verificação do usuário no WebAuthn e invalidação administrativa.    |
-| [tests/Feature/Auth/MySqlAuthenticationTest.php](../tests/Feature/Auth/MySqlAuthenticationTest.php) | Confere login, hash de token, vínculos e encerramento com as estruturas reais do MySQL.                     |
-| [tests/Feature/Auth/MySqlIdentityTest.php](../tests/Feature/Auth/MySqlIdentityTest.php)             | Confere triggers e procedures de identidade e revogação de confirmações/outbox no MySQL.                    |
-| [tests/Feature/Auth/MySqlSessionMfaTest.php](../tests/Feature/Auth/MySqlSessionMfaTest.php)         | Confere prazos, reautenticação e WebAuthn com os contratos reais de sessão e MFA do MySQL.                  |
-| [tests/Feature/Auth/PublicAccessTest.php](../tests/Feature/Auth/PublicAccessTest.php)               | Confere páginas públicas, limitação de tentativas, validação antecipada e ausência de credenciais públicas. |
-| [tests/Feature/Auth/RecoveryMailTest.php](../tests/Feature/Auth/RecoveryMailTest.php)               | Confere resposta pública uniforme, outbox, links, tratamento de falha SMTP e consumo de recuperação.        |
-| [tests/Feature/Auth/SessionSecurityTest.php](../tests/Feature/Auth/SessionSecurityTest.php)         | Valida prazos fixos, rotação de tokens, reautenticação, concorrência e revogação da sessão.                 |
-| [tests/Feature/Auth/SessionStatusReadTest.php](../tests/Feature/Auth/SessionStatusReadTest.php)     | Confere leitura única do status, ausência de atividade artificial e recusa de identidade/token inválido.    |
+| Arquivo                                                                                             | Responsabilidade e propósito                                                                                                 |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [tests/Feature/Auth/AuthPageAuditTest.php](../tests/Feature/Auth/AuthPageAuditTest.php)             | Confere a renderização dos estados de autenticação e sessão para os diferentes perfis.                                       |
+| [tests/Feature/Auth/DeliveryHealthTest.php](../tests/Feature/Auth/DeliveryHealthTest.php)           | Valida indicadores, limites de saúde, falhas e deduplicação de alertas sem informações sensíveis.                            |
+| [tests/Feature/Auth/IdentityWorkflowTest.php](../tests/Feature/Auth/IdentityWorkflowTest.php)       | Confere ativação, troca de e-mail/senha, consumo único e revogação de tokens e sessões.                                      |
+| [tests/Feature/Auth/AdminPasswordAccessTest.php](../tests/Feature/Auth/AdminPasswordAccessTest.php) | Confere acesso administrativo por senha, remoção dos endpoints de passkey e preservação dos controles de sessão e permissão. |
+| [tests/Feature/Auth/MySqlAuthenticationTest.php](../tests/Feature/Auth/MySqlAuthenticationTest.php) | Confere login, hash de token, vínculos e encerramento com as estruturas reais do MySQL.                                      |
+| [tests/Feature/Auth/MySqlIdentityTest.php](../tests/Feature/Auth/MySqlIdentityTest.php)             | Confere triggers e procedures de identidade e revogação de confirmações/outbox no MySQL.                                     |
+| [tests/Feature/Auth/MySqlSessionTest.php](../tests/Feature/Auth/MySqlSessionTest.php)               | Confere prazos, reautenticação e acesso administrativo por senha com os contratos reais de sessão do MySQL.                  |
+| [tests/Feature/Auth/PublicAccessTest.php](../tests/Feature/Auth/PublicAccessTest.php)               | Confere páginas públicas, limitação de tentativas, validação antecipada e ausência de credenciais públicas.                  |
+| [tests/Feature/Auth/RecoveryMailTest.php](../tests/Feature/Auth/RecoveryMailTest.php)               | Confere resposta pública uniforme, outbox, links, tratamento de falha SMTP e consumo de recuperação.                         |
+| [tests/Feature/Auth/SessionSecurityTest.php](../tests/Feature/Auth/SessionSecurityTest.php)         | Valida prazos fixos, rotação de tokens, reautenticação, concorrência e revogação da sessão.                                  |
+| [tests/Feature/Auth/SessionStatusReadTest.php](../tests/Feature/Auth/SessionStatusReadTest.php)     | Confere leitura única do status, ausência de atividade artificial e recusa de identidade/token inválido.                     |
 
 ## tests/Support
 
@@ -838,8 +832,7 @@ Leitura complementar: [arquitetura](ARQUITETURA.md) e [organização das pastas]
 | [tests/Support/IdentityFixture.php](../tests/Support/IdentityFixture.php)                 | Monta identidades, tokens e estruturas de outbox para testes isolados dos fluxos de ativação e recuperação. |
 | [tests/Support/ReadFixture.php](../tests/Support/ReadFixture.php)                         | Monta o contrato e os dados de leitura, perfis e permissões usados pelos testes de páginas e autorização.   |
 | [tests/Support/schema.json](../tests/Support/schema.json)                                 | Representação do esquema usada para montar estruturas dos testes sem depender do servidor institucional.    |
-| [tests/Support/SecurityFixture.php](../tests/Support/SecurityFixture.php)                 | Prepara usuários, vínculos e sessões para exercitar os serviços HTTP, sessão e WebAuthn em SQLite.          |
-| [tests/Support/TestAuthenticator.php](../tests/Support/TestAuthenticator.php)             | Cria um autenticador WebAuthn sintético com chaves de teste para validar registro, assinatura e asserções.  |
+| [tests/Support/SecurityFixture.php](../tests/Support/SecurityFixture.php)                 | Prepara usuários, vínculos e sessões para exercitar os serviços HTTP e sessão em SQLite.                    |
 | [tests/Support/TripFixture.php](../tests/Support/TripFixture.php)                         | Acrescenta cenários de viagem, checklist e motorista aos dados dos testes de operação.                      |
 
 ## tests/Unit
@@ -860,7 +853,7 @@ Arquivos incorporados na atualização de tipagem, cache, filas e documentação
 | [app/Support/RequestState.php](../app/Support/RequestState.php)                                                     | Lê os registros de contexto da requisição e verifica seus tipos.                     |
 | [app/Support/Value.php](../app/Support/Value.php)                                                                   | Normaliza valores recebidos de HTTP, configuração e banco em tipos explícitos.       |
 | [database/sql/patches/1.0.7_database_cache.sql](../database/sql/patches/1.0.7_database_cache.sql)                   | Provisiona o cache e os bloqueios MySQL na atualização versionada 1.0.7.             |
-| [database/sql/patches/1.0.8_atomic_request_creation.sql](../database/sql/patches/1.0.8_atomic_request_creation.sql) | Confirma rascunhos, coordenadas e anexos de solicitações em uma transação.            |
+| [database/sql/patches/1.0.8_atomic_request_creation.sql](../database/sql/patches/1.0.8_atomic_request_creation.sql) | Confirma rascunhos, coordenadas e anexos de solicitações em uma transação.           |
 | [database/sql/runtime-cache.sql](../database/sql/runtime-cache.sql)                                                 | Cria somente as tabelas de cache e bloqueios para instalações existentes.            |
 | [docs/MYSQL-RUNTIME.md](../docs/MYSQL-RUNTIME.md)                                                                   | Descreve provisionamento, transição e verificação de cache e filas no MySQL.         |
 | [docs/database-model/LEIA-ME.md](../docs/database-model/LEIA-ME.md)                                                 | Apresenta os artefatos e a data do retrato estrutural do banco remoto.               |

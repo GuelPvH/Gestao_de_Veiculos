@@ -93,6 +93,14 @@ class OperationCatalog
                     'cancel' => in_array($situacao, ['planejada', 'em_execucao'], true),
                     default => false,
                 };
+            } elseif ($codigo === 'users' && $acao === 'temporary') {
+                $valida = (bool) $situacao && $dono !== Value::integer($this->acesso->requireLink()->usuario_id)
+                    && $this->acesso->can('usuarios', 'gerenciar')
+                    && $this->acesso->can('usuarios', 'editar', $dono, Value::integer($registro->__unit));
+            } elseif ($codigo === 'users' && $acao === 'links') {
+                $valida = (bool) $situacao && $dono !== Value::integer($this->acesso->requireLink()->usuario_id);
+            } elseif ($codigo === 'roles' && in_array($acao, ['duplicate', 'grant'], true)) {
+                $valida = $this->acesso->can('perfis', $contrato[1]);
             } elseif ($codigo === 'tickets') {
                 $valida = ! in_array($acao, ['respond', 'resolve', 'assign'], true) || $situacao !== 'resolvido';
             }
