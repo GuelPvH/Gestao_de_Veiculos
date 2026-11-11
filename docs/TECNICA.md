@@ -29,6 +29,6 @@ Qualidade: `composer format:check`, `npm run format:check`, `composer analyse`, 
 
 Comece em routes/web.php; identifique controller e Form Request; leia o serviço responsável, autorização e SQL chamado; confira config/screens.php e as views correspondentes. Atualize testes de comportamento e contratos quando houver mudança. Alterar o formulário não dispensa a validação dos dados no servidor.
 
-
 ---
+
 [Voltar ao índice](README.md) · Referência: 09/11/2026.

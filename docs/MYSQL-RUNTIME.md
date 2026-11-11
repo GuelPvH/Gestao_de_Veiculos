@@ -22,6 +22,6 @@ Verificados no MySQL remoto: leitura/escrita de cache, bloqueio exclusivo, limit
 
 Suíte local: 215 testes, 1.694 asserções, 31 testes de integração ignorados por ausência dos ambientes dedicados. Os testes de banco locais usam SQLite isolado; a verificação de execução acima usou o MySQL remoto configurado.
 
-
 ---
+
 [Voltar ao índice](README.md) · Referência: 09/11/2026.

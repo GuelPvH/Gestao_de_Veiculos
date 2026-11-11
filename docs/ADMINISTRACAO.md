@@ -28,6 +28,6 @@ Para reconstruir uma operação, consulte o ator, o perfil, o evento, a entidade
 
 O fluxo atual não usa passkey/MFA. A URL antiga `/seguranca/mfa` redireciona ao painel; campos históricos no SQL não significam recurso ativo.
 
-
 ---
+
 [Voltar ao índice](README.md) · Referência: 09/11/2026.

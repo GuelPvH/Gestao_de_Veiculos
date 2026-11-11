@@ -30,4 +30,5 @@ O catálogo funcional foi extraído de config/screens.php. O dicionário e os ob
 - [.github/workflows/ci-cd.yml](https://github.com/GuelPvH/Gestao_de_Veiculos/blob/4ebe9d1ae80d0d6d8fa45b486155b27b4f6c124f/.github/workflows/ci-cd.yml)
 
 ---
+
 [Voltar ao índice](README.md) · Referência: 09/11/2026.
