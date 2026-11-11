@@ -62,8 +62,7 @@
 | `Trips/`                     | Saída, retorno e ocorrências de viagens.                                           |
 | `Vehicles/`                  | Cadastro e disponibilidade dos veículos.                                           |
 
-Repositórios de leitura constroem consultas já limitadas pelo alcance. Serviços
-de workflow coordenam gravações e transições. A localização de uma classe em
+Os repositórios de leitura limitam as consultas ao alcance autorizado. Os serviços responsáveis pelos fluxos de trabalho coordenam as gravações e as mudanças de estado. A localização de uma classe em
 `Models/` não implica que todo o domínio use Eloquent: o adaptador
 `Solicitacao` preserva uma API de compatibilidade para o repositório de leitura.
 
@@ -87,7 +86,7 @@ notificações, revisão visual e páginas de erro.
 ## Arquivos da raiz
 
 Os arquivos `composer.*` e `package*.json` descrevem e fixam dependências.
-`vite.config.js` conecta os assets ao Laravel. `phpunit.xml` e `phpstan.neon`
+`vite.config.js` conecta os recursos de interface ao Laravel. `phpunit.xml` e `phpstan.neon`
 configuram testes e análise estática. `.editorconfig`, `.gitattributes`,
 `.prettierrc.json` e `.prettierignore` padronizam a edição e a formatação.
 
@@ -103,7 +102,7 @@ os valores reais de uma instalação não fazem parte da documentação.
 | `app/`, `routes/`, `config/`, `resources/`            | Código e contratos mantidos pela aplicação.                             |
 | `database/sql/`                                       | Fontes versionadas do modelo relacional e de sua evolução.              |
 | `public/icons/`, `public/images/`, `public/licenses/` | Recursos visuais distribuídos com a interface e seus avisos de licença. |
-| `vendor/`, `node_modules/`                            | Dependências instaladas a partir dos lockfiles; não são código próprio. |
+| `vendor/`, `node_modules/`                            | Dependências instaladas a partir dos arquivos de versões fixadas; não são código próprio. |
 | `public/build/`                                       | Bundles, fontes e manifest produzidos pelo Vite.                        |
 | `bootstrap/cache/`, `storage/framework/`              | Caches, views compiladas e outros dados transitórios do framework.      |
 | `storage/app/private/`, `storage/logs/`               | Dados privados e registros produzidos pela execução.                    |
@@ -114,10 +113,14 @@ no Git e excluem seu conteúdo gerado. O [catálogo](ARQUIVOS.md) descreve os
 arquivos mantidos pelo repositório; dependências, caches e dados de uma instalação
 não são enumerados como arquivos próprios do sistema.
 
-Para uma alteração de fluxo, comece pelas rotas, pelo controller e pelo serviço
+Para uma alteração de fluxo, comece pelas rotas, pelo controlador e pelo serviço
 do módulo. Para uma alteração de exibição, consulte a view, seus componentes e
 os assets. Para uma alteração de acesso ou persistência, acompanhe também
 `AccessContext`, o catálogo de telas e o contrato SQL correspondente.
 
 A execução de cache e filas no MySQL está documentada em [MYSQL-RUNTIME.md](MYSQL-RUNTIME.md).
 A pasta `docs/database-model/` reúne o retrato estrutural, o diagrama e o dicionário do banco remoto.
+
+
+---
+[Voltar ao índice](README.md) · Referência: 09/11/2026.
