@@ -191,7 +191,7 @@ END
 ```sql
 BEGIN
   DECLARE v_id BIGINT UNSIGNED;
-  
+
   SELECT MAX(id) INTO v_id FROM notificacao_eventos WHERE chave_idempotencia=p_chave;
   IF v_id IS NULL THEN
     INSERT INTO notificacao_eventos(chave_idempotencia,tipo,titulo,mensagem,caminho_destino,solicitacao_id,multa_id)
@@ -229,7 +229,7 @@ BEGIN
     IF v_filtro_key NOT IN ('situacao','unidade_id','veiculo_id','inicio_utc','fim_utc') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Filtro não implementado; não usar fragmentos SQL nos filtros.'; END IF;
     SET v_i=v_i+1;
   END WHILE;
-  
+
   IF JSON_TYPE(JSON_EXTRACT(p_filtros,'$.situacao'))<>'NULL' THEN
     IF JSON_TYPE(JSON_EXTRACT(p_filtros,'$.situacao'))<>'STRING' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Situação do filtro deve ser texto.'; END IF;
     SET v_filtro_situacao=JSON_UNQUOTE(JSON_EXTRACT(p_filtros,'$.situacao'));
@@ -351,7 +351,7 @@ BEGIN
   IF v_unidade_motorista IS NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Motorista inexistente ou inativo.'; END IF;
   CALL sp_exigir_permissao(p_vinculo,'solicitacoes','aprovar',p_motorista,v_unidade_motorista);
   IF p_motivo IS NULL OR CHAR_LENGTH(TRIM(p_motivo))=0 OR CHAR_LENGTH(p_motivo)>3000 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Informe a justificativa da aprovação.'; END IF;
-  
+
   INSERT INTO reservas(veiculo_id,motorista_id,revisao_id,tipo,inicio,fim,criado_por,descricao)
   VALUES(p_veiculo,p_motorista,v_revisao,'viagem',v_inicio,v_fim,v_usuario,p_motivo);
   SET v_reserva=LAST_INSERT_ID();
@@ -617,7 +617,7 @@ END
 BEGIN
   DECLARE v_ok INT; DECLARE v_minutos INT; DECLARE v_id BIGINT UNSIGNED;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; RESIGNAL; END;
-  
+
   START TRANSACTION;
   SELECT COUNT(*) INTO v_ok FROM vw_vinculos_ativos WHERE usuario_id=p_usuario;
   IF v_ok=0 OR p_token_hash IS NULL OR OCTET_LENGTH(p_token_hash)<>32 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Usuário sem acesso vigente ou token inválido.'; END IF;
@@ -751,7 +751,7 @@ BEGIN
   VALUES(v_id,1,v_usuario,p_finalidade,p_origem,p_destino,p_origem_latitude,p_origem_longitude,
     p_destino_latitude,p_destino_longitude,p_saida,p_retorno,p_trajeto,p_quantidade,p_necessita_motorista,v_motorista,p_veiculo,p_observacoes,4);
   SET v_revisao=LAST_INSERT_ID();
-  
+
   IF p_passageiros IS NULL OR JSON_TYPE(p_passageiros)<>'ARRAY' OR JSON_LENGTH(p_passageiros)>p_quantidade THEN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Lista de passageiros inválida.';
   END IF;
@@ -924,7 +924,7 @@ BEGIN
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_admin=NULL;
   SELECT id,bootstrap_concluido INTO v_lock,v_bootstrap FROM configuracao_sistema WHERE id=1 FOR UPDATE;
   IF v_bootstrap=1 THEN
-    
+
     SELECT cv.vinculo_id INTO v_admin FROM controle_vinculos cv
     WHERE cv.ativo_vinculo=1 AND cv.ativo_usuario=1 AND cv.ativo_perfil=1 AND cv.ativo_unidade=1
     AND cv.pode_administrar=1 AND cv.vigente_desde<=UTC_TIMESTAMP(6) AND cv.vigente_ate IS NULL
@@ -1117,7 +1117,7 @@ BEGIN
   SELECT usuario_id INTO v_usuario FROM usuario_perfis WHERE id=p_vinculo;
   SELECT fim INTO v_fim FROM reservas WHERE id=v_reserva AND situacao='ativa' FOR UPDATE;
   IF v_fim IS NULL OR p_saida>=v_fim THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Reserva encerrada: revise o período antes de registrar a saída.'; END IF;
-  
+
   UPDATE reservas SET inicio=LEAST(inicio,p_saida) WHERE id=v_reserva;
   CALL sp_gravar_checklist(v_usuario,p_viagem,'saida',p_checklist,v_checklist);
   UPDATE viagens SET situacao='em_andamento',saida_real=p_saida,quilometragem_saida=p_km,
@@ -1186,7 +1186,7 @@ BEGIN
   AND (pe.alcance='orgao' OR (pe.alcance='unidade' AND pe.unidade_id=v.unidade_id)))
   AND NOT EXISTS(SELECT 1 FROM ocupacoes_agenda oa WHERE oa.veiculo_id=v.id AND oa.inicio<p_fim AND oa.fim>p_inicio)
   ORDER BY v.nome,v.id;
-  
+
 END
 ```
 
@@ -1231,7 +1231,7 @@ BEGIN
   DECLARE v_situacao VARCHAR(40); DECLARE v_resposta INT;
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_conflito=NULL;
   IF p_inicio IS NULL OR p_fim IS NULL OR p_fim<=p_inicio THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Período de reserva inválido.'; END IF;
-  
+
   SELECT v.capacidade,v.situacao_cadastro,c.categoria_cnh_requerida INTO v_capacidade,v_ativo,v_categoria
   FROM veiculos v JOIN categorias_veiculo c ON c.id=v.categoria_id WHERE v.id=p_veiculo FOR UPDATE;
   IF v_ativo IS NULL OR v_ativo<>'ativo' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Veículo inexistente, inativo ou baixado.'; END IF;
@@ -1245,12 +1245,12 @@ BEGIN
   IF v_conflito IS NOT NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Período conflita com viagem já realizada por este veículo.'; END IF;
   IF p_tipo='viagem' THEN
     IF p_motorista IS NULL OR p_revisao IS NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Reserva de viagem exige revisão e motorista.'; END IF;
-    
+
     SELECT m.usuario_id,m.categorias_autorizadas,m.validade_cnh INTO v_driver,v_cnh,v_validade
     FROM motoristas m JOIN usuarios u ON u.id=m.usuario_id AND u.ativo=1
     WHERE m.usuario_id=p_motorista AND m.ativo=1 FOR UPDATE;
     IF v_driver IS NULL OR v_validade<DATE(p_fim) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Motorista inexistente, inativo ou CNH vencida para o período.'; END IF;
-    
+
     IF LOCATE(v_categoria,v_cnh)=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Categoria do veículo não autorizada no cadastro do motorista.'; END IF;
     SET v_conflito=NULL;
     SELECT reserva_id INTO v_conflito FROM ocupacoes_agenda WHERE motorista_id=p_motorista
@@ -2546,6 +2546,6 @@ BEGIN
 END
 ```
 
-
 ---
+
 [Voltar ao índice](README.md) · Referência: 09/11/2026.

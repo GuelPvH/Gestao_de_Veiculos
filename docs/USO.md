@@ -66,17 +66,17 @@ Em Notificações, marque eventos como lidos ou oculte-os conforme necessário. 
 
 ## Problemas frequentes
 
-| Sintoma | Providência |
-|---|---|
-| Menu ou ação ausente | Confira o vínculo ativo e peça revisão da permissão/rota ao administrador. |
-| Registro mudou | Atualize a página, confira a situação e refaça somente a ação ainda necessária. |
-| Local não aceito | Selecione origem e destino com coordenadas válidas. |
-| Veículo não aparece | Verifique unidade, alcance, situação cadastral e capacidade. |
-| Não consigo dirigir | Verifique cadastro de motorista, categoria e validade da CNH. |
-| Anexo recusado | Confira formato, tamanho e autorização sobre o registro. |
-| Valor/localização não aparece | Essas informações exigem permissão específica. |
-| Download negado | Verifique sessão e autorização atual sobre o registro. |
-
+| Sintoma                       | Providência                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| Menu ou ação ausente          | Confira o vínculo ativo e peça revisão da permissão/rota ao administrador.      |
+| Registro mudou                | Atualize a página, confira a situação e refaça somente a ação ainda necessária. |
+| Local não aceito              | Selecione origem e destino com coordenadas válidas.                             |
+| Veículo não aparece           | Verifique unidade, alcance, situação cadastral e capacidade.                    |
+| Não consigo dirigir           | Verifique cadastro de motorista, categoria e validade da CNH.                   |
+| Anexo recusado                | Confira formato, tamanho e autorização sobre o registro.                        |
+| Valor/localização não aparece | Essas informações exigem permissão específica.                                  |
+| Download negado               | Verifique sessão e autorização atual sobre o registro.                          |
 
 ---
+
 [Voltar ao índice](README.md) · Referência: 09/11/2026.

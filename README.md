@@ -9,22 +9,21 @@ A aplicação atende aos perfis servidor, gestor, financeiro e administrador.
 O acesso depende do vínculo ativo do usuário, das permissões por ação e do
 alcance sobre os registros. As regras são verificadas no servidor.
 
-
 ## Documentação técnica
 
-| Objetivo | Documento |
-|---|---|
-| Aprender a usar o sistema | [Manual de uso](docs/USO.md) |
-| Consultar todas as telas, estados e ações | [Catálogo funcional](docs/FUNCIONALIDADES.md) |
-| Administrar usuários e permissões | [Guia de administração](docs/ADMINISTRACAO.md) |
-| Entender as camadas e decisões | [Arquitetura](docs/ARQUITETURA.md) |
-| Desenvolver e entender contratos | [Referência técnica](docs/TECNICA.md) |
-| Instalar, operar e diagnosticar | [Guia de operação](docs/OPERACAO.md) |
-| Entender o banco atual | [Banco remoto](docs/BANCO.md) |
-| Consultar campos e relações | [Dicionário atual](docs/DICIONARIO.md) |
-| Consultar rotinas e views | [Objetos SQL](docs/OBJETOS-SQL.md) |
-| Localizar arquivos | [Estrutura](docs/ESTRUTURA.md) e [catálogo](docs/ARQUIVOS.md) |
-| Conferir fontes e limites | [Evidências](docs/EVIDENCIAS.md) |
+| Objetivo                                  | Documento                                                     |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| Aprender a usar o sistema                 | [Manual de uso](docs/USO.md)                                  |
+| Consultar todas as telas, estados e ações | [Catálogo funcional](docs/FUNCIONALIDADES.md)                 |
+| Administrar usuários e permissões         | [Guia de administração](docs/ADMINISTRACAO.md)                |
+| Entender as camadas e decisões            | [Arquitetura](docs/ARQUITETURA.md)                            |
+| Desenvolver e entender contratos          | [Referência técnica](docs/TECNICA.md)                         |
+| Instalar, operar e diagnosticar           | [Guia de operação](docs/OPERACAO.md)                          |
+| Entender o banco atual                    | [Banco remoto](docs/BANCO.md)                                 |
+| Consultar campos e relações               | [Dicionário atual](docs/DICIONARIO.md)                        |
+| Consultar rotinas e views                 | [Objetos SQL](docs/OBJETOS-SQL.md)                            |
+| Localizar arquivos                        | [Estrutura](docs/ESTRUTURA.md) e [catálogo](docs/ARQUIVOS.md) |
+| Conferir fontes e limites                 | [Evidências](docs/EVIDENCIAS.md)                              |
 
 ## Composição
 
@@ -35,11 +34,11 @@ alcance sobre os registros. As regras são verificadas no servidor.
 - **Arquivos:** armazenamento privado de anexos e exportações CSV/PDF.
 - **Entrega:** Construção de imagens Docker e verificações automatizadas no GitHub Actions.
 
-As dependências são declaradas em `composer.json` e `package.json`, 
-com versões fixadas em `composer.lock` e `package-lock.json`. 
-As configurações da aplicação ficam em `config/`, 
-e os arquivos do Docker Compose definem os serviços e seus 
-ambientes de execução. Para localizar os componentes e entender suas 
+As dependências são declaradas em `composer.json` e `package.json`,
+com versões fixadas em `composer.lock` e `package-lock.json`.
+As configurações da aplicação ficam em `config/`,
+e os arquivos do Docker Compose definem os serviços e seus
+ambientes de execução. Para localizar os componentes e entender suas
 responsabilidades, consulte o catálogo de arquivos.
 
 ## Formatação do código

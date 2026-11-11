@@ -40,18 +40,18 @@ Mantenha cópias do banco, dos arquivos privados, da configuração e das chaves
 
 ## Diagnóstico
 
-| Falha | Verificação |
-|---|---|
-| Aplicação não inicia | Versão do esquema, credenciais, conectividade e logs do entrypoint. |
-| E-mails atrasados | Scheduler, workers, fila/outbox, transporte e health checks. |
-| Sessões inconsistentes | Volume compartilhado, chave, permissões de arquivos e validade de sessão de negócio. |
-| Página sem assets | Build Vite, manifesto e imagem implantada. |
-| Erro de conflito | Recarregar registro; conferir versão e transições permitidas. |
-| Download ausente | Metadados, arquivo privado, storage e autorização vigente. |
-| Monitoramento desatualizado | Data e fonte da posição, rastreador e integração efetiva. |
+| Falha                       | Verificação                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------ |
+| Aplicação não inicia        | Versão do esquema, credenciais, conectividade e logs do entrypoint.                  |
+| E-mails atrasados           | Scheduler, workers, fila/outbox, transporte e health checks.                         |
+| Sessões inconsistentes      | Volume compartilhado, chave, permissões de arquivos e validade de sessão de negócio. |
+| Página sem assets           | Build Vite, manifesto e imagem implantada.                                           |
+| Erro de conflito            | Recarregar registro; conferir versão e transições permitidas.                        |
+| Download ausente            | Metadados, arquivo privado, storage e autorização vigente.                           |
+| Monitoramento desatualizado | Data e fonte da posição, rastreador e integração efetiva.                            |
 
 Não cole .env, credenciais, tokens ou mensagens pessoais em relatórios públicos. Registre horário, módulo, identificador não sensível e erro reproduzível.
 
-
 ---
+
 [Voltar ao índice](README.md) · Referência: 09/11/2026.

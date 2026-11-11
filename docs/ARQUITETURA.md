@@ -29,15 +29,15 @@ flowchart TD
 
 ## Camadas e responsabilidades
 
-| Camada              | Implementação                                           | Responsabilidade                                                            |
-| ------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Entrada             | `public/index.php`, `artisan`, `bootstrap/`             | Inicializar o framework para HTTP ou console.                               |
-| Contrato HTTP       | `routes/`, `app/Http/Middleware/`, `app/Http/Requests/` | Resolver pontos de acesso, validar sessão, restringir acesso e validar entradas.   |
-| Coordenação         | `app/Http/Controllers/`                                 | Escolher leituras e ações, chamar serviços e produzir respostas.            |
-| Domínio             | `app/Services/`                                         | Executar fluxos, aplicar autorização, transações, concorrência e auditoria. |
-| Persistência        | Query Builder, Eloquent e `database/sql/`               | Consultar dados e executar o contrato relacional e suas rotinas.            |
-| Apresentação        | `resources/views/`, `resources/css/`, `resources/js/`   | Renderizar páginas e comportamentos da interface.                           |
-| Execução assíncrona | `app/Jobs/`, comandos e `routes/console.php`            | Entregar mensagens e supervisionar processos fora da requisição web.        |
+| Camada              | Implementação                                           | Responsabilidade                                                                 |
+| ------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Entrada             | `public/index.php`, `artisan`, `bootstrap/`             | Inicializar o framework para HTTP ou console.                                    |
+| Contrato HTTP       | `routes/`, `app/Http/Middleware/`, `app/Http/Requests/` | Resolver pontos de acesso, validar sessão, restringir acesso e validar entradas. |
+| Coordenação         | `app/Http/Controllers/`                                 | Escolher leituras e ações, chamar serviços e produzir respostas.                 |
+| Domínio             | `app/Services/`                                         | Executar fluxos, aplicar autorização, transações, concorrência e auditoria.      |
+| Persistência        | Query Builder, Eloquent e `database/sql/`               | Consultar dados e executar o contrato relacional e suas rotinas.                 |
+| Apresentação        | `resources/views/`, `resources/css/`, `resources/js/`   | Renderizar páginas e comportamentos da interface.                                |
+| Execução assíncrona | `app/Jobs/`, comandos e `routes/console.php`            | Entregar mensagens e supervisionar processos fora da requisição web.             |
 
 Os controladores recebem serviços por injeção de dependência. Os Form Requests
 descrevem entradas e verificações de autorização da ação; os serviços voltam a
@@ -231,6 +231,6 @@ o PHP da aplicação.
 Consulte a [estrutura de pastas](ESTRUTURA.md) para localizar cada camada e o
 [catálogo de arquivos](ARQUIVOS.md) para suas responsabilidades individuais.
 
-
 ---
+
 [Voltar ao índice](README.md) · Referência: 09/11/2026.

@@ -6,16 +6,16 @@ O dicionário abrange tabelas e visões do banco. Os tipos e os valores padrão 
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| despesa_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL |  |  |
-| combustivel | enum('gasolina','etanol','diesel','gnv','eletricidade','outro') | NO | NULL |  |  |
-| quantidade | decimal(12,3) | NO | NULL |  |  |
-| unidade_medida | enum('litro','m3','kwh') | NO | 'litro' |  |  |
-| preco_unitario | decimal(12,4) | NO | NULL |  |  |
-| quilometragem | decimal(12,1) | NO | NULL |  |  |
-| tanque_completo | tinyint(3) unsigned | NO | 0 |  |  |
+| Campo           | Tipo                                                            | Aceita NULL | Default | Chave | Comentário |
+| --------------- | --------------------------------------------------------------- | ----------- | ------- | ----- | ---------- |
+| despesa_id      | bigint(20) unsigned                                             | NO          | NULL    | PRI   |            |
+| veiculo_id      | bigint(20) unsigned                                             | NO          | NULL    |       |            |
+| combustivel     | enum('gasolina','etanol','diesel','gnv','eletricidade','outro') | NO          | NULL    |       |            |
+| quantidade      | decimal(12,3)                                                   | NO          | NULL    |       |            |
+| unidade_medida  | enum('litro','m3','kwh')                                        | NO          | 'litro' |       |            |
+| preco_unitario  | decimal(12,4)                                                   | NO          | NULL    |       |            |
+| quilometragem   | decimal(12,1)                                                   | NO          | NULL    |       |            |
+| tanque_completo | tinyint(3) unsigned                                             | NO          | 0       |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -26,29 +26,29 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| codigo | varchar(40) | NO | NULL | PRI |  |
-| nome | varchar(100) | NO | NULL |  |  |
+| Campo  | Tipo         | Aceita NULL | Default | Chave | Comentário |
+| ------ | ------------ | ----------- | ------- | ----- | ---------- |
+| codigo | varchar(40)  | NO          | NULL    | PRI   |            |
+| nome   | varchar(100) | NO          | NULL    |       |            |
 
 ## anexos
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| arquivo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| revisao_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| ocorrencia_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| checklist_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| despesa_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| manutencao_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| multa_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| chamado_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| mensagem_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| descricao | varchar(255) | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo         | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id            | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| arquivo_id    | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| revisao_id    | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| ocorrencia_id | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| checklist_id  | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| despesa_id    | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| manutencao_id | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| multa_id      | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| chamado_id    | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| mensagem_id   | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| descricao     | varchar(255)        | YES         | NULL                 |       |            |
+| criado_em     | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -66,12 +66,12 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| recuperacao_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| aprovada_por | bigint(20) unsigned | NO | NULL | PRI |  |
-| vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| aprovada_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo          | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| -------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| recuperacao_id | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| aprovada_por   | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| vinculo_id     | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| aprovada_em    | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -84,17 +84,17 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| enviado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| chave_armazenamento | varchar(255) | NO | NULL | UNI |  |
-| nome_original | varchar(255) | NO | NULL |  |  |
-| tipo_mime | varchar(120) | NO | NULL |  |  |
-| tamanho_bytes | bigint(20) unsigned | NO | NULL |  |  |
-| sha256 | binary(32) | NO | NULL | MUL |  |
-| situacao | enum('pendente','disponivel','bloqueado','arquivado') | NO | 'pendente' |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo               | Tipo                                                  | Aceita NULL | Default              | Chave | Comentário |
+| ------------------- | ----------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                  | bigint(20) unsigned                                   | NO          | NULL                 | PRI   |            |
+| enviado_por         | bigint(20) unsigned                                   | NO          | NULL                 | MUL   |            |
+| chave_armazenamento | varchar(255)                                          | NO          | NULL                 | UNI   |            |
+| nome_original       | varchar(255)                                          | NO          | NULL                 |       |            |
+| tipo_mime           | varchar(120)                                          | NO          | NULL                 |       |            |
+| tamanho_bytes       | bigint(20) unsigned                                   | NO          | NULL                 |       |            |
+| sha256              | binary(32)                                            | NO          | NULL                 | MUL   |            |
+| situacao            | enum('pendente','disponivel','bloqueado','arquivado') | NO          | 'pendente'           |       |            |
+| criado_em           | datetime(6)                                           | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -104,24 +104,24 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| ator_usuario_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| ator_vinculo_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| sessao_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| ator_nome_snapshot | varchar(150) | YES | NULL |  |  |
-| perfil_nome_snapshot | varchar(100) | YES | NULL |  |  |
-| perfil_codigo_snapshot | varchar(60) | YES | NULL |  |  |
-| evento | varchar(80) | NO | NULL |  |  |
-| entidade | varchar(60) | YES | NULL | MUL |  |
-| entidade_id | bigint(20) unsigned | YES | NULL |  |  |
-| correlacao | char(36) | YES | NULL |  |  |
-| descricao | varchar(1000) | YES | NULL |  |  |
-| antes | longtext | YES | NULL |  |  |
-| depois | longtext | YES | NULL |  |  |
-| ip | varbinary(16) | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) | MUL |  |
+| Campo                  | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ---------------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                     | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| ator_usuario_id        | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| ator_vinculo_id        | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| sessao_id              | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| ator_nome_snapshot     | varchar(150)        | YES         | NULL                 |       |            |
+| perfil_nome_snapshot   | varchar(100)        | YES         | NULL                 |       |            |
+| perfil_codigo_snapshot | varchar(60)         | YES         | NULL                 |       |            |
+| evento                 | varchar(80)         | NO          | NULL                 |       |            |
+| entidade               | varchar(60)         | YES         | NULL                 | MUL   |            |
+| entidade_id            | bigint(20) unsigned | YES         | NULL                 |       |            |
+| correlacao             | char(36)            | YES         | NULL                 |       |            |
+| descricao              | varchar(1000)       | YES         | NULL                 |       |            |
+| antes                  | longtext            | YES         | NULL                 |       |            |
+| depois                 | longtext            | YES         | NULL                 |       |            |
+| ip                     | varbinary(16)       | YES         | NULL                 |       |            |
+| criado_em              | datetime(6)         | NO          | current_timestamp(6) | MUL   |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -135,68 +135,68 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| key | varchar(255) | NO | NULL | PRI |  |
-| value | mediumtext | NO | NULL |  |  |
-| expiration | int(11) | NO | NULL | MUL |  |
+| Campo      | Tipo         | Aceita NULL | Default | Chave | Comentário |
+| ---------- | ------------ | ----------- | ------- | ----- | ---------- |
+| key        | varchar(255) | NO          | NULL    | PRI   |            |
+| value      | mediumtext   | NO          | NULL    |       |            |
+| expiration | int(11)      | NO          | NULL    | MUL   |            |
 
 ## cache_locks
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| key | varchar(255) | NO | NULL | PRI |  |
-| owner | varchar(255) | NO | NULL |  |  |
-| expiration | int(11) | NO | NULL | MUL |  |
+| Campo      | Tipo         | Aceita NULL | Default | Chave | Comentário |
+| ---------- | ------------ | ----------- | ------- | ----- | ---------- |
+| key        | varchar(255) | NO          | NULL    | PRI   |            |
+| owner      | varchar(255) | NO          | NULL    |       |            |
+| expiration | int(11)      | NO          | NULL    | MUL   |            |
 
 ## categorias_chamado
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | smallint(5) unsigned | NO | NULL | PRI |  |
-| nome | varchar(80) | NO | NULL | UNI |  |
-| ativa | tinyint(3) unsigned | NO | 1 |  |  |
+| Campo | Tipo                 | Aceita NULL | Default | Chave | Comentário |
+| ----- | -------------------- | ----------- | ------- | ----- | ---------- |
+| id    | smallint(5) unsigned | NO          | NULL    | PRI   |            |
+| nome  | varchar(80)          | NO          | NULL    | UNI   |            |
+| ativa | tinyint(3) unsigned  | NO          | 1       |       |            |
 
 ## categorias_despesa
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | smallint(5) unsigned | NO | NULL | PRI |  |
-| codigo | varchar(40) | NO | NULL | UNI |  |
-| nome | varchar(80) | NO | NULL |  |  |
-| ativa | tinyint(3) unsigned | NO | 1 |  |  |
+| Campo  | Tipo                 | Aceita NULL | Default | Chave | Comentário |
+| ------ | -------------------- | ----------- | ------- | ----- | ---------- |
+| id     | smallint(5) unsigned | NO          | NULL    | PRI   |            |
+| codigo | varchar(40)          | NO          | NULL    | UNI   |            |
+| nome   | varchar(80)          | NO          | NULL    |       |            |
+| ativa  | tinyint(3) unsigned  | NO          | 1       |       |            |
 
 ## categorias_veiculo
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | smallint(5) unsigned | NO | NULL | PRI |  |
-| nome | varchar(60) | NO | NULL | UNI |  |
-| categoria_cnh_requerida | char(1) | NO | 'B' |  |  |
-| ativa | tinyint(3) unsigned | NO | 1 |  |  |
+| Campo                   | Tipo                 | Aceita NULL | Default | Chave | Comentário |
+| ----------------------- | -------------------- | ----------- | ------- | ----- | ---------- |
+| id                      | smallint(5) unsigned | NO          | NULL    | PRI   |            |
+| nome                    | varchar(60)          | NO          | NULL    | UNI   |            |
+| categoria_cnh_requerida | char(1)              | NO          | 'B'     |       |            |
+| ativa                   | tinyint(3) unsigned  | NO          | 1       |       |            |
 
 ## chamado_eventos
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| chamado_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| ator_vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| tipo | varchar(40) | NO | NULL |  |  |
-| situacao_anterior | varchar(40) | YES | NULL |  |  |
-| situacao_nova | varchar(40) | NO | NULL |  |  |
-| motivo | text | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo             | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ----------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| chamado_id        | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| ator_vinculo_id   | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| tipo              | varchar(40)         | NO          | NULL                 |       |            |
+| situacao_anterior | varchar(40)         | YES         | NULL                 |       |            |
+| situacao_nova     | varchar(40)         | NO          | NULL                 |       |            |
+| motivo            | text                | YES         | NULL                 |       |            |
+| criado_em         | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -207,14 +207,14 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| chamado_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| autor_vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| mensagem | text | NO | NULL |  |  |
-| interna | tinyint(3) unsigned | NO | 0 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo            | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ---------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id               | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| chamado_id       | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| autor_vinculo_id | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| mensagem         | text                | NO          | NULL                 |       |            |
+| interna          | tinyint(3) unsigned | NO          | 0                    |       |            |
+| criado_em        | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -225,23 +225,23 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| protocolo | varchar(40) | NO | NULL | UNI |  |
-| solicitante_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| unidade_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| perfil_contexto_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| categoria_id | smallint(5) unsigned | NO | NULL | MUL |  |
-| assunto | varchar(200) | NO | NULL |  |  |
-| descricao | text | NO | NULL |  |  |
-| pagina_contexto | varchar(255) | YES | NULL |  |  |
-| situacao | enum('aberto','em_atendimento','aguardando_solicitante','resolvido') | NO | 'aberto' |  |  |
-| atribuido_a | bigint(20) unsigned | YES | NULL | MUL |  |
-| resolvido_em | datetime(6) | YES | NULL |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| atualizado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo              | Tipo                                                                 | Aceita NULL | Default              | Chave | Comentário |
+| ------------------ | -------------------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                 | bigint(20) unsigned                                                  | NO          | NULL                 | PRI   |            |
+| protocolo          | varchar(40)                                                          | NO          | NULL                 | UNI   |            |
+| solicitante_id     | bigint(20) unsigned                                                  | NO          | NULL                 | MUL   |            |
+| unidade_id         | bigint(20) unsigned                                                  | NO          | NULL                 | MUL   |            |
+| perfil_contexto_id | bigint(20) unsigned                                                  | NO          | NULL                 | MUL   |            |
+| categoria_id       | smallint(5) unsigned                                                 | NO          | NULL                 | MUL   |            |
+| assunto            | varchar(200)                                                         | NO          | NULL                 |       |            |
+| descricao          | text                                                                 | NO          | NULL                 |       |            |
+| pagina_contexto    | varchar(255)                                                         | YES         | NULL                 |       |            |
+| situacao           | enum('aberto','em_atendimento','aguardando_solicitante','resolvido') | NO          | 'aberto'             |       |            |
+| atribuido_a        | bigint(20) unsigned                                                  | YES         | NULL                 | MUL   |            |
+| resolvido_em       | datetime(6)                                                          | YES         | NULL                 |       |            |
+| versao             | bigint(20) unsigned                                                  | NO          | 1                    |       |            |
+| criado_em          | datetime(6)                                                          | NO          | current_timestamp(6) |       |            |
+| atualizado_em      | datetime(6)                                                          | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -255,32 +255,32 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | smallint(5) unsigned | NO | NULL | PRI |  |
-| codigo | varchar(40) | NO | NULL | UNI |  |
-| descricao | varchar(150) | NO | NULL |  |  |
-| obrigatorio | tinyint(3) unsigned | NO | 1 |  |  |
-| ativo | tinyint(3) unsigned | NO | 1 |  |  |
-| ordem | smallint(5) unsigned | NO | 0 |  |  |
+| Campo       | Tipo                 | Aceita NULL | Default | Chave | Comentário |
+| ----------- | -------------------- | ----------- | ------- | ----- | ---------- |
+| id          | smallint(5) unsigned | NO          | NULL    | PRI   |            |
+| codigo      | varchar(40)          | NO          | NULL    | UNI   |            |
+| descricao   | varchar(150)         | NO          | NULL    |       |            |
+| obrigatorio | tinyint(3) unsigned  | NO          | 1       |       |            |
+| ativo       | tinyint(3) unsigned  | NO          | 1       |       |            |
+| ordem       | smallint(5) unsigned | NO          | 0       |       |            |
 
 ## configuracao_sistema
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | tinyint(3) unsigned | NO | NULL | PRI |  |
-| nome_sistema | varchar(120) | NO | NULL |  |  |
-| nome_orgao | varchar(150) | NO | NULL |  |  |
-| sigla_orgao | varchar(30) | YES | NULL |  |  |
-| fuso_horario | varchar(64) | NO | 'America/Porto_Velho' |  |  |
-| moeda | char(3) | NO | 'BRL' |  |  |
-| sessao_inatividade_minutos | smallint(5) unsigned | NO | 30 |  |  |
-| limite_sem_comunicacao_minutos | smallint(5) unsigned | NO | 15 |  |  |
-| logo_arquivo_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| bootstrap_concluido | tinyint(3) unsigned | NO | 0 |  |  |
-| atualizado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                          | Tipo                 | Aceita NULL | Default               | Chave | Comentário |
+| ------------------------------ | -------------------- | ----------- | --------------------- | ----- | ---------- |
+| id                             | tinyint(3) unsigned  | NO          | NULL                  | PRI   |            |
+| nome_sistema                   | varchar(120)         | NO          | NULL                  |       |            |
+| nome_orgao                     | varchar(150)         | NO          | NULL                  |       |            |
+| sigla_orgao                    | varchar(30)          | YES         | NULL                  |       |            |
+| fuso_horario                   | varchar(64)          | NO          | 'America/Porto_Velho' |       |            |
+| moeda                          | char(3)              | NO          | 'BRL'                 |       |            |
+| sessao_inatividade_minutos     | smallint(5) unsigned | NO          | 30                    |       |            |
+| limite_sem_comunicacao_minutos | smallint(5) unsigned | NO          | 15                    |       |            |
+| logo_arquivo_id                | bigint(20) unsigned  | YES         | NULL                  | MUL   |            |
+| bootstrap_concluido            | tinyint(3) unsigned  | NO          | 0                     |       |            |
+| atualizado_em                  | datetime(6)          | NO          | current_timestamp(6)  |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -290,19 +290,19 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| usuario_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| vinculo_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| finalidade | enum('ativacao','email') | NO | NULL |  |  |
-| email_destino | varchar(254) | NO | NULL |  |  |
-| versao_seguranca | bigint(20) unsigned | NO | NULL |  |  |
-| token_hash | binary(32) | NO | NULL | UNI |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| expira_em | datetime(6) | NO | NULL |  |  |
-| usado_em | datetime(6) | YES | NULL |  |  |
-| invalidado_em | datetime(6) | YES | NULL |  |  |
+| Campo            | Tipo                     | Aceita NULL | Default              | Chave | Comentário |
+| ---------------- | ------------------------ | ----------- | -------------------- | ----- | ---------- |
+| id               | bigint(20) unsigned      | NO          | NULL                 | PRI   |            |
+| usuario_id       | bigint(20) unsigned      | NO          | NULL                 | MUL   |            |
+| vinculo_id       | bigint(20) unsigned      | YES         | NULL                 | MUL   |            |
+| finalidade       | enum('ativacao','email') | NO          | NULL                 |       |            |
+| email_destino    | varchar(254)             | NO          | NULL                 |       |            |
+| versao_seguranca | bigint(20) unsigned      | NO          | NULL                 |       |            |
+| token_hash       | binary(32)               | NO          | NULL                 | UNI   |            |
+| criado_em        | datetime(6)              | NO          | current_timestamp(6) |       |            |
+| expira_em        | datetime(6)              | NO          | NULL                 |       |            |
+| usado_em         | datetime(6)              | YES         | NULL                 |       |            |
+| invalidado_em    | datetime(6)              | YES         | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -314,19 +314,19 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| vinculo_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| usuario_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| perfil_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| unidade_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| vigente_desde | datetime(6) | NO | NULL |  |  |
-| vigente_ate | datetime(6) | YES | NULL |  |  |
-| ativo_vinculo | tinyint(3) unsigned | NO | NULL |  |  |
-| ativo_usuario | tinyint(3) unsigned | NO | NULL |  |  |
-| ativo_perfil | tinyint(3) unsigned | NO | NULL |  |  |
-| ativo_unidade | tinyint(3) unsigned | NO | NULL |  |  |
-| pode_administrar | tinyint(3) unsigned | NO | NULL | MUL |  |
+| Campo            | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ---------------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| vinculo_id       | bigint(20) unsigned | NO          | NULL    | PRI   |            |
+| usuario_id       | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| perfil_id        | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| unidade_id       | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| vigente_desde    | datetime(6)         | NO          | NULL    |       |            |
+| vigente_ate      | datetime(6)         | YES         | NULL    |       |            |
+| ativo_vinculo    | tinyint(3) unsigned | NO          | NULL    |       |            |
+| ativo_usuario    | tinyint(3) unsigned | NO          | NULL    |       |            |
+| ativo_perfil     | tinyint(3) unsigned | NO          | NULL    |       |            |
+| ativo_unidade    | tinyint(3) unsigned | NO          | NULL    |       |            |
+| pode_administrar | tinyint(3) unsigned | NO          | NULL    | MUL   |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -339,15 +339,15 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| usuario_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| credential_id | varchar(1366) | NO | NULL | UNI |  |
-| registro | longtext | NO | NULL |  |  |
-| criada_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| usada_em | datetime(6) | YES | NULL |  |  |
-| revogada_em | datetime(6) | YES | NULL |  |  |
+| Campo         | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id            | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| usuario_id    | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| credential_id | varchar(1366)       | NO          | NULL                 | UNI   |            |
+| registro      | longtext            | NO          | NULL                 |       |            |
+| criada_em     | datetime(6)         | NO          | current_timestamp(6) |       |            |
+| usada_em      | datetime(6)         | YES         | NULL                 |       |            |
+| revogada_em   | datetime(6)         | YES         | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -357,19 +357,19 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| usuario_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| sessao_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| versao_seguranca | bigint(20) unsigned | NO | NULL |  |  |
-| http_hash | binary(32) | NO | NULL |  |  |
-| finalidade | enum('registration','assertion') | NO | NULL |  |  |
-| opcoes | longtext | NO | NULL |  |  |
-| expira_em | datetime(6) | NO | NULL |  |  |
-| usado_em | datetime(6) | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo            | Tipo                             | Aceita NULL | Default              | Chave | Comentário |
+| ---------------- | -------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id               | bigint(20) unsigned              | NO          | NULL                 | PRI   |            |
+| usuario_id       | bigint(20) unsigned              | NO          | NULL                 | MUL   |            |
+| sessao_id        | bigint(20) unsigned              | NO          | NULL                 | MUL   |            |
+| vinculo_id       | bigint(20) unsigned              | NO          | NULL                 | MUL   |            |
+| versao_seguranca | bigint(20) unsigned              | NO          | NULL                 |       |            |
+| http_hash        | binary(32)                       | NO          | NULL                 |       |            |
+| finalidade       | enum('registration','assertion') | NO          | NULL                 |       |            |
+| opcoes           | longtext                         | NO          | NULL                 |       |            |
+| expira_em        | datetime(6)                      | NO          | NULL                 |       |            |
+| usado_em         | datetime(6)                      | YES         | NULL                 |       |            |
+| criado_em        | datetime(6)                      | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -383,16 +383,16 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| despesa_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| ator_vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| tipo | varchar(40) | NO | NULL |  |  |
-| situacao_anterior | varchar(40) | YES | NULL |  |  |
-| situacao_nova | varchar(40) | NO | NULL |  |  |
-| motivo | text | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo             | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ----------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| despesa_id        | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| ator_vinculo_id   | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| tipo              | varchar(40)         | NO          | NULL                 |       |            |
+| situacao_anterior | varchar(40)         | YES         | NULL                 |       |            |
+| situacao_nova     | varchar(40)         | NO          | NULL                 |       |            |
+| motivo            | text                | YES         | NULL                 |       |            |
+| criado_em         | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -403,23 +403,23 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| protocolo | varchar(40) | NO | NULL | UNI |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| unidade_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| categoria_id | smallint(5) unsigned | NO | NULL | MUL |  |
-| fornecedor_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| data_despesa | date | NO | NULL |  |  |
-| valor | decimal(13,2) | NO | NULL |  |  |
-| descricao | text | NO | NULL |  |  |
-| numero_documento | varchar(100) | YES | NULL |  |  |
-| situacao | enum('registrada','em_conferencia','aprovada','paga','cancelada') | NO | 'registrada' |  |  |
-| criado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| atualizado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo            | Tipo                                                              | Aceita NULL | Default              | Chave | Comentário |
+| ---------------- | ----------------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id               | bigint(20) unsigned                                               | NO          | NULL                 | PRI   |            |
+| protocolo        | varchar(40)                                                       | NO          | NULL                 | UNI   |            |
+| veiculo_id       | bigint(20) unsigned                                               | NO          | NULL                 | MUL   |            |
+| unidade_id       | bigint(20) unsigned                                               | NO          | NULL                 | MUL   |            |
+| categoria_id     | smallint(5) unsigned                                              | NO          | NULL                 | MUL   |            |
+| fornecedor_id    | bigint(20) unsigned                                               | YES         | NULL                 | MUL   |            |
+| data_despesa     | date                                                              | NO          | NULL                 |       |            |
+| valor            | decimal(13,2)                                                     | NO          | NULL                 |       |            |
+| descricao        | text                                                              | NO          | NULL                 |       |            |
+| numero_documento | varchar(100)                                                      | YES         | NULL                 |       |            |
+| situacao         | enum('registrada','em_conferencia','aprovada','paga','cancelada') | NO          | 'registrada'         |       |            |
+| criado_por       | bigint(20) unsigned                                               | NO          | NULL                 | MUL   |            |
+| versao           | bigint(20) unsigned                                               | NO          | 1                    |       |            |
+| criado_em        | datetime(6)                                                       | NO          | current_timestamp(6) |       |            |
+| atualizado_em    | datetime(6)                                                       | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -433,18 +433,18 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| arquivo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| tipo | varchar(60) | NO | NULL |  |  |
-| numero | varchar(80) | YES | NULL |  |  |
-| exercicio | smallint(5) unsigned | YES | NULL |  |  |
-| emitido_em | date | YES | NULL |  |  |
-| vence_em | date | YES | NULL | MUL |  |
-| substitui_documento_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                  | Tipo                 | Aceita NULL | Default              | Chave | Comentário |
+| ---------------------- | -------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                     | bigint(20) unsigned  | NO          | NULL                 | PRI   |            |
+| veiculo_id             | bigint(20) unsigned  | NO          | NULL                 | MUL   |            |
+| arquivo_id             | bigint(20) unsigned  | NO          | NULL                 | MUL   |            |
+| tipo                   | varchar(60)          | NO          | NULL                 |       |            |
+| numero                 | varchar(80)          | YES         | NULL                 |       |            |
+| exercicio              | smallint(5) unsigned | YES         | NULL                 |       |            |
+| emitido_em             | date                 | YES         | NULL                 |       |            |
+| vence_em               | date                 | YES         | NULL                 | MUL   |            |
+| substitui_documento_id | bigint(20) unsigned  | YES         | NULL                 | MUL   |            |
+| criado_em              | datetime(6)          | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -456,28 +456,28 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| evento_chave | char(36) | NO | NULL | UNI |  |
-| usuario_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| finalidade | enum('ativacao','email','recuperacao','aviso') | NO | NULL |  |  |
-| versao_seguranca | bigint(20) unsigned | NO | NULL |  |  |
-| destinatario_cifrado | text | YES | NULL |  |  |
-| token_cifrado | text | YES | NULL |  |  |
-| recuperacao_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| confirmacao_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| aviso_codigo | varchar(80) | YES | NULL |  |  |
-| estado | enum('pendente','enfileirado','enviando','aceito','cancelado','falhou') | NO | 'pendente' | MUL |  |
-| tentativas | smallint(5) unsigned | NO | 0 |  |  |
-| proxima_tentativa_em | datetime(6) | NO | NULL |  |  |
-| expira_em | datetime(6) | NO | NULL |  |  |
-| lease_id | char(36) | YES | NULL |  |  |
-| lease_ate | datetime(6) | YES | NULL |  |  |
-| aceito_smtp_em | datetime(6) | YES | NULL |  |  |
-| provedor_id | varchar(150) | YES | NULL |  |  |
-| codigo_erro | varchar(60) | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                | Tipo                                                                    | Aceita NULL | Default              | Chave | Comentário |
+| -------------------- | ----------------------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                   | bigint(20) unsigned                                                     | NO          | NULL                 | PRI   |            |
+| evento_chave         | char(36)                                                                | NO          | NULL                 | UNI   |            |
+| usuario_id           | bigint(20) unsigned                                                     | NO          | NULL                 | MUL   |            |
+| finalidade           | enum('ativacao','email','recuperacao','aviso')                          | NO          | NULL                 |       |            |
+| versao_seguranca     | bigint(20) unsigned                                                     | NO          | NULL                 |       |            |
+| destinatario_cifrado | text                                                                    | YES         | NULL                 |       |            |
+| token_cifrado        | text                                                                    | YES         | NULL                 |       |            |
+| recuperacao_id       | bigint(20) unsigned                                                     | YES         | NULL                 | MUL   |            |
+| confirmacao_id       | bigint(20) unsigned                                                     | YES         | NULL                 | MUL   |            |
+| aviso_codigo         | varchar(80)                                                             | YES         | NULL                 |       |            |
+| estado               | enum('pendente','enfileirado','enviando','aceito','cancelado','falhou') | NO          | 'pendente'           | MUL   |            |
+| tentativas           | smallint(5) unsigned                                                    | NO          | 0                    |       |            |
+| proxima_tentativa_em | datetime(6)                                                             | NO          | NULL                 |       |            |
+| expira_em            | datetime(6)                                                             | NO          | NULL                 |       |            |
+| lease_id             | char(36)                                                                | YES         | NULL                 |       |            |
+| lease_ate            | datetime(6)                                                             | YES         | NULL                 |       |            |
+| aceito_smtp_em       | datetime(6)                                                             | YES         | NULL                 |       |            |
+| provedor_id          | varchar(150)                                                            | YES         | NULL                 |       |            |
+| codigo_erro          | varchar(60)                                                             | YES         | NULL                 |       |            |
+| criado_em            | datetime(6)                                                             | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -489,12 +489,12 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| exportacao_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| campo_id | smallint(5) unsigned | NO | NULL | PRI |  |
-| modulo_codigo | varchar(40) | NO | NULL |  |  |
-| ordem | smallint(5) unsigned | NO | NULL |  |  |
+| Campo         | Tipo                 | Aceita NULL | Default | Chave | Comentário |
+| ------------- | -------------------- | ----------- | ------- | ----- | ---------- |
+| exportacao_id | bigint(20) unsigned  | NO          | NULL    | PRI   |            |
+| campo_id      | smallint(5) unsigned | NO          | NULL    | PRI   |            |
+| modulo_codigo | varchar(40)          | NO          | NULL    |       |            |
+| ordem         | smallint(5) unsigned | NO          | NULL    |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -507,24 +507,24 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| exportacao_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| ordem | bigint(20) unsigned | NO | NULL |  |  |
-| solicitacao_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| viagem_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| veiculo_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| despesa_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| multa_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| chamado_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| usuario_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| perfil_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| rota_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| auditoria_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| posicao_rastreamento_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| posicao_manual_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| snapshot | longtext | NO | NULL |  |  |
+| Campo                   | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ----------------------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| id                      | bigint(20) unsigned | NO          | NULL    | PRI   |            |
+| exportacao_id           | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| ordem                   | bigint(20) unsigned | NO          | NULL    |       |            |
+| solicitacao_id          | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| viagem_id               | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| veiculo_id              | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| despesa_id              | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| multa_id                | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| chamado_id              | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| usuario_id              | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| perfil_id               | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| rota_id                 | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| auditoria_id            | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| posicao_rastreamento_id | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| posicao_manual_id       | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| snapshot                | longtext            | NO          | NULL    |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -546,28 +546,28 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| solicitado_por_vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| modulo_codigo | varchar(40) | NO | NULL | MUL |  |
-| formato | enum('md','csv','xlsx','pdf') | NO | NULL |  |  |
-| situacao | enum('previa','fila','processando','concluida','falhou','expirada','cancelada') | NO | 'previa' | MUL |  |
-| periodo_inicio | date | YES | NULL |  |  |
-| periodo_fim | date | YES | NULL |  |  |
-| periodo_inicio_utc | datetime(6) | YES | NULL |  |  |
-| periodo_fim_utc | datetime(6) | YES | NULL |  |  |
-| fuso_apresentacao | varchar(64) | NO | 'America/Porto_Velho' |  |  |
-| filtros | longtext | NO | NULL |  |  |
-| alcance_aplicado | enum('proprios','unidade','orgao') | NO | NULL |  |  |
-| unidade_aplicada_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| total_registros | bigint(20) unsigned | NO | 0 |  |  |
-| arquivo_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| erro_codigo | varchar(60) | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| iniciado_em | datetime(6) | YES | NULL |  |  |
-| concluido_em | datetime(6) | YES | NULL |  |  |
-| expira_em | datetime(6) | YES | NULL |  |  |
+| Campo                     | Tipo                                                                            | Aceita NULL | Default               | Chave | Comentário |
+| ------------------------- | ------------------------------------------------------------------------------- | ----------- | --------------------- | ----- | ---------- |
+| id                        | bigint(20) unsigned                                                             | NO          | NULL                  | PRI   |            |
+| solicitado_por_vinculo_id | bigint(20) unsigned                                                             | NO          | NULL                  | MUL   |            |
+| modulo_codigo             | varchar(40)                                                                     | NO          | NULL                  | MUL   |            |
+| formato                   | enum('md','csv','xlsx','pdf')                                                   | NO          | NULL                  |       |            |
+| situacao                  | enum('previa','fila','processando','concluida','falhou','expirada','cancelada') | NO          | 'previa'              | MUL   |            |
+| periodo_inicio            | date                                                                            | YES         | NULL                  |       |            |
+| periodo_fim               | date                                                                            | YES         | NULL                  |       |            |
+| periodo_inicio_utc        | datetime(6)                                                                     | YES         | NULL                  |       |            |
+| periodo_fim_utc           | datetime(6)                                                                     | YES         | NULL                  |       |            |
+| fuso_apresentacao         | varchar(64)                                                                     | NO          | 'America/Porto_Velho' |       |            |
+| filtros                   | longtext                                                                        | NO          | NULL                  |       |            |
+| alcance_aplicado          | enum('proprios','unidade','orgao')                                              | NO          | NULL                  |       |            |
+| unidade_aplicada_id       | bigint(20) unsigned                                                             | YES         | NULL                  | MUL   |            |
+| total_registros           | bigint(20) unsigned                                                             | NO          | 0                     |       |            |
+| arquivo_id                | bigint(20) unsigned                                                             | YES         | NULL                  | MUL   |            |
+| erro_codigo               | varchar(60)                                                                     | YES         | NULL                  |       |            |
+| criado_em                 | datetime(6)                                                                     | NO          | current_timestamp(6)  |       |            |
+| iniciado_em               | datetime(6)                                                                     | YES         | NULL                  |       |            |
+| concluido_em              | datetime(6)                                                                     | YES         | NULL                  |       |            |
+| expira_em                 | datetime(6)                                                                     | YES         | NULL                  |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -580,55 +580,55 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| uuid | varchar(255) | NO | NULL | UNI |  |
-| connection | text | NO | NULL |  |  |
-| queue | text | NO | NULL |  |  |
-| payload | longtext | NO | NULL |  |  |
-| exception | longtext | NO | NULL |  |  |
-| failed_at | timestamp | NO | current_timestamp() |  |  |
+| Campo      | Tipo                | Aceita NULL | Default             | Chave | Comentário |
+| ---------- | ------------------- | ----------- | ------------------- | ----- | ---------- |
+| id         | bigint(20) unsigned | NO          | NULL                | PRI   |            |
+| uuid       | varchar(255)        | NO          | NULL                | UNI   |            |
+| connection | text                | NO          | NULL                |       |            |
+| queue      | text                | NO          | NULL                |       |            |
+| payload    | longtext            | NO          | NULL                |       |            |
+| exception  | longtext            | NO          | NULL                |       |            |
+| failed_at  | timestamp           | NO          | current_timestamp() |       |            |
 
 ## fornecedores
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| nome | varchar(150) | NO | NULL |  |  |
-| cpf_cnpj | varchar(14) | YES | NULL | UNI |  |
-| email | varchar(254) | YES | NULL |  |  |
-| telefone | varchar(30) | YES | NULL |  |  |
-| ativo | tinyint(3) unsigned | NO | 1 |  |  |
+| Campo    | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| -------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| id       | bigint(20) unsigned | NO          | NULL    | PRI   |            |
+| nome     | varchar(150)        | NO          | NULL    |       |            |
+| cpf_cnpj | varchar(14)         | YES         | NULL    | UNI   |            |
+| email    | varchar(254)        | YES         | NULL    |       |            |
+| telefone | varchar(30)         | YES         | NULL    |       |            |
+| ativo    | tinyint(3) unsigned | NO          | 1       |       |            |
 
 ## jobs
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| queue | varchar(255) | NO | NULL | MUL |  |
-| payload | longtext | NO | NULL |  |  |
-| attempts | tinyint(3) unsigned | NO | NULL |  |  |
-| reserved_at | int(10) unsigned | YES | NULL |  |  |
-| available_at | int(10) unsigned | NO | NULL |  |  |
-| created_at | int(10) unsigned | NO | NULL |  |  |
+| Campo        | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ------------ | ------------------- | ----------- | ------- | ----- | ---------- |
+| id           | bigint(20) unsigned | NO          | NULL    | PRI   |            |
+| queue        | varchar(255)        | NO          | NULL    | MUL   |            |
+| payload      | longtext            | NO          | NULL    |       |            |
+| attempts     | tinyint(3) unsigned | NO          | NULL    |       |            |
+| reserved_at  | int(10) unsigned    | YES         | NULL    |       |            |
+| available_at | int(10) unsigned    | NO          | NULL    |       |            |
+| created_at   | int(10) unsigned    | NO          | NULL    |       |            |
 
 ## manutencao_itens
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| manutencao_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| tipo | enum('peca','servico') | NO | NULL |  |  |
-| descricao | varchar(255) | NO | NULL |  |  |
-| quantidade | decimal(12,3) | NO | 1.000 |  |  |
-| valor_unitario | decimal(13,2) | NO | NULL |  |  |
+| Campo          | Tipo                   | Aceita NULL | Default | Chave | Comentário |
+| -------------- | ---------------------- | ----------- | ------- | ----- | ---------- |
+| id             | bigint(20) unsigned    | NO          | NULL    | PRI   |            |
+| manutencao_id  | bigint(20) unsigned    | NO          | NULL    | MUL   |            |
+| tipo           | enum('peca','servico') | NO          | NULL    |       |            |
+| descricao      | varchar(255)           | NO          | NULL    |       |            |
+| quantidade     | decimal(12,3)          | NO          | 1.000   |       |            |
+| valor_unitario | decimal(13,2)          | NO          | NULL    |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -638,26 +638,26 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| protocolo | varchar(40) | NO | NULL | UNI |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| despesa_id | bigint(20) unsigned | YES | NULL | UNI |  |
-| reserva_id | bigint(20) unsigned | YES | NULL | UNI |  |
-| fornecedor_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| tipo | enum('preventiva','corretiva','vistoria') | NO | NULL |  |  |
-| situacao | enum('planejada','em_execucao','concluida','cancelada') | NO | 'planejada' |  |  |
-| descricao | text | NO | NULL |  |  |
-| inicio_previsto | datetime(6) | NO | NULL |  |  |
-| fim_previsto | datetime(6) | NO | NULL |  |  |
-| inicio_real | datetime(6) | YES | NULL |  |  |
-| fim_real | datetime(6) | YES | NULL |  |  |
-| quilometragem | decimal(12,1) | YES | NULL |  |  |
-| proxima_revisao_km | decimal(12,1) | YES | NULL |  |  |
-| proxima_revisao_data | date | YES | NULL |  |  |
-| criado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                | Tipo                                                    | Aceita NULL | Default              | Chave | Comentário |
+| -------------------- | ------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                   | bigint(20) unsigned                                     | NO          | NULL                 | PRI   |            |
+| protocolo            | varchar(40)                                             | NO          | NULL                 | UNI   |            |
+| veiculo_id           | bigint(20) unsigned                                     | NO          | NULL                 | MUL   |            |
+| despesa_id           | bigint(20) unsigned                                     | YES         | NULL                 | UNI   |            |
+| reserva_id           | bigint(20) unsigned                                     | YES         | NULL                 | UNI   |            |
+| fornecedor_id        | bigint(20) unsigned                                     | YES         | NULL                 | MUL   |            |
+| tipo                 | enum('preventiva','corretiva','vistoria')               | NO          | NULL                 |       |            |
+| situacao             | enum('planejada','em_execucao','concluida','cancelada') | NO          | 'planejada'          |       |            |
+| descricao            | text                                                    | NO          | NULL                 |       |            |
+| inicio_previsto      | datetime(6)                                             | NO          | NULL                 |       |            |
+| fim_previsto         | datetime(6)                                             | NO          | NULL                 |       |            |
+| inicio_real          | datetime(6)                                             | YES         | NULL                 |       |            |
+| fim_real             | datetime(6)                                             | YES         | NULL                 |       |            |
+| quilometragem        | decimal(12,1)                                           | YES         | NULL                 |       |            |
+| proxima_revisao_km   | decimal(12,1)                                           | YES         | NULL                 |       |            |
+| proxima_revisao_data | date                                                    | YES         | NULL                 |       |            |
+| criado_por           | bigint(20) unsigned                                     | NO          | NULL                 | MUL   |            |
+| criado_em            | datetime(6)                                             | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -673,10 +673,10 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| modulo_codigo | varchar(40) | NO | NULL | PRI |  |
-| acao_codigo | varchar(40) | NO | NULL | PRI |  |
+| Campo         | Tipo        | Aceita NULL | Default | Chave | Comentário |
+| ------------- | ----------- | ----------- | ------- | ----- | ---------- |
+| modulo_codigo | varchar(40) | NO          | NULL    | PRI   |            |
+| acao_codigo   | varchar(40) | NO          | NULL    | PRI   |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -687,26 +687,26 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| codigo | varchar(40) | NO | NULL | PRI |  |
-| nome | varchar(100) | NO | NULL |  |  |
-| ordem | smallint(5) unsigned | NO | 0 |  |  |
-| ativo | tinyint(3) unsigned | NO | 1 |  |  |
+| Campo  | Tipo                 | Aceita NULL | Default | Chave | Comentário |
+| ------ | -------------------- | ----------- | ------- | ----- | ---------- |
+| codigo | varchar(40)          | NO          | NULL    | PRI   |            |
+| nome   | varchar(100)         | NO          | NULL    |       |            |
+| ordem  | smallint(5) unsigned | NO          | 0       |       |            |
+| ativo  | tinyint(3) unsigned  | NO          | 1       |       |            |
 
 ## motoristas
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| usuario_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| numero_cnh | varchar(20) | NO | NULL | UNI |  |
-| categoria_cnh | varchar(10) | NO | NULL |  |  |
-| categorias_autorizadas | varchar(5) | NO | NULL |  |  |
-| validade_cnh | date | NO | NULL |  |  |
-| ativo | tinyint(3) unsigned | NO | 1 |  |  |
-| cnh_arquivo_id | bigint(20) unsigned | YES | NULL | MUL |  |
+| Campo                  | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ---------------------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| usuario_id             | bigint(20) unsigned | NO          | NULL    | PRI   |            |
+| numero_cnh             | varchar(20)         | NO          | NULL    | UNI   |            |
+| categoria_cnh          | varchar(10)         | NO          | NULL    |       |            |
+| categorias_autorizadas | varchar(5)          | NO          | NULL    |       |            |
+| validade_cnh           | date                | NO          | NULL    |       |            |
+| ativo                  | tinyint(3) unsigned | NO          | 1       |       |            |
+| cnh_arquivo_id         | bigint(20) unsigned | YES         | NULL    | MUL   |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -717,18 +717,18 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| multa_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| numero | int(10) unsigned | NO | NULL |  |  |
-| responsabilidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| arquivo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| enviado_por_vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| valor_declarado | decimal(13,2) | NO | NULL |  |  |
-| pagamento_declarado_em | datetime(6) | NO | NULL |  |  |
-| observacao | text | YES | NULL |  |  |
-| enviado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                  | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ---------------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                     | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| multa_id               | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| numero                 | int(10) unsigned    | NO          | NULL                 |       |            |
+| responsabilidade_id    | bigint(20) unsigned | NO          | NULL                 |       |            |
+| arquivo_id             | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| enviado_por_vinculo_id | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| valor_declarado        | decimal(13,2)       | NO          | NULL                 |       |            |
+| pagamento_declarado_em | datetime(6)         | NO          | NULL                 |       |            |
+| observacao             | text                | YES         | NULL                 |       |            |
+| enviado_em             | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -741,17 +741,17 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| multa_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| comprovante_id | bigint(20) unsigned | NO | NULL | UNI |  |
-| conferido_por_vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| resultado | enum('aceito','correcao_solicitada') | NO | NULL |  |  |
-| motivo | text | YES | NULL |  |  |
-| valor_confirmado | decimal(13,2) | YES | NULL |  |  |
-| pagamento_confirmado_em | datetime(6) | YES | NULL |  |  |
-| conferido_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                    | Tipo                                 | Aceita NULL | Default              | Chave | Comentário |
+| ------------------------ | ------------------------------------ | ----------- | -------------------- | ----- | ---------- |
+| id                       | bigint(20) unsigned                  | NO          | NULL                 | PRI   |            |
+| multa_id                 | bigint(20) unsigned                  | NO          | NULL                 | MUL   |            |
+| comprovante_id           | bigint(20) unsigned                  | NO          | NULL                 | UNI   |            |
+| conferido_por_vinculo_id | bigint(20) unsigned                  | NO          | NULL                 | MUL   |            |
+| resultado                | enum('aceito','correcao_solicitada') | NO          | NULL                 |       |            |
+| motivo                   | text                                 | YES         | NULL                 |       |            |
+| valor_confirmado         | decimal(13,2)                        | YES         | NULL                 |       |            |
+| pagamento_confirmado_em  | datetime(6)                          | YES         | NULL                 |       |            |
+| conferido_em             | datetime(6)                          | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -763,16 +763,16 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| multa_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| ator_vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| tipo | varchar(40) | NO | NULL |  |  |
-| situacao_anterior | varchar(40) | YES | NULL |  |  |
-| situacao_nova | varchar(40) | NO | NULL |  |  |
-| motivo | text | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo             | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ----------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| multa_id          | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| ator_vinculo_id   | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| tipo              | varchar(40)         | NO          | NULL                 |       |            |
+| situacao_anterior | varchar(40)         | YES         | NULL                 |       |            |
+| situacao_nova     | varchar(40)         | NO          | NULL                 |       |            |
+| motivo            | text                | YES         | NULL                 |       |            |
+| criado_em         | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -783,18 +783,18 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| multa_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL |  |  |
-| viagem_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| motorista_id | bigint(20) unsigned | NO | NULL |  |  |
-| responsavel_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| numero | int(10) unsigned | NO | NULL |  |  |
-| confirmado_por_vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| confirmado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| justificativa | text | NO | NULL |  |  |
+| Campo                     | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ------------------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                        | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| multa_id                  | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| veiculo_id                | bigint(20) unsigned | NO          | NULL                 |       |            |
+| viagem_id                 | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| motorista_id              | bigint(20) unsigned | NO          | NULL                 |       |            |
+| responsavel_id            | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| numero                    | int(10) unsigned    | NO          | NULL                 |       |            |
+| confirmado_por_vinculo_id | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| confirmado_em             | datetime(6)         | NO          | current_timestamp(6) |       |            |
+| justificativa             | text                | NO          | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -810,25 +810,25 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| protocolo | varchar(40) | NO | NULL | UNI |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| unidade_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| numero_auto | varchar(100) | YES | NULL |  |  |
-| orgao_autuador | varchar(150) | YES | NULL | MUL |  |
-| ocorrido_em | datetime(6) | NO | NULL |  |  |
-| precisao_ocorrencia | enum('dia','instante') | NO | 'instante' |  |  |
-| fim_dia_ocorrencia_utc | datetime(6) | YES | NULL |  |  |
-| data_vencimento | date | YES | NULL |  |  |
-| valor | decimal(13,2) | NO | NULL |  |  |
-| descricao | text | NO | NULL |  |  |
-| situacao | enum('sem_responsavel','aguardando_comprovante','em_conferencia','quitada','contestada','cancelada') | NO | 'sem_responsavel' |  |  |
-| responsabilidade_atual_id | bigint(20) unsigned | YES | NULL |  |  |
-| criado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                     | Tipo                                                                                                 | Aceita NULL | Default              | Chave | Comentário |
+| ------------------------- | ---------------------------------------------------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                        | bigint(20) unsigned                                                                                  | NO          | NULL                 | PRI   |            |
+| protocolo                 | varchar(40)                                                                                          | NO          | NULL                 | UNI   |            |
+| veiculo_id                | bigint(20) unsigned                                                                                  | NO          | NULL                 | MUL   |            |
+| unidade_id                | bigint(20) unsigned                                                                                  | NO          | NULL                 | MUL   |            |
+| numero_auto               | varchar(100)                                                                                         | YES         | NULL                 |       |            |
+| orgao_autuador            | varchar(150)                                                                                         | YES         | NULL                 | MUL   |            |
+| ocorrido_em               | datetime(6)                                                                                          | NO          | NULL                 |       |            |
+| precisao_ocorrencia       | enum('dia','instante')                                                                               | NO          | 'instante'           |       |            |
+| fim_dia_ocorrencia_utc    | datetime(6)                                                                                          | YES         | NULL                 |       |            |
+| data_vencimento           | date                                                                                                 | YES         | NULL                 |       |            |
+| valor                     | decimal(13,2)                                                                                        | NO          | NULL                 |       |            |
+| descricao                 | text                                                                                                 | NO          | NULL                 |       |            |
+| situacao                  | enum('sem_responsavel','aguardando_comprovante','em_conferencia','quitada','contestada','cancelada') | NO          | 'sem_responsavel'    |       |            |
+| responsabilidade_atual_id | bigint(20) unsigned                                                                                  | YES         | NULL                 |       |            |
+| criado_por                | bigint(20) unsigned                                                                                  | NO          | NULL                 | MUL   |            |
+| versao                    | bigint(20) unsigned                                                                                  | NO          | 1                    |       |            |
+| criado_em                 | datetime(6)                                                                                          | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -842,14 +842,14 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| evento_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| usuario_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| lida_em | datetime(6) | YES | NULL |  |  |
-| oculta_em | datetime(6) | YES | NULL |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| entregue_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo       | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ----------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| evento_id   | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| usuario_id  | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| lida_em     | datetime(6)         | YES         | NULL                 |       |            |
+| oculta_em   | datetime(6)         | YES         | NULL                 |       |            |
+| versao      | bigint(20) unsigned | NO          | 1                    |       |            |
+| entregue_em | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -860,20 +860,20 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| chave_idempotencia | varchar(160) | NO | NULL | UNI |  |
-| tipo | varchar(60) | NO | NULL |  |  |
-| titulo | varchar(160) | NO | NULL |  |  |
-| mensagem | varchar(1000) | NO | NULL |  |  |
-| caminho_destino | varchar(255) | YES | NULL |  |  |
-| solicitacao_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| viagem_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| multa_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| despesa_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| chamado_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo              | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ------------------ | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                 | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| chave_idempotencia | varchar(160)        | NO          | NULL                 | UNI   |            |
+| tipo               | varchar(60)         | NO          | NULL                 |       |            |
+| titulo             | varchar(160)        | NO          | NULL                 |       |            |
+| mensagem           | varchar(1000)       | NO          | NULL                 |       |            |
+| caminho_destino    | varchar(255)        | YES         | NULL                 |       |            |
+| solicitacao_id     | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| viagem_id          | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| multa_id           | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| despesa_id         | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| chamado_id         | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| criado_em          | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -887,15 +887,15 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| reserva_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| motorista_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| viagem_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| em_andamento | tinyint(3) unsigned | NO | 0 |  |  |
-| inicio | datetime(6) | NO | NULL |  |  |
-| fim | datetime(6) | NO | NULL |  |  |
+| Campo        | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ------------ | ------------------- | ----------- | ------- | ----- | ---------- |
+| reserva_id   | bigint(20) unsigned | NO          | NULL    | PRI   |            |
+| veiculo_id   | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| motorista_id | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| viagem_id    | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| em_andamento | tinyint(3) unsigned | NO          | 0       |       |            |
+| inicio       | datetime(6)         | NO          | NULL    |       |            |
+| fim          | datetime(6)         | NO          | NULL    |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -908,15 +908,15 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| despesa_id | bigint(20) unsigned | NO | NULL | UNI |  |
-| valor | decimal(13,2) | NO | NULL |  |  |
-| pago_em | datetime(6) | NO | NULL |  |  |
-| comprovante_arquivo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| confirmado_por_vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| confirmado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                     | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ------------------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                        | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| despesa_id                | bigint(20) unsigned | NO          | NULL                 | UNI   |            |
+| valor                     | decimal(13,2)       | NO          | NULL                 |       |            |
+| pago_em                   | datetime(6)         | NO          | NULL                 |       |            |
+| comprovante_arquivo_id    | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| confirmado_por_vinculo_id | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| confirmado_em             | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -928,14 +928,14 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| multa_id | bigint(20) unsigned | NO | NULL | UNI |  |
-| conferencia_id | bigint(20) unsigned | NO | NULL | UNI |  |
-| valor | decimal(13,2) | NO | NULL |  |  |
-| pago_em | datetime(6) | NO | NULL |  |  |
-| registrado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo          | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| -------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id             | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| multa_id       | bigint(20) unsigned | NO          | NULL                 | UNI   |            |
+| conferencia_id | bigint(20) unsigned | NO          | NULL                 | UNI   |            |
+| valor          | decimal(13,2)       | NO          | NULL                 |       |            |
+| pago_em        | datetime(6)         | NO          | NULL                 |       |            |
+| registrado_em  | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -946,13 +946,13 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| perfil_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| permissao_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| delegavel | tinyint(3) unsigned | NO | 0 |  |  |
-| concedido_por | bigint(20) unsigned | YES | NULL | MUL |  |
-| concedido_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo         | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| perfil_id     | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| permissao_id  | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| delegavel     | tinyint(3) unsigned | NO          | 0                    |       |            |
+| concedido_por | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| concedido_em  | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -964,17 +964,17 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| codigo | varchar(60) | NO | NULL | UNI |  |
-| nome | varchar(100) | NO | NULL |  |  |
-| descricao | text | YES | NULL |  |  |
-| ativo | tinyint(3) unsigned | NO | 1 |  |  |
-| perfil_origem_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| criado_por | bigint(20) unsigned | YES | NULL | MUL |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| atualizado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo            | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ---------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id               | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| codigo           | varchar(60)         | NO          | NULL                 | UNI   |            |
+| nome             | varchar(100)        | NO          | NULL                 |       |            |
+| descricao        | text                | YES         | NULL                 |       |            |
+| ativo            | tinyint(3) unsigned | NO          | 1                    |       |            |
+| perfil_origem_id | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| criado_por       | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| criado_em        | datetime(6)         | NO          | current_timestamp(6) |       |            |
+| atualizado_em    | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -985,12 +985,12 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| modulo_codigo | varchar(40) | NO | NULL | MUL |  |
-| acao_codigo | varchar(40) | NO | NULL | MUL |  |
-| alcance | enum('proprios','unidade','orgao') | NO | NULL |  |  |
+| Campo         | Tipo                               | Aceita NULL | Default | Chave | Comentário |
+| ------------- | ---------------------------------- | ----------- | ------- | ----- | ---------- |
+| id            | bigint(20) unsigned                | NO          | NULL    | PRI   |            |
+| modulo_codigo | varchar(40)                        | NO          | NULL    | MUL   |            |
+| acao_codigo   | varchar(40)                        | NO          | NULL    | MUL   |            |
+| alcance       | enum('proprios','unidade','orgao') | NO          | NULL    |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1003,22 +1003,22 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| pneu_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| posicao | varchar(40) | NO | NULL |  |  |
-| instalado_em | datetime(6) | NO | NULL |  |  |
-| removido_em | datetime(6) | YES | NULL |  |  |
-| quilometragem_instalacao | decimal(12,1) | NO | NULL |  |  |
-| quilometragem_remocao | decimal(12,1) | YES | NULL |  |  |
-| motivo_remocao | varchar(500) | YES | NULL |  |  |
-| registrado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| manutencao_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| pneu_aberto | bigint(20) unsigned | YES | NULL | UNI |  |
-| veiculo_aberto | bigint(20) unsigned | YES | NULL | MUL |  |
-| posicao_aberta | varchar(40) | YES | NULL |  |  |
+| Campo                    | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ------------------------ | ------------------- | ----------- | ------- | ----- | ---------- |
+| id                       | bigint(20) unsigned | NO          | NULL    | PRI   |            |
+| pneu_id                  | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| veiculo_id               | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| posicao                  | varchar(40)         | NO          | NULL    |       |            |
+| instalado_em             | datetime(6)         | NO          | NULL    |       |            |
+| removido_em              | datetime(6)         | YES         | NULL    |       |            |
+| quilometragem_instalacao | decimal(12,1)       | NO          | NULL    |       |            |
+| quilometragem_remocao    | decimal(12,1)       | YES         | NULL    |       |            |
+| motivo_remocao           | varchar(500)        | YES         | NULL    |       |            |
+| registrado_por           | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| manutencao_id            | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| pneu_aberto              | bigint(20) unsigned | YES         | NULL    | UNI   |            |
+| veiculo_aberto           | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| posicao_aberta           | varchar(40)         | YES         | NULL    |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1031,19 +1031,19 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| codigo | varchar(60) | NO | NULL | UNI |  |
-| numero_serie | varchar(100) | YES | NULL | UNI |  |
-| marca | varchar(80) | YES | NULL |  |  |
-| modelo | varchar(80) | YES | NULL |  |  |
-| medida | varchar(40) | NO | NULL |  |  |
-| adquirido_em | date | YES | NULL |  |  |
-| despesa_aquisicao_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| situacao | enum('estoque','instalado','descartado') | NO | 'estoque' |  |  |
-| descartado_em | datetime(6) | YES | NULL |  |  |
-| motivo_descarte | varchar(500) | YES | NULL |  |  |
+| Campo                | Tipo                                     | Aceita NULL | Default   | Chave | Comentário |
+| -------------------- | ---------------------------------------- | ----------- | --------- | ----- | ---------- |
+| id                   | bigint(20) unsigned                      | NO          | NULL      | PRI   |            |
+| codigo               | varchar(60)                              | NO          | NULL      | UNI   |            |
+| numero_serie         | varchar(100)                             | YES         | NULL      | UNI   |            |
+| marca                | varchar(80)                              | YES         | NULL      |       |            |
+| modelo               | varchar(80)                              | YES         | NULL      |       |            |
+| medida               | varchar(40)                              | NO          | NULL      |       |            |
+| adquirido_em         | date                                     | YES         | NULL      |       |            |
+| despesa_aquisicao_id | bigint(20) unsigned                      | YES         | NULL      | MUL   |            |
+| situacao             | enum('estoque','instalado','descartado') | NO          | 'estoque' |       |            |
+| descartado_em        | datetime(6)                              | YES         | NULL      |       |            |
+| motivo_descarte      | varchar(500)                             | YES         | NULL      |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1053,16 +1053,16 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| viagem_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| registrado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| registrado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| ocorrido_em | datetime(6) | NO | NULL |  |  |
-| latitude | decimal(10,7) | NO | NULL |  |  |
-| longitude | decimal(10,7) | NO | NULL |  |  |
-| descricao | varchar(1000) | NO | NULL |  |  |
+| Campo          | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| -------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id             | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| viagem_id      | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| registrado_por | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| registrado_em  | datetime(6)         | NO          | current_timestamp(6) |       |            |
+| ocorrido_em    | datetime(6)         | NO          | NULL                 |       |            |
+| latitude       | decimal(10,7)       | NO          | NULL                 |       |            |
+| longitude      | decimal(10,7)       | NO          | NULL                 |       |            |
+| descricao      | varchar(1000)       | NO          | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1073,20 +1073,20 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| instalacao_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| viagem_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| identificador_evento | varchar(120) | NO | NULL |  |  |
-| capturado_em | datetime(6) | NO | NULL |  |  |
-| recebido_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| latitude | decimal(10,7) | NO | NULL |  |  |
-| longitude | decimal(10,7) | NO | NULL |  |  |
-| velocidade_kmh | decimal(7,2) | YES | NULL |  |  |
-| precisao_metros | decimal(9,2) | YES | NULL |  |  |
-| ignicao | tinyint(3) unsigned | YES | NULL |  |  |
+| Campo                | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| -------------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                   | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| instalacao_id        | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| veiculo_id           | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| viagem_id            | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| identificador_evento | varchar(120)        | NO          | NULL                 |       |            |
+| capturado_em         | datetime(6)         | NO          | NULL                 |       |            |
+| recebido_em          | datetime(6)         | NO          | current_timestamp(6) |       |            |
+| latitude             | decimal(10,7)       | NO          | NULL                 |       |            |
+| longitude            | decimal(10,7)       | NO          | NULL                 |       |            |
+| velocidade_kmh       | decimal(7,2)        | YES         | NULL                 |       |            |
+| precisao_metros      | decimal(9,2)        | YES         | NULL                 |       |            |
+| ignicao              | tinyint(3) unsigned | YES         | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1099,13 +1099,13 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| usuario_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| tema | enum('claro','escuro','dispositivo') | NO | 'dispositivo' |  |  |
-| itens_por_pagina | smallint(5) unsigned | NO | 10 |  |  |
-| notificacoes_internas | tinyint(3) unsigned | NO | 1 |  |  |
-| atualizado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                 | Tipo                                 | Aceita NULL | Default              | Chave | Comentário |
+| --------------------- | ------------------------------------ | ----------- | -------------------- | ----- | ---------- |
+| usuario_id            | bigint(20) unsigned                  | NO          | NULL                 | PRI   |            |
+| tema                  | enum('claro','escuro','dispositivo') | NO          | 'dispositivo'        |       |            |
+| itens_por_pagina      | smallint(5) unsigned                 | NO          | 10                   |       |            |
+| notificacoes_internas | tinyint(3) unsigned                  | NO          | 1                    |       |            |
+| atualizado_em         | datetime(6)                          | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1115,30 +1115,30 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| identificador_externo | varchar(100) | NO | NULL |  |  |
-| provedor | varchar(100) | NO | NULL | MUL |  |
-| tipo | enum('gps','telematica','outro') | NO | 'gps' |  |  |
-| modelo | varchar(100) | YES | NULL |  |  |
-| ativo | tinyint(3) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                 | Tipo                             | Aceita NULL | Default              | Chave | Comentário |
+| --------------------- | -------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                    | bigint(20) unsigned              | NO          | NULL                 | PRI   |            |
+| identificador_externo | varchar(100)                     | NO          | NULL                 |       |            |
+| provedor              | varchar(100)                     | NO          | NULL                 | MUL   |            |
+| tipo                  | enum('gps','telematica','outro') | NO          | 'gps'                |       |            |
+| modelo                | varchar(100)                     | YES         | NULL                 |       |            |
+| ativo                 | tinyint(3) unsigned              | NO          | 1                    |       |            |
+| criado_em             | datetime(6)                      | NO          | current_timestamp(6) |       |            |
 
 ## recuperacoes_mfa
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| usuario_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| solicitada_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| versao_seguranca | bigint(20) unsigned | NO | NULL |  |  |
-| justificativa | varchar(500) | NO | NULL |  |  |
-| criada_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| expira_em | datetime(6) | NO | NULL |  |  |
-| concluida_em | datetime(6) | YES | NULL |  |  |
+| Campo            | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ---------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id               | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| usuario_id       | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| solicitada_por   | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| versao_seguranca | bigint(20) unsigned | NO          | NULL                 |       |            |
+| justificativa    | varchar(500)        | NO          | NULL                 |       |            |
+| criada_em        | datetime(6)         | NO          | current_timestamp(6) |       |            |
+| expira_em        | datetime(6)         | NO          | NULL                 |       |            |
+| concluida_em     | datetime(6)         | YES         | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1149,17 +1149,17 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| usuario_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| token_hash | binary(32) | NO | NULL | UNI |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| expira_em | datetime(6) | NO | NULL |  |  |
-| usado_em | datetime(6) | YES | NULL |  |  |
-| invalidado_em | datetime(6) | YES | NULL |  |  |
-| email_destino | varchar(254) | YES | NULL |  |  |
-| versao_seguranca | bigint(20) unsigned | YES | NULL |  |  |
+| Campo            | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ---------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id               | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| usuario_id       | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| token_hash       | binary(32)          | NO          | NULL                 | UNI   |            |
+| criado_em        | datetime(6)         | NO          | current_timestamp(6) |       |            |
+| expira_em        | datetime(6)         | NO          | NULL                 |       |            |
+| usado_em         | datetime(6)         | YES         | NULL                 |       |            |
+| invalidado_em    | datetime(6)         | YES         | NULL                 |       |            |
+| email_destino    | varchar(254)        | YES         | NULL                 |       |            |
+| versao_seguranca | bigint(20) unsigned | YES         | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1169,16 +1169,16 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | smallint(5) unsigned | NO | NULL | PRI |  |
-| modulo_codigo | varchar(40) | NO | NULL | MUL |  |
-| chave | varchar(80) | NO | NULL |  |  |
-| rotulo | varchar(150) | NO | NULL |  |  |
-| tipo | enum('texto','numero','moeda','data','data_hora','situacao') | NO | NULL |  |  |
-| acao_adicional | varchar(40) | YES | NULL | MUL |  |
-| ordem | smallint(5) unsigned | NO | 0 |  |  |
-| ativo | tinyint(3) unsigned | NO | 1 |  |  |
+| Campo          | Tipo                                                         | Aceita NULL | Default | Chave | Comentário |
+| -------------- | ------------------------------------------------------------ | ----------- | ------- | ----- | ---------- |
+| id             | smallint(5) unsigned                                         | NO          | NULL    | PRI   |            |
+| modulo_codigo  | varchar(40)                                                  | NO          | NULL    | MUL   |            |
+| chave          | varchar(80)                                                  | NO          | NULL    |       |            |
+| rotulo         | varchar(150)                                                 | NO          | NULL    |       |            |
+| tipo           | enum('texto','numero','moeda','data','data_hora','situacao') | NO          | NULL    |       |            |
+| acao_adicional | varchar(40)                                                  | YES         | NULL    | MUL   |            |
+| ordem          | smallint(5) unsigned                                         | NO          | 0       |       |            |
+| ativo          | tinyint(3) unsigned                                          | NO          | 1       |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1191,20 +1191,20 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| motorista_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| revisao_id | bigint(20) unsigned | YES | NULL | UNI |  |
-| tipo | enum('viagem','manutencao','indisponibilidade') | NO | NULL |  |  |
-| inicio | datetime(6) | NO | NULL |  |  |
-| fim | datetime(6) | NO | NULL |  |  |
-| situacao | enum('ativa','liberada','cancelada') | NO | 'ativa' |  |  |
-| descricao | varchar(500) | YES | NULL |  |  |
-| criado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| liberada_em | datetime(6) | YES | NULL |  |  |
+| Campo        | Tipo                                            | Aceita NULL | Default              | Chave | Comentário |
+| ------------ | ----------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id           | bigint(20) unsigned                             | NO          | NULL                 | PRI   |            |
+| veiculo_id   | bigint(20) unsigned                             | NO          | NULL                 | MUL   |            |
+| motorista_id | bigint(20) unsigned                             | YES         | NULL                 | MUL   |            |
+| revisao_id   | bigint(20) unsigned                             | YES         | NULL                 | UNI   |            |
+| tipo         | enum('viagem','manutencao','indisponibilidade') | NO          | NULL                 |       |            |
+| inicio       | datetime(6)                                     | NO          | NULL                 |       |            |
+| fim          | datetime(6)                                     | NO          | NULL                 |       |            |
+| situacao     | enum('ativa','liberada','cancelada')            | NO          | 'ativa'              |       |            |
+| descricao    | varchar(500)                                    | YES         | NULL                 |       |            |
+| criado_por   | bigint(20) unsigned                             | NO          | NULL                 | MUL   |            |
+| criado_em    | datetime(6)                                     | NO          | current_timestamp(6) |       |            |
+| liberada_em  | datetime(6)                                     | YES         | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1217,11 +1217,11 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| rota_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| modulo_codigo | varchar(40) | NO | NULL | PRI |  |
-| acao_codigo | varchar(40) | NO | NULL | PRI |  |
+| Campo         | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ------------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| rota_id       | bigint(20) unsigned | NO          | NULL    | PRI   |            |
+| modulo_codigo | varchar(40)         | NO          | NULL    | PRI   |            |
+| acao_codigo   | varchar(40)         | NO          | NULL    | PRI   |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1235,21 +1235,21 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| chave | varchar(80) | NO | NULL | UNI |  |
-| nome | varchar(120) | NO | NULL |  |  |
-| caminho | varchar(255) | NO | NULL |  |  |
-| metodo_http | enum('GET','POST','PUT','PATCH','DELETE') | NO | 'GET' | MUL |  |
-| modulo_codigo | varchar(40) | NO | NULL | MUL |  |
-| descricao | text | YES | NULL |  |  |
-| ativa | tinyint(3) unsigned | NO | 1 |  |  |
-| visivel_menu | tinyint(3) unsigned | NO | 1 |  |  |
-| implementada | tinyint(3) unsigned | NO | 0 |  |  |
-| protegida | tinyint(3) unsigned | NO | 0 |  |  |
-| ordem | smallint(5) unsigned | NO | 0 |  |  |
-| criado_por | bigint(20) unsigned | YES | NULL | MUL |  |
+| Campo         | Tipo                                      | Aceita NULL | Default | Chave | Comentário |
+| ------------- | ----------------------------------------- | ----------- | ------- | ----- | ---------- |
+| id            | bigint(20) unsigned                       | NO          | NULL    | PRI   |            |
+| chave         | varchar(80)                               | NO          | NULL    | UNI   |            |
+| nome          | varchar(120)                              | NO          | NULL    |       |            |
+| caminho       | varchar(255)                              | NO          | NULL    |       |            |
+| metodo_http   | enum('GET','POST','PUT','PATCH','DELETE') | NO          | 'GET'   | MUL   |            |
+| modulo_codigo | varchar(40)                               | NO          | NULL    | MUL   |            |
+| descricao     | text                                      | YES         | NULL    |       |            |
+| ativa         | tinyint(3) unsigned                       | NO          | 1       |       |            |
+| visivel_menu  | tinyint(3) unsigned                       | NO          | 1       |       |            |
+| implementada  | tinyint(3) unsigned                       | NO          | 0       |       |            |
+| protegida     | tinyint(3) unsigned                       | NO          | 0       |       |            |
+| ordem         | smallint(5) unsigned                      | NO          | 0       |       |            |
+| criado_por    | bigint(20) unsigned                       | YES         | NULL    | MUL   |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1260,25 +1260,25 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| usuario_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| vinculo_ativo_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| token_hash | binary(32) | NO | NULL | UNI |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| ultima_atividade_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| expira_em | datetime(6) | NO | NULL |  |  |
-| encerrada_em | datetime(6) | YES | NULL |  |  |
-| motivo_encerramento | enum('logout','inatividade','prazo','revogacao','troca_senha') | YES | NULL |  |  |
-| ip | varbinary(16) | YES | NULL |  |  |
-| agente_usuario | varchar(500) | YES | NULL |  |  |
-| autenticada_em | datetime(6) | YES | NULL |  |  |
-| reautenticar_ate | datetime(6) | YES | NULL |  |  |
-| mfa_verificada_em | datetime(6) | YES | NULL |  |  |
-| mfa_vinculo_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| mfa_versao | bigint(20) unsigned | YES | NULL |  |  |
-| mfa_http_hash | binary(32) | YES | NULL |  |  |
+| Campo               | Tipo                                                           | Aceita NULL | Default              | Chave | Comentário |
+| ------------------- | -------------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                  | bigint(20) unsigned                                            | NO          | NULL                 | PRI   |            |
+| usuario_id          | bigint(20) unsigned                                            | NO          | NULL                 | MUL   |            |
+| vinculo_ativo_id    | bigint(20) unsigned                                            | YES         | NULL                 | MUL   |            |
+| token_hash          | binary(32)                                                     | NO          | NULL                 | UNI   |            |
+| criado_em           | datetime(6)                                                    | NO          | current_timestamp(6) |       |            |
+| ultima_atividade_em | datetime(6)                                                    | NO          | current_timestamp(6) |       |            |
+| expira_em           | datetime(6)                                                    | NO          | NULL                 |       |            |
+| encerrada_em        | datetime(6)                                                    | YES         | NULL                 |       |            |
+| motivo_encerramento | enum('logout','inatividade','prazo','revogacao','troca_senha') | YES         | NULL                 |       |            |
+| ip                  | varbinary(16)                                                  | YES         | NULL                 |       |            |
+| agente_usuario      | varchar(500)                                                   | YES         | NULL                 |       |            |
+| autenticada_em      | datetime(6)                                                    | YES         | NULL                 |       |            |
+| reautenticar_ate    | datetime(6)                                                    | YES         | NULL                 |       |            |
+| mfa_verificada_em   | datetime(6)                                                    | YES         | NULL                 |       |            |
+| mfa_vinculo_id      | bigint(20) unsigned                                            | YES         | NULL                 | MUL   |            |
+| mfa_versao          | bigint(20) unsigned                                            | YES         | NULL                 |       |            |
+| mfa_http_hash       | binary(32)                                                     | YES         | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1292,19 +1292,19 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| solicitacao_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| revisao_id | bigint(20) unsigned | NO | NULL |  |  |
-| ator_vinculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| tipo | enum('criada','enviada','ajustes_solicitados','aprovada','negada','revisao_aberta','cancelada') | NO | NULL |  |  |
-| situacao_anterior | varchar(40) | YES | NULL |  |  |
-| situacao_nova | varchar(40) | NO | NULL |  |  |
-| motivo | text | YES | NULL |  |  |
-| veiculo_confirmado_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| motorista_confirmado_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                   | Tipo                                                                                            | Aceita NULL | Default              | Chave | Comentário |
+| ----------------------- | ----------------------------------------------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                      | bigint(20) unsigned                                                                             | NO          | NULL                 | PRI   |            |
+| solicitacao_id          | bigint(20) unsigned                                                                             | NO          | NULL                 | MUL   |            |
+| revisao_id              | bigint(20) unsigned                                                                             | NO          | NULL                 |       |            |
+| ator_vinculo_id         | bigint(20) unsigned                                                                             | NO          | NULL                 | MUL   |            |
+| tipo                    | enum('criada','enviada','ajustes_solicitados','aprovada','negada','revisao_aberta','cancelada') | NO          | NULL                 |       |            |
+| situacao_anterior       | varchar(40)                                                                                     | YES         | NULL                 |       |            |
+| situacao_nova           | varchar(40)                                                                                     | NO          | NULL                 |       |            |
+| motivo                  | text                                                                                            | YES         | NULL                 |       |            |
+| veiculo_confirmado_id   | bigint(20) unsigned                                                                             | YES         | NULL                 | MUL   |            |
+| motorista_confirmado_id | bigint(20) unsigned                                                                             | YES         | NULL                 | MUL   |            |
+| criado_em               | datetime(6)                                                                                     | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1318,14 +1318,14 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| revisao_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| ordem | smallint(5) unsigned | NO | NULL |  |  |
-| descricao | varchar(255) | NO | NULL |  |  |
-| latitude | decimal(10,7) | YES | NULL |  |  |
-| longitude | decimal(10,7) | YES | NULL |  |  |
+| Campo      | Tipo                 | Aceita NULL | Default | Chave | Comentário |
+| ---------- | -------------------- | ----------- | ------- | ----- | ---------- |
+| id         | bigint(20) unsigned  | NO          | NULL    | PRI   |            |
+| revisao_id | bigint(20) unsigned  | NO          | NULL    | MUL   |            |
+| ordem      | smallint(5) unsigned | NO          | NULL    |       |            |
+| descricao  | varchar(255)         | NO          | NULL    |       |            |
+| latitude   | decimal(10,7)        | YES         | NULL    |       |            |
+| longitude  | decimal(10,7)        | YES         | NULL    |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1335,13 +1335,13 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| revisao_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| usuario_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| nome | varchar(150) | NO | NULL |  |  |
-| contato | varchar(100) | YES | NULL |  |  |
+| Campo      | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ---------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| id         | bigint(20) unsigned | NO          | NULL    | PRI   |            |
+| revisao_id | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| usuario_id | bigint(20) unsigned | YES         | NULL    | MUL   |            |
+| nome       | varchar(150)        | NO          | NULL    |       |            |
+| contato    | varchar(100)        | YES         | NULL    |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1352,32 +1352,32 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| solicitacao_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| numero | int(10) unsigned | NO | NULL |  |  |
-| finalidade | text | YES | NULL |  |  |
-| origem | varchar(255) | YES | NULL |  |  |
-| destino | varchar(255) | YES | NULL |  |  |
-| origem_latitude | decimal(10,7) | YES | NULL |  |  |
-| origem_longitude | decimal(10,7) | YES | NULL |  |  |
-| destino_latitude | decimal(10,7) | YES | NULL |  |  |
-| destino_longitude | decimal(10,7) | YES | NULL |  |  |
-| saida_prevista | datetime(6) | YES | NULL |  |  |
-| retorno_previsto | datetime(6) | YES | NULL |  |  |
-| quantidade_passageiros | smallint(5) unsigned | YES | NULL |  |  |
-| necessita_motorista | tinyint(3) unsigned | NO | 1 |  |  |
-| motorista_sugerido_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| veiculo_pretendido_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| trajeto_planejado | text | YES | NULL |  |  |
-| polilinha_planejada | longtext | YES | NULL |  |  |
-| distancia_prevista_km | decimal(12,3) | YES | NULL |  |  |
-| observacoes | text | YES | NULL |  |  |
-| etapa_atual | tinyint(3) unsigned | NO | 1 |  |  |
-| criado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| enviado_em | datetime(6) | YES | NULL |  |  |
+| Campo                  | Tipo                 | Aceita NULL | Default              | Chave | Comentário |
+| ---------------------- | -------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                     | bigint(20) unsigned  | NO          | NULL                 | PRI   |            |
+| solicitacao_id         | bigint(20) unsigned  | NO          | NULL                 | MUL   |            |
+| numero                 | int(10) unsigned     | NO          | NULL                 |       |            |
+| finalidade             | text                 | YES         | NULL                 |       |            |
+| origem                 | varchar(255)         | YES         | NULL                 |       |            |
+| destino                | varchar(255)         | YES         | NULL                 |       |            |
+| origem_latitude        | decimal(10,7)        | YES         | NULL                 |       |            |
+| origem_longitude       | decimal(10,7)        | YES         | NULL                 |       |            |
+| destino_latitude       | decimal(10,7)        | YES         | NULL                 |       |            |
+| destino_longitude      | decimal(10,7)        | YES         | NULL                 |       |            |
+| saida_prevista         | datetime(6)          | YES         | NULL                 |       |            |
+| retorno_previsto       | datetime(6)          | YES         | NULL                 |       |            |
+| quantidade_passageiros | smallint(5) unsigned | YES         | NULL                 |       |            |
+| necessita_motorista    | tinyint(3) unsigned  | NO          | 1                    |       |            |
+| motorista_sugerido_id  | bigint(20) unsigned  | YES         | NULL                 | MUL   |            |
+| veiculo_pretendido_id  | bigint(20) unsigned  | YES         | NULL                 | MUL   |            |
+| trajeto_planejado      | text                 | YES         | NULL                 |       |            |
+| polilinha_planejada    | longtext             | YES         | NULL                 |       |            |
+| distancia_prevista_km  | decimal(12,3)        | YES         | NULL                 |       |            |
+| observacoes            | text                 | YES         | NULL                 |       |            |
+| etapa_atual            | tinyint(3) unsigned  | NO          | 1                    |       |            |
+| criado_por             | bigint(20) unsigned  | NO          | NULL                 | MUL   |            |
+| criado_em              | datetime(6)          | NO          | current_timestamp(6) |       |            |
+| enviado_em             | datetime(6)          | YES         | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1390,17 +1390,17 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| protocolo | varchar(40) | NO | NULL | UNI |  |
-| solicitante_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| unidade_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| revisao_atual_id | bigint(20) unsigned | YES | NULL |  |  |
-| situacao | enum('rascunho','aguardando_analise','ajustes_solicitados','aprovada','negada','cancelada') | NO | 'rascunho' |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| atualizado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo            | Tipo                                                                                        | Aceita NULL | Default              | Chave | Comentário |
+| ---------------- | ------------------------------------------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id               | bigint(20) unsigned                                                                         | NO          | NULL                 | PRI   |            |
+| protocolo        | varchar(40)                                                                                 | NO          | NULL                 | UNI   |            |
+| solicitante_id   | bigint(20) unsigned                                                                         | NO          | NULL                 | MUL   |            |
+| unidade_id       | bigint(20) unsigned                                                                         | NO          | NULL                 | MUL   |            |
+| revisao_atual_id | bigint(20) unsigned                                                                         | YES         | NULL                 |       |            |
+| situacao         | enum('rascunho','aguardando_analise','ajustes_solicitados','aprovada','negada','cancelada') | NO          | 'rascunho'           |       |            |
+| versao           | bigint(20) unsigned                                                                         | NO          | 1                    |       |            |
+| criado_em        | datetime(6)                                                                                 | NO          | current_timestamp(6) |       |            |
+| atualizado_em    | datetime(6)                                                                                 | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1413,17 +1413,17 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| unidade_superior_id | bigint(20) unsigned | YES | NULL | MUL |  |
-| codigo | varchar(30) | NO | NULL | UNI |  |
-| nome | varchar(150) | NO | NULL |  |  |
-| endereco | varchar(255) | YES | NULL |  |  |
-| cidade | varchar(100) | YES | NULL |  |  |
-| uf | char(2) | YES | NULL |  |  |
-| ativa | tinyint(3) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo               | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ------------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                  | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| unidade_superior_id | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| codigo              | varchar(30)         | NO          | NULL                 | UNI   |            |
+| nome                | varchar(150)        | NO          | NULL                 |       |            |
+| endereco            | varchar(255)        | YES         | NULL                 |       |            |
+| cidade              | varchar(100)        | YES         | NULL                 |       |            |
+| uf                  | char(2)             | YES         | NULL                 |       |            |
+| ativa               | tinyint(3) unsigned | NO          | 1                    |       |            |
+| criado_em           | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1433,19 +1433,19 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| usuario_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| perfil_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| unidade_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| vigente_desde | datetime(6) | NO | NULL |  |  |
-| vigente_ate | datetime(6) | YES | NULL |  |  |
-| ativo | tinyint(3) unsigned | NO | 1 |  |  |
-| concedido_por | bigint(20) unsigned | YES | NULL | MUL |  |
-| revogado_por | bigint(20) unsigned | YES | NULL | MUL |  |
-| motivo_revogacao | varchar(500) | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo            | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ---------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id               | bigint(20) unsigned | NO          | NULL                 | PRI   |            |
+| usuario_id       | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| perfil_id        | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| unidade_id       | bigint(20) unsigned | NO          | NULL                 | MUL   |            |
+| vigente_desde    | datetime(6)         | NO          | NULL                 |       |            |
+| vigente_ate      | datetime(6)         | YES         | NULL                 |       |            |
+| ativo            | tinyint(3) unsigned | NO          | 1                    |       |            |
+| concedido_por    | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| revogado_por     | bigint(20) unsigned | YES         | NULL                 | MUL   |            |
+| motivo_revogacao | varchar(500)        | YES         | NULL                 |       |            |
+| criado_em        | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1459,29 +1459,29 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| unidade_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| identificador | varchar(100) | NO | NULL | UNI |  |
-| nome | varchar(150) | NO | NULL |  |  |
-| email | varchar(254) | YES | NULL | UNI |  |
-| telefone | varchar(30) | YES | NULL |  |  |
-| senha_hash | varchar(255) | NO | NULL |  |  |
-| ativo | tinyint(3) unsigned | NO | 1 |  |  |
-| deve_trocar_senha | tinyint(3) unsigned | NO | 0 |  |  |
-| senha_alterada_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| atualizado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| estado_identidade | enum('legado','pendente','ativa') | NO | 'legado' |  |  |
-| email_verificado_em | datetime(6) | YES | NULL |  |  |
-| email_pendente | varchar(254) | YES | NULL |  |  |
-| versao_seguranca | bigint(20) unsigned | NO | 1 |  |  |
-| senha_temporaria_emitida_em | datetime(6) | YES | NULL |  |  |
-| senha_temporaria_expira_em | datetime(6) | YES | NULL |  |  |
-| senha_temporaria_usada_em | datetime(6) | YES | NULL |  |  |
-| senha_temporaria_revogada_em | datetime(6) | YES | NULL |  |  |
+| Campo                        | Tipo                              | Aceita NULL | Default              | Chave | Comentário |
+| ---------------------------- | --------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                           | bigint(20) unsigned               | NO          | NULL                 | PRI   |            |
+| unidade_id                   | bigint(20) unsigned               | NO          | NULL                 | MUL   |            |
+| identificador                | varchar(100)                      | NO          | NULL                 | UNI   |            |
+| nome                         | varchar(150)                      | NO          | NULL                 |       |            |
+| email                        | varchar(254)                      | YES         | NULL                 | UNI   |            |
+| telefone                     | varchar(30)                       | YES         | NULL                 |       |            |
+| senha_hash                   | varchar(255)                      | NO          | NULL                 |       |            |
+| ativo                        | tinyint(3) unsigned               | NO          | 1                    |       |            |
+| deve_trocar_senha            | tinyint(3) unsigned               | NO          | 0                    |       |            |
+| senha_alterada_em            | datetime(6)                       | NO          | current_timestamp(6) |       |            |
+| versao                       | bigint(20) unsigned               | NO          | 1                    |       |            |
+| criado_em                    | datetime(6)                       | NO          | current_timestamp(6) |       |            |
+| atualizado_em                | datetime(6)                       | NO          | current_timestamp(6) |       |            |
+| estado_identidade            | enum('legado','pendente','ativa') | NO          | 'legado'             |       |            |
+| email_verificado_em          | datetime(6)                       | YES         | NULL                 |       |            |
+| email_pendente               | varchar(254)                      | YES         | NULL                 |       |            |
+| versao_seguranca             | bigint(20) unsigned               | NO          | 1                    |       |            |
+| senha_temporaria_emitida_em  | datetime(6)                       | YES         | NULL                 |       |            |
+| senha_temporaria_expira_em   | datetime(6)                       | YES         | NULL                 |       |            |
+| senha_temporaria_usada_em    | datetime(6)                       | YES         | NULL                 |       |            |
+| senha_temporaria_revogada_em | datetime(6)                       | YES         | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1491,16 +1491,16 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| rastreador_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| instalado_em | datetime(6) | NO | NULL |  |  |
-| removido_em | datetime(6) | YES | NULL |  |  |
-| instalado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| veiculo_aberto | bigint(20) unsigned | YES | NULL | UNI |  |
-| rastreador_aberto | bigint(20) unsigned | YES | NULL | UNI |  |
+| Campo             | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ----------------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| id                | bigint(20) unsigned | NO          | NULL    | PRI   |            |
+| veiculo_id        | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| rastreador_id     | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| instalado_em      | datetime(6)         | NO          | NULL    |       |            |
+| removido_em       | datetime(6)         | YES         | NULL    |       |            |
+| instalado_por     | bigint(20) unsigned | NO          | NULL    | MUL   |            |
+| veiculo_aberto    | bigint(20) unsigned | YES         | NULL    | UNI   |            |
+| rastreador_aberto | bigint(20) unsigned | YES         | NULL    | UNI   |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1512,27 +1512,27 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| unidade_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| categoria_id | smallint(5) unsigned | NO | NULL | MUL |  |
-| nome | varchar(120) | NO | NULL |  |  |
-| placa | varchar(10) | NO | NULL | UNI |  |
-| renavam | varchar(20) | YES | NULL | UNI |  |
-| chassi | varchar(30) | YES | NULL | UNI |  |
-| marca | varchar(80) | YES | NULL |  |  |
-| modelo | varchar(80) | YES | NULL |  |  |
-| ano_fabricacao | smallint(5) unsigned | YES | NULL |  |  |
-| ano_modelo | smallint(5) unsigned | YES | NULL |  |  |
-| capacidade | smallint(5) unsigned | NO | NULL |  |  |
-| quilometragem_atual | decimal(12,1) | NO | 0.0 |  |  |
-| situacao_cadastro | enum('ativo','inativo','baixado') | NO | 'ativo' |  |  |
-| observacoes | text | YES | NULL |  |  |
-| criado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| atualizado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo               | Tipo                              | Aceita NULL | Default              | Chave | Comentário |
+| ------------------- | --------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                  | bigint(20) unsigned               | NO          | NULL                 | PRI   |            |
+| unidade_id          | bigint(20) unsigned               | NO          | NULL                 | MUL   |            |
+| categoria_id        | smallint(5) unsigned              | NO          | NULL                 | MUL   |            |
+| nome                | varchar(120)                      | NO          | NULL                 |       |            |
+| placa               | varchar(10)                       | NO          | NULL                 | UNI   |            |
+| renavam             | varchar(20)                       | YES         | NULL                 | UNI   |            |
+| chassi              | varchar(30)                       | YES         | NULL                 | UNI   |            |
+| marca               | varchar(80)                       | YES         | NULL                 |       |            |
+| modelo              | varchar(80)                       | YES         | NULL                 |       |            |
+| ano_fabricacao      | smallint(5) unsigned              | YES         | NULL                 |       |            |
+| ano_modelo          | smallint(5) unsigned              | YES         | NULL                 |       |            |
+| capacidade          | smallint(5) unsigned              | NO          | NULL                 |       |            |
+| quilometragem_atual | decimal(12,1)                     | NO          | 0.0                  |       |            |
+| situacao_cadastro   | enum('ativo','inativo','baixado') | NO          | 'ativo'              |       |            |
+| observacoes         | text                              | YES         | NULL                 |       |            |
+| criado_por          | bigint(20) unsigned               | NO          | NULL                 | MUL   |            |
+| versao              | bigint(20) unsigned               | NO          | 1                    |       |            |
+| criado_em           | datetime(6)                       | NO          | current_timestamp(6) |       |            |
+| atualizado_em       | datetime(6)                       | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1544,24 +1544,24 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| versao | varchar(30) | NO | NULL | PRI |  |
-| instalado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| descricao | varchar(255) | NO | NULL |  |  |
+| Campo        | Tipo         | Aceita NULL | Default              | Chave | Comentário |
+| ------------ | ------------ | ----------- | -------------------- | ----- | ---------- |
+| versao       | varchar(30)  | NO          | NULL                 | PRI   |            |
+| instalado_em | datetime(6)  | NO          | current_timestamp(6) |       |            |
+| descricao    | varchar(255) | NO          | NULL                 |       |            |
 
 ## viagem_checklist_respostas
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| checklist_id | bigint(20) unsigned | NO | NULL | PRI |  |
-| item_id | smallint(5) unsigned | NO | NULL | PRI |  |
-| resultado | enum('ok','problema','nao_aplicavel') | NO | NULL |  |  |
-| observacao | varchar(1000) | YES | NULL |  |  |
-| descricao_item | varchar(150) | NO | '' |  |  |
-| obrigatorio_snapshot | tinyint(3) unsigned | NO | 1 |  |  |
+| Campo                | Tipo                                  | Aceita NULL | Default | Chave | Comentário |
+| -------------------- | ------------------------------------- | ----------- | ------- | ----- | ---------- |
+| checklist_id         | bigint(20) unsigned                   | NO          | NULL    | PRI   |            |
+| item_id              | smallint(5) unsigned                  | NO          | NULL    | PRI   |            |
+| resultado            | enum('ok','problema','nao_aplicavel') | NO          | NULL    |       |            |
+| observacao           | varchar(1000)                         | YES         | NULL    |       |            |
+| descricao_item       | varchar(150)                          | NO          | ''      |       |            |
+| obrigatorio_snapshot | tinyint(3) unsigned                   | NO          | 1       |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1572,14 +1572,14 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| viagem_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| tipo | enum('saida','retorno') | NO | NULL |  |  |
-| preenchido_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| finalizado_em | datetime(6) | YES | NULL |  |  |
+| Campo          | Tipo                    | Aceita NULL | Default              | Chave | Comentário |
+| -------------- | ----------------------- | ----------- | -------------------- | ----- | ---------- |
+| id             | bigint(20) unsigned     | NO          | NULL                 | PRI   |            |
+| viagem_id      | bigint(20) unsigned     | NO          | NULL                 | MUL   |            |
+| tipo           | enum('saida','retorno') | NO          | NULL                 |       |            |
+| preenchido_por | bigint(20) unsigned     | NO          | NULL                 | MUL   |            |
+| criado_em      | datetime(6)             | NO          | current_timestamp(6) |       |            |
+| finalizado_em  | datetime(6)             | YES         | NULL                 |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1590,17 +1590,17 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| viagem_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| registrado_por | bigint(20) unsigned | NO | NULL | MUL |  |
-| tipo | enum('geral','desvio_trajeto','avaria','acidente','atraso') | NO | 'geral' |  |  |
-| ocorrido_em | datetime(6) | NO | NULL |  |  |
-| descricao | text | NO | NULL |  |  |
-| latitude | decimal(10,7) | YES | NULL |  |  |
-| longitude | decimal(10,7) | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo          | Tipo                                                        | Aceita NULL | Default              | Chave | Comentário |
+| -------------- | ----------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id             | bigint(20) unsigned                                         | NO          | NULL                 | PRI   |            |
+| viagem_id      | bigint(20) unsigned                                         | NO          | NULL                 | MUL   |            |
+| registrado_por | bigint(20) unsigned                                         | NO          | NULL                 | MUL   |            |
+| tipo           | enum('geral','desvio_trajeto','avaria','acidente','atraso') | NO          | 'geral'              |       |            |
+| ocorrido_em    | datetime(6)                                                 | NO          | NULL                 |       |            |
+| descricao      | text                                                        | NO          | NULL                 |       |            |
+| latitude       | decimal(10,7)                                               | YES         | NULL                 |       |            |
+| longitude      | decimal(10,7)                                               | YES         | NULL                 |       |            |
+| criado_em      | datetime(6)                                                 | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1611,25 +1611,25 @@ Chaves estrangeiras desta tabela:
 
 Tipo: BASE TABLE. Motor: InnoDB.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | NULL | PRI |  |
-| protocolo | varchar(40) | NO | NULL | UNI |  |
-| revisao_id | bigint(20) unsigned | NO | NULL | UNI |  |
-| reserva_id | bigint(20) unsigned | NO | NULL | UNI |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| motorista_id | bigint(20) unsigned | NO | NULL | MUL |  |
-| situacao | enum('programada','em_andamento','concluida','cancelada') | NO | 'programada' | MUL |  |
-| saida_real | datetime(6) | YES | NULL |  |  |
-| retorno_real | datetime(6) | YES | NULL |  |  |
-| quilometragem_saida | decimal(12,1) | YES | NULL |  |  |
-| quilometragem_retorno | decimal(12,1) | YES | NULL |  |  |
-| saida_registrada_por | bigint(20) unsigned | YES | NULL | MUL |  |
-| retorno_registrado_por | bigint(20) unsigned | YES | NULL | MUL |  |
-| observacao_saida | text | YES | NULL |  |  |
-| observacao_retorno | text | YES | NULL |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo                  | Tipo                                                      | Aceita NULL | Default              | Chave | Comentário |
+| ---------------------- | --------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                     | bigint(20) unsigned                                       | NO          | NULL                 | PRI   |            |
+| protocolo              | varchar(40)                                               | NO          | NULL                 | UNI   |            |
+| revisao_id             | bigint(20) unsigned                                       | NO          | NULL                 | UNI   |            |
+| reserva_id             | bigint(20) unsigned                                       | NO          | NULL                 | UNI   |            |
+| veiculo_id             | bigint(20) unsigned                                       | NO          | NULL                 | MUL   |            |
+| motorista_id           | bigint(20) unsigned                                       | NO          | NULL                 | MUL   |            |
+| situacao               | enum('programada','em_andamento','concluida','cancelada') | NO          | 'programada'         | MUL   |            |
+| saida_real             | datetime(6)                                               | YES         | NULL                 |       |            |
+| retorno_real           | datetime(6)                                               | YES         | NULL                 |       |            |
+| quilometragem_saida    | decimal(12,1)                                             | YES         | NULL                 |       |            |
+| quilometragem_retorno  | decimal(12,1)                                             | YES         | NULL                 |       |            |
+| saida_registrada_por   | bigint(20) unsigned                                       | YES         | NULL                 | MUL   |            |
+| retorno_registrado_por | bigint(20) unsigned                                       | YES         | NULL                 | MUL   |            |
+| observacao_saida       | text                                                      | YES         | NULL                 |       |            |
+| observacao_retorno     | text                                                      | YES         | NULL                 |       |            |
+| versao                 | bigint(20) unsigned                                       | NO          | 1                    |       |            |
+| criado_em              | datetime(6)                                               | NO          | current_timestamp(6) |       |            |
 
 Chaves estrangeiras desta tabela:
 
@@ -1644,304 +1644,304 @@ Chaves estrangeiras desta tabela:
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| vinculo_id | bigint(20) unsigned | NO | 0 |  |  |
-| usuario_id | bigint(20) unsigned | NO | NULL |  |  |
-| perfil_id | bigint(20) unsigned | NO | NULL |  |  |
+| Campo      | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ---------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| vinculo_id | bigint(20) unsigned | NO          | 0       |       |            |
+| usuario_id | bigint(20) unsigned | NO          | NULL    |       |            |
+| perfil_id  | bigint(20) unsigned | NO          | NULL    |       |            |
 
 ## vw_custos_veiculo_mensais
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| veiculo_id | bigint(20) unsigned | NO | NULL |  |  |
-| unidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| mes | varchar(10) | YES | NULL |  |  |
-| valor_despesas | decimal(35,2) | YES | NULL |  |  |
-| quantidade_despesas | bigint(21) | NO | 0 |  |  |
+| Campo               | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ------------------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| veiculo_id          | bigint(20) unsigned | NO          | NULL    |       |            |
+| unidade_id          | bigint(20) unsigned | NO          | NULL    |       |            |
+| mes                 | varchar(10)         | YES         | NULL    |       |            |
+| valor_despesas      | decimal(35,2)       | YES         | NULL    |       |            |
+| quantidade_despesas | bigint(21)          | NO          | 0       |       |            |
 
 ## vw_despesas_detalhadas
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | 0 |  |  |
-| protocolo | varchar(40) | NO | NULL |  |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL |  |  |
-| unidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| categoria_id | smallint(5) unsigned | NO | NULL |  |  |
-| fornecedor_id | bigint(20) unsigned | YES | NULL |  |  |
-| data_despesa | date | NO | NULL |  |  |
-| valor | decimal(13,2) | NO | NULL |  |  |
-| descricao | text | NO | NULL |  |  |
-| numero_documento | varchar(100) | YES | NULL |  |  |
-| situacao | enum('registrada','em_conferencia','aprovada','paga','cancelada') | NO | 'registrada' |  |  |
-| criado_por | bigint(20) unsigned | NO | NULL |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| atualizado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| placa | varchar(10) | NO | NULL |  |  |
-| veiculo | varchar(120) | NO | NULL |  |  |
-| categoria | varchar(80) | NO | NULL |  |  |
-| fornecedor | varchar(150) | YES | NULL |  |  |
-| valor_pago | decimal(13,2) | YES | NULL |  |  |
-| pago_em | datetime(6) | YES | NULL |  |  |
+| Campo            | Tipo                                                              | Aceita NULL | Default              | Chave | Comentário |
+| ---------------- | ----------------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id               | bigint(20) unsigned                                               | NO          | 0                    |       |            |
+| protocolo        | varchar(40)                                                       | NO          | NULL                 |       |            |
+| veiculo_id       | bigint(20) unsigned                                               | NO          | NULL                 |       |            |
+| unidade_id       | bigint(20) unsigned                                               | NO          | NULL                 |       |            |
+| categoria_id     | smallint(5) unsigned                                              | NO          | NULL                 |       |            |
+| fornecedor_id    | bigint(20) unsigned                                               | YES         | NULL                 |       |            |
+| data_despesa     | date                                                              | NO          | NULL                 |       |            |
+| valor            | decimal(13,2)                                                     | NO          | NULL                 |       |            |
+| descricao        | text                                                              | NO          | NULL                 |       |            |
+| numero_documento | varchar(100)                                                      | YES         | NULL                 |       |            |
+| situacao         | enum('registrada','em_conferencia','aprovada','paga','cancelada') | NO          | 'registrada'         |       |            |
+| criado_por       | bigint(20) unsigned                                               | NO          | NULL                 |       |            |
+| versao           | bigint(20) unsigned                                               | NO          | 1                    |       |            |
+| criado_em        | datetime(6)                                                       | NO          | current_timestamp(6) |       |            |
+| atualizado_em    | datetime(6)                                                       | NO          | current_timestamp(6) |       |            |
+| placa            | varchar(10)                                                       | NO          | NULL                 |       |            |
+| veiculo          | varchar(120)                                                      | NO          | NULL                 |       |            |
+| categoria        | varchar(80)                                                       | NO          | NULL                 |       |            |
+| fornecedor       | varchar(150)                                                      | YES         | NULL                 |       |            |
+| valor_pago       | decimal(13,2)                                                     | YES         | NULL                 |       |            |
+| pago_em          | datetime(6)                                                       | YES         | NULL                 |       |            |
 
 ## vw_frota
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | 0 |  |  |
-| unidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| categoria_id | smallint(5) unsigned | NO | NULL |  |  |
-| nome | varchar(120) | NO | NULL |  |  |
-| placa | varchar(10) | NO | NULL |  |  |
-| renavam | varchar(20) | YES | NULL |  |  |
-| chassi | varchar(30) | YES | NULL |  |  |
-| marca | varchar(80) | YES | NULL |  |  |
-| modelo | varchar(80) | YES | NULL |  |  |
-| ano_fabricacao | smallint(5) unsigned | YES | NULL |  |  |
-| ano_modelo | smallint(5) unsigned | YES | NULL |  |  |
-| capacidade | smallint(5) unsigned | NO | NULL |  |  |
-| quilometragem_atual | decimal(12,1) | NO | 0.0 |  |  |
-| situacao_cadastro | enum('ativo','inativo','baixado') | NO | 'ativo' |  |  |
-| observacoes | text | YES | NULL |  |  |
-| criado_por | bigint(20) unsigned | NO | NULL |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| atualizado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| categoria | varchar(60) | NO | NULL |  |  |
-| unidade | varchar(150) | NO | NULL |  |  |
-| situacao_operacional | varchar(12) | NO | '' |  |  |
+| Campo                | Tipo                              | Aceita NULL | Default              | Chave | Comentário |
+| -------------------- | --------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                   | bigint(20) unsigned               | NO          | 0                    |       |            |
+| unidade_id           | bigint(20) unsigned               | NO          | NULL                 |       |            |
+| categoria_id         | smallint(5) unsigned              | NO          | NULL                 |       |            |
+| nome                 | varchar(120)                      | NO          | NULL                 |       |            |
+| placa                | varchar(10)                       | NO          | NULL                 |       |            |
+| renavam              | varchar(20)                       | YES         | NULL                 |       |            |
+| chassi               | varchar(30)                       | YES         | NULL                 |       |            |
+| marca                | varchar(80)                       | YES         | NULL                 |       |            |
+| modelo               | varchar(80)                       | YES         | NULL                 |       |            |
+| ano_fabricacao       | smallint(5) unsigned              | YES         | NULL                 |       |            |
+| ano_modelo           | smallint(5) unsigned              | YES         | NULL                 |       |            |
+| capacidade           | smallint(5) unsigned              | NO          | NULL                 |       |            |
+| quilometragem_atual  | decimal(12,1)                     | NO          | 0.0                  |       |            |
+| situacao_cadastro    | enum('ativo','inativo','baixado') | NO          | 'ativo'              |       |            |
+| observacoes          | text                              | YES         | NULL                 |       |            |
+| criado_por           | bigint(20) unsigned               | NO          | NULL                 |       |            |
+| versao               | bigint(20) unsigned               | NO          | 1                    |       |            |
+| criado_em            | datetime(6)                       | NO          | current_timestamp(6) |       |            |
+| atualizado_em        | datetime(6)                       | NO          | current_timestamp(6) |       |            |
+| categoria            | varchar(60)                       | NO          | NULL                 |       |            |
+| unidade              | varchar(150)                      | NO          | NULL                 |       |            |
+| situacao_operacional | varchar(12)                       | NO          | ''                   |       |            |
 
 ## vw_monitoramento
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| veiculo_id | bigint(20) unsigned | NO | 0 |  |  |
-| placa | varchar(10) | NO | NULL |  |  |
-| nome | varchar(120) | NO | NULL |  |  |
-| unidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| instalacao_id | bigint(20) unsigned | YES | NULL |  |  |
-| identificador_externo | varchar(100) | YES | NULL |  |  |
-| provedor | varchar(100) | YES | NULL |  |  |
-| capturado_em | datetime(6) | YES | NULL |  |  |
-| recebido_em | datetime(6) | YES | current_timestamp(6) |  |  |
-| latitude | decimal(10,7) | YES | NULL |  |  |
-| longitude | decimal(10,7) | YES | NULL |  |  |
-| velocidade_kmh | decimal(7,2) | YES | NULL |  |  |
-| situacao_comunicacao | varchar(15) | YES | NULL |  |  |
+| Campo                 | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| --------------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| veiculo_id            | bigint(20) unsigned | NO          | 0                    |       |            |
+| placa                 | varchar(10)         | NO          | NULL                 |       |            |
+| nome                  | varchar(120)        | NO          | NULL                 |       |            |
+| unidade_id            | bigint(20) unsigned | NO          | NULL                 |       |            |
+| instalacao_id         | bigint(20) unsigned | YES         | NULL                 |       |            |
+| identificador_externo | varchar(100)        | YES         | NULL                 |       |            |
+| provedor              | varchar(100)        | YES         | NULL                 |       |            |
+| capturado_em          | datetime(6)         | YES         | NULL                 |       |            |
+| recebido_em           | datetime(6)         | YES         | current_timestamp(6) |       |            |
+| latitude              | decimal(10,7)       | YES         | NULL                 |       |            |
+| longitude             | decimal(10,7)       | YES         | NULL                 |       |            |
+| velocidade_kmh        | decimal(7,2)        | YES         | NULL                 |       |            |
+| situacao_comunicacao  | varchar(15)         | YES         | NULL                 |       |            |
 
 ## vw_multas_detalhadas
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | 0 |  |  |
-| protocolo | varchar(40) | NO | NULL |  |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL |  |  |
-| unidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| numero_auto | varchar(100) | YES | NULL |  |  |
-| orgao_autuador | varchar(150) | YES | NULL |  |  |
-| ocorrido_em | datetime(6) | NO | NULL |  |  |
-| precisao_ocorrencia | enum('dia','instante') | NO | 'instante' |  |  |
-| fim_dia_ocorrencia_utc | datetime(6) | YES | NULL |  |  |
-| data_vencimento | date | YES | NULL |  |  |
-| valor | decimal(13,2) | NO | NULL |  |  |
-| descricao | text | NO | NULL |  |  |
-| situacao | enum('sem_responsavel','aguardando_comprovante','em_conferencia','quitada','contestada','cancelada') | NO | 'sem_responsavel' |  |  |
-| responsabilidade_atual_id | bigint(20) unsigned | YES | NULL |  |  |
-| criado_por | bigint(20) unsigned | NO | NULL |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| responsavel_id | bigint(20) unsigned | YES | NULL |  |  |
-| motorista_id | bigint(20) unsigned | YES | NULL |  |  |
-| viagem_id | bigint(20) unsigned | YES | NULL |  |  |
-| responsavel | varchar(150) | YES | NULL |  |  |
-| placa | varchar(10) | NO | NULL |  |  |
-| veiculo | varchar(120) | NO | NULL |  |  |
-| ultima_versao_comprovante | int(10) unsigned | YES | NULL |  |  |
-| valor_quitado | decimal(13,2) | YES | NULL |  |  |
-| pago_em | datetime(6) | YES | NULL |  |  |
+| Campo                     | Tipo                                                                                                 | Aceita NULL | Default              | Chave | Comentário |
+| ------------------------- | ---------------------------------------------------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                        | bigint(20) unsigned                                                                                  | NO          | 0                    |       |            |
+| protocolo                 | varchar(40)                                                                                          | NO          | NULL                 |       |            |
+| veiculo_id                | bigint(20) unsigned                                                                                  | NO          | NULL                 |       |            |
+| unidade_id                | bigint(20) unsigned                                                                                  | NO          | NULL                 |       |            |
+| numero_auto               | varchar(100)                                                                                         | YES         | NULL                 |       |            |
+| orgao_autuador            | varchar(150)                                                                                         | YES         | NULL                 |       |            |
+| ocorrido_em               | datetime(6)                                                                                          | NO          | NULL                 |       |            |
+| precisao_ocorrencia       | enum('dia','instante')                                                                               | NO          | 'instante'           |       |            |
+| fim_dia_ocorrencia_utc    | datetime(6)                                                                                          | YES         | NULL                 |       |            |
+| data_vencimento           | date                                                                                                 | YES         | NULL                 |       |            |
+| valor                     | decimal(13,2)                                                                                        | NO          | NULL                 |       |            |
+| descricao                 | text                                                                                                 | NO          | NULL                 |       |            |
+| situacao                  | enum('sem_responsavel','aguardando_comprovante','em_conferencia','quitada','contestada','cancelada') | NO          | 'sem_responsavel'    |       |            |
+| responsabilidade_atual_id | bigint(20) unsigned                                                                                  | YES         | NULL                 |       |            |
+| criado_por                | bigint(20) unsigned                                                                                  | NO          | NULL                 |       |            |
+| versao                    | bigint(20) unsigned                                                                                  | NO          | 1                    |       |            |
+| criado_em                 | datetime(6)                                                                                          | NO          | current_timestamp(6) |       |            |
+| responsavel_id            | bigint(20) unsigned                                                                                  | YES         | NULL                 |       |            |
+| motorista_id              | bigint(20) unsigned                                                                                  | YES         | NULL                 |       |            |
+| viagem_id                 | bigint(20) unsigned                                                                                  | YES         | NULL                 |       |            |
+| responsavel               | varchar(150)                                                                                         | YES         | NULL                 |       |            |
+| placa                     | varchar(10)                                                                                          | NO          | NULL                 |       |            |
+| veiculo                   | varchar(120)                                                                                         | NO          | NULL                 |       |            |
+| ultima_versao_comprovante | int(10) unsigned                                                                                     | YES         | NULL                 |       |            |
+| valor_quitado             | decimal(13,2)                                                                                        | YES         | NULL                 |       |            |
+| pago_em                   | datetime(6)                                                                                          | YES         | NULL                 |       |            |
 
 ## vw_notificacoes_usuario
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| usuario_id | bigint(20) unsigned | NO | NULL |  |  |
-| lida_em | datetime(6) | YES | NULL |  |  |
-| oculta_em | datetime(6) | YES | NULL |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| entregue_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| id | bigint(20) unsigned | NO | 0 |  |  |
-| chave_idempotencia | varchar(160) | NO | NULL |  |  |
-| tipo | varchar(60) | NO | NULL |  |  |
-| titulo | varchar(160) | NO | NULL |  |  |
-| mensagem | varchar(1000) | NO | NULL |  |  |
-| caminho_destino | varchar(255) | YES | NULL |  |  |
-| solicitacao_id | bigint(20) unsigned | YES | NULL |  |  |
-| viagem_id | bigint(20) unsigned | YES | NULL |  |  |
-| multa_id | bigint(20) unsigned | YES | NULL |  |  |
-| despesa_id | bigint(20) unsigned | YES | NULL |  |  |
-| chamado_id | bigint(20) unsigned | YES | NULL |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
+| Campo              | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| ------------------ | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| usuario_id         | bigint(20) unsigned | NO          | NULL                 |       |            |
+| lida_em            | datetime(6)         | YES         | NULL                 |       |            |
+| oculta_em          | datetime(6)         | YES         | NULL                 |       |            |
+| versao             | bigint(20) unsigned | NO          | 1                    |       |            |
+| entregue_em        | datetime(6)         | NO          | current_timestamp(6) |       |            |
+| id                 | bigint(20) unsigned | NO          | 0                    |       |            |
+| chave_idempotencia | varchar(160)        | NO          | NULL                 |       |            |
+| tipo               | varchar(60)         | NO          | NULL                 |       |            |
+| titulo             | varchar(160)        | NO          | NULL                 |       |            |
+| mensagem           | varchar(1000)       | NO          | NULL                 |       |            |
+| caminho_destino    | varchar(255)        | YES         | NULL                 |       |            |
+| solicitacao_id     | bigint(20) unsigned | YES         | NULL                 |       |            |
+| viagem_id          | bigint(20) unsigned | YES         | NULL                 |       |            |
+| multa_id           | bigint(20) unsigned | YES         | NULL                 |       |            |
+| despesa_id         | bigint(20) unsigned | YES         | NULL                 |       |            |
+| chamado_id         | bigint(20) unsigned | YES         | NULL                 |       |            |
+| criado_em          | datetime(6)         | NO          | current_timestamp(6) |       |            |
 
 ## vw_permissoes_efetivas
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| vinculo_id | bigint(20) unsigned | NO | 0 |  |  |
-| usuario_id | bigint(20) unsigned | NO | NULL |  |  |
-| perfil_id | bigint(20) unsigned | NO | NULL |  |  |
-| unidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| modulo_codigo | varchar(40) | NO | NULL |  |  |
-| acao_codigo | varchar(40) | NO | NULL |  |  |
-| alcance | enum('proprios','unidade','orgao') | NO | NULL |  |  |
-| delegavel | tinyint(3) unsigned | NO | 0 |  |  |
-| nivel_alcance | int(2) | NO | 0 |  |  |
+| Campo         | Tipo                               | Aceita NULL | Default | Chave | Comentário |
+| ------------- | ---------------------------------- | ----------- | ------- | ----- | ---------- |
+| vinculo_id    | bigint(20) unsigned                | NO          | 0       |       |            |
+| usuario_id    | bigint(20) unsigned                | NO          | NULL    |       |            |
+| perfil_id     | bigint(20) unsigned                | NO          | NULL    |       |            |
+| unidade_id    | bigint(20) unsigned                | NO          | NULL    |       |            |
+| modulo_codigo | varchar(40)                        | NO          | NULL    |       |            |
+| acao_codigo   | varchar(40)                        | NO          | NULL    |       |            |
+| alcance       | enum('proprios','unidade','orgao') | NO          | NULL    |       |            |
+| delegavel     | tinyint(3) unsigned                | NO          | 0       |       |            |
+| nivel_alcance | int(2)                             | NO          | 0       |       |            |
 
 ## vw_resumo_financeiro_veiculo
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| veiculo_id | bigint(20) unsigned | NO | 0 |  |  |
-| placa | varchar(10) | NO | NULL |  |  |
-| unidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| despesas_registradas | decimal(35,2) | NO | 0.00 |  |  |
-| despesas_pagas | decimal(35,2) | NO | 0.00 |  |  |
-| multas_registradas | decimal(35,2) | NO | 0.00 |  |  |
-| multas_quitadas | decimal(35,2) | NO | 0.00 |  |  |
-| multas_pendentes | bigint(21) | YES | NULL |  |  |
+| Campo                | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| -------------------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| veiculo_id           | bigint(20) unsigned | NO          | 0       |       |            |
+| placa                | varchar(10)         | NO          | NULL    |       |            |
+| unidade_id           | bigint(20) unsigned | NO          | NULL    |       |            |
+| despesas_registradas | decimal(35,2)       | NO          | 0.00    |       |            |
+| despesas_pagas       | decimal(35,2)       | NO          | 0.00    |       |            |
+| multas_registradas   | decimal(35,2)       | NO          | 0.00    |       |            |
+| multas_quitadas      | decimal(35,2)       | NO          | 0.00    |       |            |
+| multas_pendentes     | bigint(21)          | YES         | NULL    |       |            |
 
 ## vw_solicitacoes_atuais
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | 0 |  |  |
-| protocolo | varchar(40) | NO | NULL |  |  |
-| solicitante_id | bigint(20) unsigned | NO | NULL |  |  |
-| unidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| situacao | enum('rascunho','aguardando_analise','ajustes_solicitados','aprovada','negada','cancelada') | NO | 'rascunho' |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| revisao_id | bigint(20) unsigned | NO | 0 |  |  |
-| numero | int(10) unsigned | NO | NULL |  |  |
-| finalidade | text | YES | NULL |  |  |
-| origem | varchar(255) | YES | NULL |  |  |
-| destino | varchar(255) | YES | NULL |  |  |
-| saida_prevista | datetime(6) | YES | NULL |  |  |
-| retorno_previsto | datetime(6) | YES | NULL |  |  |
-| quantidade_passageiros | smallint(5) unsigned | YES | NULL |  |  |
-| necessita_motorista | tinyint(3) unsigned | NO | 1 |  |  |
-| veiculo_pretendido_id | bigint(20) unsigned | YES | NULL |  |  |
-| motorista_sugerido_id | bigint(20) unsigned | YES | NULL |  |  |
-| trajeto_planejado | text | YES | NULL |  |  |
-| distancia_prevista_km | decimal(12,3) | YES | NULL |  |  |
-| enviado_em | datetime(6) | YES | NULL |  |  |
-| solicitante | varchar(150) | NO | NULL |  |  |
-| unidade | varchar(150) | NO | NULL |  |  |
+| Campo                  | Tipo                                                                                        | Aceita NULL | Default              | Chave | Comentário |
+| ---------------------- | ------------------------------------------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                     | bigint(20) unsigned                                                                         | NO          | 0                    |       |            |
+| protocolo              | varchar(40)                                                                                 | NO          | NULL                 |       |            |
+| solicitante_id         | bigint(20) unsigned                                                                         | NO          | NULL                 |       |            |
+| unidade_id             | bigint(20) unsigned                                                                         | NO          | NULL                 |       |            |
+| situacao               | enum('rascunho','aguardando_analise','ajustes_solicitados','aprovada','negada','cancelada') | NO          | 'rascunho'           |       |            |
+| versao                 | bigint(20) unsigned                                                                         | NO          | 1                    |       |            |
+| criado_em              | datetime(6)                                                                                 | NO          | current_timestamp(6) |       |            |
+| revisao_id             | bigint(20) unsigned                                                                         | NO          | 0                    |       |            |
+| numero                 | int(10) unsigned                                                                            | NO          | NULL                 |       |            |
+| finalidade             | text                                                                                        | YES         | NULL                 |       |            |
+| origem                 | varchar(255)                                                                                | YES         | NULL                 |       |            |
+| destino                | varchar(255)                                                                                | YES         | NULL                 |       |            |
+| saida_prevista         | datetime(6)                                                                                 | YES         | NULL                 |       |            |
+| retorno_previsto       | datetime(6)                                                                                 | YES         | NULL                 |       |            |
+| quantidade_passageiros | smallint(5) unsigned                                                                        | YES         | NULL                 |       |            |
+| necessita_motorista    | tinyint(3) unsigned                                                                         | NO          | 1                    |       |            |
+| veiculo_pretendido_id  | bigint(20) unsigned                                                                         | YES         | NULL                 |       |            |
+| motorista_sugerido_id  | bigint(20) unsigned                                                                         | YES         | NULL                 |       |            |
+| trajeto_planejado      | text                                                                                        | YES         | NULL                 |       |            |
+| distancia_prevista_km  | decimal(12,3)                                                                               | YES         | NULL                 |       |            |
+| enviado_em             | datetime(6)                                                                                 | YES         | NULL                 |       |            |
+| solicitante            | varchar(150)                                                                                | NO          | NULL                 |       |            |
+| unidade                | varchar(150)                                                                                | NO          | NULL                 |       |            |
 
 ## vw_trajetos_observados
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| registro_id | bigint(20) unsigned | NO | 0 |  |  |
-| fonte | varchar(10) | NO | '' |  |  |
-| veiculo_id | bigint(20) unsigned | NO | 0 |  |  |
-| viagem_id | bigint(20) unsigned | YES | NULL |  |  |
-| ocorrido_em | datetime(6) /* mariadb-5.3 */ | NO | '0000-00-00 00:00:00.000000' |  |  |
-| latitude | decimal(10,7) | NO | 0.0000000 |  |  |
-| longitude | decimal(10,7) | NO | 0.0000000 |  |  |
-| velocidade_kmh | decimal(7,2) | YES | NULL |  |  |
-| descricao | varchar(1000) | YES | NULL |  |  |
+| Campo          | Tipo                          | Aceita NULL | Default                      | Chave | Comentário |
+| -------------- | ----------------------------- | ----------- | ---------------------------- | ----- | ---------- |
+| registro_id    | bigint(20) unsigned           | NO          | 0                            |       |            |
+| fonte          | varchar(10)                   | NO          | ''                           |       |            |
+| veiculo_id     | bigint(20) unsigned           | NO          | 0                            |       |            |
+| viagem_id      | bigint(20) unsigned           | YES         | NULL                         |       |            |
+| ocorrido_em    | datetime(6) /* mariadb-5.3 */ | NO          | '0000-00-00 00:00:00.000000' |       |            |
+| latitude       | decimal(10,7)                 | NO          | 0.0000000                    |       |            |
+| longitude      | decimal(10,7)                 | NO          | 0.0000000                    |       |            |
+| velocidade_kmh | decimal(7,2)                  | YES         | NULL                         |       |            |
+| descricao      | varchar(1000)                 | YES         | NULL                         |       |            |
 
 ## vw_ultima_posicao_rastreador
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | 0 |  |  |
-| instalacao_id | bigint(20) unsigned | NO | NULL |  |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL |  |  |
-| viagem_id | bigint(20) unsigned | YES | NULL |  |  |
-| identificador_evento | varchar(120) | NO | NULL |  |  |
-| capturado_em | datetime(6) | NO | NULL |  |  |
-| recebido_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| latitude | decimal(10,7) | NO | NULL |  |  |
-| longitude | decimal(10,7) | NO | NULL |  |  |
-| velocidade_kmh | decimal(7,2) | YES | NULL |  |  |
-| precisao_metros | decimal(9,2) | YES | NULL |  |  |
-| ignicao | tinyint(3) unsigned | YES | NULL |  |  |
+| Campo                | Tipo                | Aceita NULL | Default              | Chave | Comentário |
+| -------------------- | ------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                   | bigint(20) unsigned | NO          | 0                    |       |            |
+| instalacao_id        | bigint(20) unsigned | NO          | NULL                 |       |            |
+| veiculo_id           | bigint(20) unsigned | NO          | NULL                 |       |            |
+| viagem_id            | bigint(20) unsigned | YES         | NULL                 |       |            |
+| identificador_evento | varchar(120)        | NO          | NULL                 |       |            |
+| capturado_em         | datetime(6)         | NO          | NULL                 |       |            |
+| recebido_em          | datetime(6)         | NO          | current_timestamp(6) |       |            |
+| latitude             | decimal(10,7)       | NO          | NULL                 |       |            |
+| longitude            | decimal(10,7)       | NO          | NULL                 |       |            |
+| velocidade_kmh       | decimal(7,2)        | YES         | NULL                 |       |            |
+| precisao_metros      | decimal(9,2)        | YES         | NULL                 |       |            |
+| ignicao              | tinyint(3) unsigned | YES         | NULL                 |       |            |
 
 ## vw_viagens_detalhadas
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| id | bigint(20) unsigned | NO | 0 |  |  |
-| protocolo | varchar(40) | NO | NULL |  |  |
-| revisao_id | bigint(20) unsigned | NO | NULL |  |  |
-| reserva_id | bigint(20) unsigned | NO | NULL |  |  |
-| veiculo_id | bigint(20) unsigned | NO | NULL |  |  |
-| motorista_id | bigint(20) unsigned | NO | NULL |  |  |
-| situacao | enum('programada','em_andamento','concluida','cancelada') | NO | 'programada' |  |  |
-| saida_real | datetime(6) | YES | NULL |  |  |
-| retorno_real | datetime(6) | YES | NULL |  |  |
-| quilometragem_saida | decimal(12,1) | YES | NULL |  |  |
-| quilometragem_retorno | decimal(12,1) | YES | NULL |  |  |
-| saida_registrada_por | bigint(20) unsigned | YES | NULL |  |  |
-| retorno_registrado_por | bigint(20) unsigned | YES | NULL |  |  |
-| observacao_saida | text | YES | NULL |  |  |
-| observacao_retorno | text | YES | NULL |  |  |
-| versao | bigint(20) unsigned | NO | 1 |  |  |
-| criado_em | datetime(6) | NO | current_timestamp(6) |  |  |
-| solicitacao_id | bigint(20) unsigned | NO | 0 |  |  |
-| solicitante_id | bigint(20) unsigned | NO | NULL |  |  |
-| unidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| saida_prevista | datetime(6) | YES | NULL |  |  |
-| retorno_previsto | datetime(6) | YES | NULL |  |  |
-| finalidade | text | YES | NULL |  |  |
-| origem | varchar(255) | YES | NULL |  |  |
-| destino | varchar(255) | YES | NULL |  |  |
-| trajeto_planejado | text | YES | NULL |  |  |
-| placa | varchar(10) | NO | NULL |  |  |
-| veiculo | varchar(120) | NO | NULL |  |  |
-| motorista | varchar(150) | NO | NULL |  |  |
-| distancia_real_km | decimal(13,1) | YES | NULL |  |  |
+| Campo                  | Tipo                                                      | Aceita NULL | Default              | Chave | Comentário |
+| ---------------------- | --------------------------------------------------------- | ----------- | -------------------- | ----- | ---------- |
+| id                     | bigint(20) unsigned                                       | NO          | 0                    |       |            |
+| protocolo              | varchar(40)                                               | NO          | NULL                 |       |            |
+| revisao_id             | bigint(20) unsigned                                       | NO          | NULL                 |       |            |
+| reserva_id             | bigint(20) unsigned                                       | NO          | NULL                 |       |            |
+| veiculo_id             | bigint(20) unsigned                                       | NO          | NULL                 |       |            |
+| motorista_id           | bigint(20) unsigned                                       | NO          | NULL                 |       |            |
+| situacao               | enum('programada','em_andamento','concluida','cancelada') | NO          | 'programada'         |       |            |
+| saida_real             | datetime(6)                                               | YES         | NULL                 |       |            |
+| retorno_real           | datetime(6)                                               | YES         | NULL                 |       |            |
+| quilometragem_saida    | decimal(12,1)                                             | YES         | NULL                 |       |            |
+| quilometragem_retorno  | decimal(12,1)                                             | YES         | NULL                 |       |            |
+| saida_registrada_por   | bigint(20) unsigned                                       | YES         | NULL                 |       |            |
+| retorno_registrado_por | bigint(20) unsigned                                       | YES         | NULL                 |       |            |
+| observacao_saida       | text                                                      | YES         | NULL                 |       |            |
+| observacao_retorno     | text                                                      | YES         | NULL                 |       |            |
+| versao                 | bigint(20) unsigned                                       | NO          | 1                    |       |            |
+| criado_em              | datetime(6)                                               | NO          | current_timestamp(6) |       |            |
+| solicitacao_id         | bigint(20) unsigned                                       | NO          | 0                    |       |            |
+| solicitante_id         | bigint(20) unsigned                                       | NO          | NULL                 |       |            |
+| unidade_id             | bigint(20) unsigned                                       | NO          | NULL                 |       |            |
+| saida_prevista         | datetime(6)                                               | YES         | NULL                 |       |            |
+| retorno_previsto       | datetime(6)                                               | YES         | NULL                 |       |            |
+| finalidade             | text                                                      | YES         | NULL                 |       |            |
+| origem                 | varchar(255)                                              | YES         | NULL                 |       |            |
+| destino                | varchar(255)                                              | YES         | NULL                 |       |            |
+| trajeto_planejado      | text                                                      | YES         | NULL                 |       |            |
+| placa                  | varchar(10)                                               | NO          | NULL                 |       |            |
+| veiculo                | varchar(120)                                              | NO          | NULL                 |       |            |
+| motorista              | varchar(150)                                              | NO          | NULL                 |       |            |
+| distancia_real_km      | decimal(13,1)                                             | YES         | NULL                 |       |            |
 
 ## vw_vinculos_ativos
 
 Tipo: VIEW. Motor: None.
 
-| Campo | Tipo | Aceita NULL | Default | Chave | Comentário |
-|---|---|---|---|---|---|
-| vinculo_id | bigint(20) unsigned | NO | 0 |  |  |
-| usuario_id | bigint(20) unsigned | NO | NULL |  |  |
-| perfil_id | bigint(20) unsigned | NO | NULL |  |  |
-| unidade_id | bigint(20) unsigned | NO | NULL |  |  |
-| vigente_desde | datetime(6) | NO | NULL |  |  |
-| vigente_ate | datetime(6) | YES | NULL |  |  |
-
+| Campo         | Tipo                | Aceita NULL | Default | Chave | Comentário |
+| ------------- | ------------------- | ----------- | ------- | ----- | ---------- |
+| vinculo_id    | bigint(20) unsigned | NO          | 0       |       |            |
+| usuario_id    | bigint(20) unsigned | NO          | NULL    |       |            |
+| perfil_id     | bigint(20) unsigned | NO          | NULL    |       |            |
+| unidade_id    | bigint(20) unsigned | NO          | NULL    |       |            |
+| vigente_desde | datetime(6)         | NO          | NULL    |       |            |
+| vigente_ate   | datetime(6)         | YES         | NULL    |       |            |
 
 ---
+
 [Voltar ao índice](README.md) · Referência: 09/11/2026.

@@ -97,16 +97,16 @@ os valores reais de uma instalação não fazem parte da documentação.
 
 ## Código mantido e conteúdo gerado
 
-| Local                                                 | Natureza e finalidade                                                   |
-| ----------------------------------------------------- | ----------------------------------------------------------------------- |
-| `app/`, `routes/`, `config/`, `resources/`            | Código e contratos mantidos pela aplicação.                             |
-| `database/sql/`                                       | Fontes versionadas do modelo relacional e de sua evolução.              |
-| `public/icons/`, `public/images/`, `public/licenses/` | Recursos visuais distribuídos com a interface e seus avisos de licença. |
+| Local                                                 | Natureza e finalidade                                                                     |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `app/`, `routes/`, `config/`, `resources/`            | Código e contratos mantidos pela aplicação.                                               |
+| `database/sql/`                                       | Fontes versionadas do modelo relacional e de sua evolução.                                |
+| `public/icons/`, `public/images/`, `public/licenses/` | Recursos visuais distribuídos com a interface e seus avisos de licença.                   |
 | `vendor/`, `node_modules/`                            | Dependências instaladas a partir dos arquivos de versões fixadas; não são código próprio. |
-| `public/build/`                                       | Bundles, fontes e manifest produzidos pelo Vite.                        |
-| `bootstrap/cache/`, `storage/framework/`              | Caches, views compiladas e outros dados transitórios do framework.      |
-| `storage/app/private/`, `storage/logs/`               | Dados privados e registros produzidos pela execução.                    |
-| `artifacts/`, `playwright-report/`, `test-results/`   | Resultados locais ou de integração, quando gerados pelas ferramentas.   |
+| `public/build/`                                       | Bundles, fontes e manifest produzidos pelo Vite.                                          |
+| `bootstrap/cache/`, `storage/framework/`              | Caches, views compiladas e outros dados transitórios do framework.                        |
+| `storage/app/private/`, `storage/logs/`               | Dados privados e registros produzidos pela execução.                                      |
+| `artifacts/`, `playwright-report/`, `test-results/`   | Resultados locais ou de integração, quando gerados pelas ferramentas.                     |
 
 Os `.gitignore` dentro de diretórios de execução mantêm a estrutura necessária
 no Git e excluem seu conteúdo gerado. O [catálogo](ARQUIVOS.md) descreve os
@@ -121,6 +121,6 @@ os assets. Para uma alteração de acesso ou persistência, acompanhe também
 A execução de cache e filas no MySQL está documentada em [MYSQL-RUNTIME.md](MYSQL-RUNTIME.md).
 A pasta `docs/database-model/` reúne o retrato estrutural, o diagrama e o dicionário do banco remoto.
 
-
 ---
+
 [Voltar ao índice](README.md) · Referência: 09/11/2026.
