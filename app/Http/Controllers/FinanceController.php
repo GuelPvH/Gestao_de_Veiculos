@@ -43,13 +43,15 @@ class FinanceController extends Controller
         } elseif ($screen === 'fuel' && $acao === 'edit') {
             $finance->editFuel($registro, $data, $document);
         } elseif ($screen === 'maintenance') {
-            if ($acao === 'edit') {
-                $finance->editMaintenance($registro, $data, $document);
-            } elseif (in_array($acao, ['start', 'complete', 'cancel'], true)) {
-                $finance->changeMaintenance($registro, $acao, Value::string($data['versao']), $data);
-            } else {
-                abort(404);
-            }
+            match ($acao) {
+                'edit' => $finance->editMaintenance($registro, $data, $document),
+                'start', 'complete', 'cancel' => $finance->changeMaintenance($registro, $acao, Value::string($data['versao']), $data),
+                'item-add' => $finance->addMaintenanceItem($registro, $data),
+                'item-edit' => $finance->updateMaintenanceItem($registro, Value::integer($data['item']), $data),
+                'item-remove' => $finance->removeMaintenanceItem($registro, Value::integer($data['item']), Value::string($data['versao'])),
+                'link-expense' => $finance->linkMaintenanceExpense($registro, Value::integer($data['despesa_id']), Value::string($data['versao'])),
+                default => abort(404),
+            };
         } else {
             abort(404);
         }
@@ -67,10 +69,31 @@ class FinanceController extends Controller
         $file = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id')
             ->where('a.id', $anexo)->where('a.'.$column, $registro)->where('f.situacao', 'disponivel')
             ->first(['f.chave_armazenamento', 'f.nome_original', 'f.tipo_mime']);
-        abort_unless($file !== null && Storage::disk('local')->exists(Value::string($file->chave_armazenamento)), 404);
+        abort_unless($file !== null, 404);
+
+        return $this->stream($file);
+    }
+
+    public function receipt(Request $request, FleetReadRepository $reads, AccessContext $access, int $registro): StreamedResponse
+    {
+        $tela = (string) $request->route('tela');
+        abort_unless(in_array($tela, ['expenses', 'fuel'], true), 404);
+        $record = $reads->record($tela, $registro);
+        abort_unless($access->can('despesas', 'ver_valores', Value::integer($record->__owner), Value::integer($record->__unit)), 403);
+        $file = DB::table('pagamentos_despesa as p')->join('arquivos as f', 'f.id', '=', 'p.comprovante_arquivo_id')
+            ->where('p.despesa_id', $registro)->where('f.situacao', 'disponivel')
+            ->first(['f.chave_armazenamento', 'f.nome_original', 'f.tipo_mime']);
+        abort_unless($file !== null, 404);
+
+        return $this->stream($file);
+    }
+
+    private function stream(\stdClass $file): StreamedResponse
+    {
+        abort_unless(Storage::disk('local')->exists(Value::string($file->chave_armazenamento)), 404);
 
         return Storage::disk('local')->download(Value::string($file->chave_armazenamento), Value::nullableString($file->nome_original), [
-            'Content-Type' => $file->tipo_mime,
+            'Content-Type' => Value::string($file->tipo_mime),
             'X-Content-Type-Options' => 'nosniff',
         ]);
     }

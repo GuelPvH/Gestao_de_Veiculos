@@ -33,16 +33,18 @@ class FinanceActionRequest extends FormRequest
         $owner = Value::integer($record->criado_por);
         $unit = Value::integer($record->unidade_id);
         $permission = match ($action) {
-            'edit', 'submit', 'start', 'complete' => 'editar',
+            'edit', 'submit', 'start', 'complete', 'item-add', 'item-edit', 'item-remove', 'link-expense' => 'editar',
             'verify' => 'aprovar',
             'pay' => 'validar_pagamento',
             'cancel' => 'cancelar',
             default => null,
         };
+        $needsValues = in_array($action, ['item-add', 'item-edit', 'item-remove', 'link-expense'], true);
 
         return $permission !== null
             && $access->can('despesas', 'consultar', $owner, $unit)
-            && $access->can('despesas', $permission, $owner, $unit);
+            && $access->can('despesas', $permission, $owner, $unit)
+            && (! $needsValues || $access->can('despesas', 'ver_valores', $owner, $unit));
     }
 
     /**
@@ -99,6 +101,21 @@ class FinanceActionRequest extends FormRequest
                 default => [],
             };
         }
+        if ($screen === 'maintenance' && in_array($action, ['item-add', 'item-edit', 'item-remove', 'link-expense'], true)) {
+            $item = [
+                'tipo' => ['required', Rule::in(['peca', 'servico'])],
+                'descricao' => ['required', 'string', 'max:255'],
+                'quantidade' => ['required', 'regex:/^(?:0|[1-9]\d{0,5})(?:\.\d{1,3})?$/', 'numeric', 'gt:0'],
+                'valor_unitario' => ['required', 'regex:/^(?:0|[1-9]\d{0,6})(?:\.\d{1,2})?$/', 'numeric', 'min:0'],
+            ];
+
+            return ['versao' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]{64}$/']] + match ($action) {
+                'item-add' => $item,
+                'item-edit' => ['item' => ['required', 'integer', 'min:1']] + $item,
+                'item-remove' => ['item' => ['required', 'integer', 'min:1'], 'confirmar' => ['accepted']],
+                default => ['despesa_id' => ['required', 'integer', 'min:1', Rule::exists('despesas', 'id')]],
+            };
+        }
         if ($screen === 'maintenance' && in_array($action, ['start', 'complete', 'cancel'], true)) {
             return ['versao' => ['required', 'string', 'size:64', 'regex:/^[a-f0-9]{64}$/']] + match ($action) {
                 'start' => ['inicio_real' => ['required', 'date_format:Y-m-d\TH:i']],
@@ -116,6 +133,9 @@ class FinanceActionRequest extends FormRequest
         $action = (string) ($this->route('acao') ?? 'create');
         if ($action === 'create') {
             return route($screen.'.create');
+        }
+        if (in_array($action, ['item-add', 'item-edit', 'item-remove', 'link-expense'], true)) {
+            return route($screen.'.show', ['registro' => $this->route('registro')]);
         }
 
         return route($screen.'.operation', ['registro' => $this->route('registro'), 'acao' => $action]);
