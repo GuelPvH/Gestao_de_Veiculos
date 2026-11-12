@@ -82,9 +82,12 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
         Route::post('/'.$path.'/{registro}/{acao}', [FinanceController::class, 'perform'])->whereNumber('registro')->where('acao', match ($screen) {
             'expenses' => 'edit|submit|verify|pay|cancel',
             'fuel' => 'edit',
-            default => 'edit|start|complete|cancel',
+            default => 'edit|start|complete|cancel|item-add|item-edit|item-remove|link-expense',
         })->defaults('tela', $screen)->name($screen.'.perform');
         Route::get('/'.$path.'/{registro}/anexos/{anexo}', [FinanceController::class, 'download'])->whereNumber('registro')->whereNumber('anexo')->defaults('tela', $screen)->name($screen.'.download');
+        if ($screen !== 'maintenance') {
+            Route::get('/'.$path.'/{registro}/comprovante', [FinanceController::class, 'receipt'])->whereNumber('registro')->defaults('tela', $screen)->name($screen.'.receipt');
+        }
     }
 
     Route::get('/financeiro/pneus', [TyreController::class, 'index'])->name('tyres.index');

@@ -255,7 +255,7 @@ def main():
             safety_output = run(['python3', '-m', 'unittest', 'discover', '-s', 'tests/database', '-v'], env=environment, cwd=ROOT)
             print(safety_output)
             passed('native_advisory_lock_excludes_concurrent_maintenance')
-            output = run(['php', str(ROOT/'vendor/bin/phpunit'), '--filter', 'MySql(Authentication|Workflow|RequestWorkflow|Identity|Session)Test', '--no-progress'], env=environment, cwd=ROOT)
+            output = run(['php', str(ROOT/'vendor/bin/phpunit'), '--filter', 'MySql(Authentication|Workflow|FinanceWorkflow|RequestWorkflow|Identity|Session)Test', '--no-progress'], env=environment, cwd=ROOT)
             print(output)
             print(json.dumps({'mysql_contract':'passed','results':results}))
     finally:

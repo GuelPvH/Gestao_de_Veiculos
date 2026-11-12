@@ -5,6 +5,7 @@ namespace App\Services\Finance;
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
 use App\Services\Files\PrivateFileService;
+use App\Support\Money;
 use App\Support\Value;
 use Carbon\CarbonImmutable;
 use Closure;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
+use PDOException;
 use stdClass;
 use Throwable;
 
@@ -22,6 +25,7 @@ class FinanceService
         private AccessContext $access,
         private ProcedureRunner $procedures,
         private PrivateFileService $files,
+        private ExpenseNotifier $notifier,
     ) {}
 
     private function actor(): stdClass
@@ -32,9 +36,28 @@ class FinanceService
         return $link;
     }
 
+    /**
+     * @param  list<int|string|null>  $arguments
+     */
+    private function guarded(string $procedure, array $arguments, string $field = 'operacao'): void
+    {
+        try {
+            $this->procedures->call($procedure, $arguments);
+        } catch (PDOException $error) {
+            if (($error->errorInfo[0] ?? null) !== '45000') {
+                throw $error;
+            }
+            if (str_starts_with(Value::string($error->errorInfo[2] ?? ''), 'Acesso negado:')) {
+                abort(403);
+            }
+
+            throw ValidationException::withMessages([$field => 'A operação foi recusada pelas regras financeiras. Recarregue a página e confira os dados.']);
+        }
+    }
+
     private function permit(string $action, ?int $owner, ?int $unit): void
     {
-        $this->procedures->call('sp_exigir_permissao', [
+        $this->guarded('sp_exigir_permissao', [
             Value::integer($this->actor()->vinculo_id), 'despesas', $action, $owner, $unit,
         ]);
     }
@@ -47,8 +70,11 @@ class FinanceService
         if ($vehicle === null) {
             throw ValidationException::withMessages(['veiculo' => 'Veículo ativo não encontrado.']);
         }
-        $this->procedures->call('sp_exigir_permissao', [
-            Value::integer($this->actor()->vinculo_id), 'frota', 'consultar', Value::integer($vehicle->criado_por), Value::integer($vehicle->unidade_id),
+        $owner = Value::integer($vehicle->criado_por);
+        $unit = Value::integer($vehicle->unidade_id);
+        $action = $this->access->can('frota', 'selecionar', $owner, $unit) ? 'selecionar' : 'consultar';
+        $this->guarded('sp_exigir_permissao', [
+            Value::integer($this->actor()->vinculo_id), 'frota', $action, $owner, $unit,
         ]);
 
         return $vehicle;
@@ -326,6 +352,9 @@ class FinanceService
             }
             DB::table('despesas')->where('id', $id)->where('versao', $version)->update(['situacao' => $next, 'versao' => DB::raw('versao + 1')]);
             $this->event($id, $type, Value::nullableString($expense->situacao), $next, $reason);
+            if ($type !== 'cancelada') {
+                $this->notifier->notify($id, $type, Value::integer($this->actor()->usuario_id), $reason);
+            }
             $this->audit('despesa_'.$type, 'despesas', $id, 'Estado financeiro alterado e registrado no histórico.');
 
             return $id;
@@ -347,10 +376,15 @@ class FinanceService
         }
         $fileId = $this->files->store($receipt);
         try {
-            $this->procedures->call('sp_pagar_despesa', [Value::integer($this->actor()->vinculo_id), $id, $version, $fileId, $utc]);
+            $this->guarded('sp_pagar_despesa', [Value::integer($this->actor()->vinculo_id), $id, $version, $fileId, $utc], 'versao');
         } catch (Throwable $error) {
             $this->files->discardUnlinked($fileId);
             throw $error;
+        }
+        try {
+            DB::transaction(fn () => $this->notifier->notify($id, 'pagamento_confirmado', Value::integer($this->actor()->usuario_id)));
+        } catch (Throwable $error) {
+            report($error);
         }
 
         return $id;
@@ -516,6 +550,149 @@ class FinanceService
                 DB::table('reservas')->where('id', $record->reserva_id)->update(['situacao' => 'cancelada']);
             }
             $this->audit('manutencao_'.$action, 'manutencoes', $id, mb_substr(Value::string($data['justificativa'] ?? 'Estado da manutenção atualizado.'), 0, 1000));
+
+            return $id;
+        });
+    }
+
+    private function lockedMaintenance(int $id, string $version): stdClass
+    {
+        $record = $this->maintenance($id);
+        $this->permit('editar', Value::integer($record->criado_por), Value::integer($record->unidade_id));
+        $this->permit('ver_valores', Value::integer($record->criado_por), Value::integer($record->unidade_id));
+        $this->assertMaintenanceVersion($record, $version);
+
+        return $record;
+    }
+
+    private function lockedEditableMaintenance(int $id, string $version): void
+    {
+        $record = $this->lockedMaintenance($id, $version);
+        if (! in_array($record->situacao, ['planejada', 'em_execucao'], true)) {
+            throw ValidationException::withMessages(['versao' => 'Peças e serviços só podem ser alterados com a manutenção planejada ou em execução.']);
+        }
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $data
+     * @return array{tipo: string, descricao: string, quantidade: string, valor_unitario: string, total: string}
+     */
+    private function itemFields(array $data): array
+    {
+        $quantity = Value::string($data['quantidade']);
+        $unitValue = Value::string($data['valor_unitario']);
+        try {
+            $total = Money::lineTotal($quantity, $unitValue);
+        } catch (InvalidArgumentException) {
+            throw ValidationException::withMessages(['quantidade' => 'Informe quantidade e valor unitário válidos.']);
+        }
+        if (Money::exceedsLimit($total)) {
+            throw ValidationException::withMessages(['valor_unitario' => 'O total do item supera o limite de uma despesa.']);
+        }
+
+        return [
+            'tipo' => Value::string($data['tipo']),
+            'descricao' => trim(Value::string($data['descricao'])),
+            'quantidade' => $quantity,
+            'valor_unitario' => $unitValue,
+            'total' => $total,
+        ];
+    }
+
+    /** @param array{tipo: string, descricao: string, quantidade: string, valor_unitario: string, total: string} $fields */
+    private function itemSummary(array $fields): string
+    {
+        return mb_substr($fields['tipo'].' · '.$fields['descricao'].' · '.$fields['quantidade'].' × '.$fields['valor_unitario'].' = '.$fields['total'], 0, 900);
+    }
+
+    private function maintenanceItem(int $maintenanceId, int $itemId): stdClass
+    {
+        $item = DB::table('manutencao_itens')->where('id', $itemId)->where('manutencao_id', $maintenanceId)
+            ->lockForUpdate()->first(['id', 'tipo', 'descricao', 'quantidade', 'valor_unitario']);
+        abort_unless($item !== null, 404);
+
+        return $item;
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $data
+     */
+    public function addMaintenanceItem(int $id, array $data): int
+    {
+        return DB::transaction(function () use ($id, $data): int {
+            $this->lockedEditableMaintenance($id, Value::string($data['versao']));
+            $fields = $this->itemFields($data);
+            $item = (int) DB::table('manutencao_itens')->insertGetId([
+                'manutencao_id' => $id, 'tipo' => $fields['tipo'], 'descricao' => $fields['descricao'],
+                'quantidade' => $fields['quantidade'], 'valor_unitario' => $fields['valor_unitario'],
+            ]);
+            $this->audit('manutencao_item_adicionado', 'manutencoes', $id, 'Item adicionado: '.$this->itemSummary($fields));
+
+            return $item;
+        });
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $data
+     */
+    public function updateMaintenanceItem(int $id, int $itemId, array $data): int
+    {
+        return DB::transaction(function () use ($id, $itemId, $data): int {
+            $this->lockedEditableMaintenance($id, Value::string($data['versao']));
+            $this->maintenanceItem($id, $itemId);
+            $fields = $this->itemFields($data);
+            DB::table('manutencao_itens')->where('id', $itemId)->where('manutencao_id', $id)->update([
+                'tipo' => $fields['tipo'], 'descricao' => $fields['descricao'],
+                'quantidade' => $fields['quantidade'], 'valor_unitario' => $fields['valor_unitario'],
+            ]);
+            $this->audit('manutencao_item_editado', 'manutencoes', $id, 'Item atualizado: '.$this->itemSummary($fields));
+
+            return $itemId;
+        });
+    }
+
+    public function removeMaintenanceItem(int $id, int $itemId, string $version): int
+    {
+        return DB::transaction(function () use ($id, $itemId, $version): int {
+            $this->lockedEditableMaintenance($id, $version);
+            $item = $this->maintenanceItem($id, $itemId);
+            DB::table('manutencao_itens')->where('id', $itemId)->where('manutencao_id', $id)->delete();
+            $this->audit('manutencao_item_removido', 'manutencoes', $id, 'Item removido: '.mb_substr(Value::string($item->tipo).' · '.Value::string($item->descricao), 0, 900));
+
+            return $itemId;
+        });
+    }
+
+    public function linkMaintenanceExpense(int $id, int $expenseId, string $version): int
+    {
+        return DB::transaction(function () use ($id, $expenseId, $version): int {
+            $record = $this->lockedMaintenance($id, $version);
+            if ($record->situacao === 'cancelada') {
+                throw ValidationException::withMessages(['despesa_id' => 'Manutenção cancelada não recebe despesa.']);
+            }
+            if ($record->despesa_id !== null) {
+                throw ValidationException::withMessages(['despesa_id' => 'A manutenção já possui despesa vinculada.']);
+            }
+            $expense = $this->expense($expenseId);
+            $this->permit('consultar', Value::integer($expense->criado_por), Value::integer($expense->unidade_id));
+            $this->permit('ver_valores', Value::integer($expense->criado_por), Value::integer($expense->unidade_id));
+            if (Value::integer($expense->veiculo_id) !== Value::integer($record->veiculo_id)) {
+                throw ValidationException::withMessages(['despesa_id' => 'A despesa pertence a outro veículo.']);
+            }
+            if ($expense->situacao === 'cancelada') {
+                throw ValidationException::withMessages(['despesa_id' => 'Despesa cancelada não pode ser vinculada.']);
+            }
+            if (Value::integer($expense->categoria_id) !== $this->category('manutencao')) {
+                throw ValidationException::withMessages(['despesa_id' => 'Informe uma despesa da categoria Manutenção.']);
+            }
+            if (DB::table('manutencoes')->where('despesa_id', $expenseId)->exists()) {
+                throw ValidationException::withMessages(['despesa_id' => 'A despesa já está vinculada a outra manutenção.']);
+            }
+            $updated = DB::table('manutencoes')->where('id', $id)->whereNull('despesa_id')->update(['despesa_id' => $expenseId]);
+            if ($updated !== 1) {
+                throw ValidationException::withMessages(['despesa_id' => 'A manutenção foi alterada. Recarregue a página.']);
+            }
+            $this->audit('manutencao_despesa_vinculada', 'manutencoes', $id, 'Despesa '.$expenseId.' vinculada à manutenção.');
 
             return $id;
         });

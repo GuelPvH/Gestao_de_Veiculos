@@ -262,7 +262,7 @@ class FleetReadRepository
      */
     public function history(string $codigo, int $id): array
     {
-        if (! in_array($codigo, ['requests', 'fines', 'tickets'], true)) {
+        if (! in_array($codigo, ['requests', 'fines', 'tickets', 'expenses', 'fuel'], true)) {
             return [];
         }
         $this->record($codigo, $id);
@@ -298,14 +298,27 @@ class FleetReadRepository
      */
     private function historyForRecord(string $codigo, int $id): array
     {
-        $contratos = ['requests' => ['solicitacao_eventos', 'solicitacao_id'], 'fines' => ['multa_eventos', 'multa_id'], 'tickets' => ['chamado_eventos', 'chamado_id']];
+        $contratos = ['requests' => ['solicitacao_eventos', 'solicitacao_id'], 'fines' => ['multa_eventos', 'multa_id'], 'tickets' => ['chamado_eventos', 'chamado_id'], 'expenses' => ['despesa_eventos', 'despesa_id'], 'fuel' => ['despesa_eventos', 'despesa_id']];
         if (! isset($contratos[$codigo])) {
             return [];
         }
         [$tabela, $coluna] = $contratos[$codigo];
+        $rotulos = in_array($codigo, ['expenses', 'fuel'], true) ? self::EXPENSE_EVENT_LABELS : [];
 
-        return DB::table($tabela)->where($coluna, $id)->orderByDesc('id')->limit(40)->get(['tipo', 'criado_em', 'motivo'])->map(fn (stdClass $evento) => ['titulo' => ucfirst(str_replace('_', ' ', Value::string($evento->tipo))), 'data' => $this->format($evento->criado_em, 'datetime'), 'descricao' => $evento->motivo ?? ''])->all();
+        return DB::table($tabela)->where($coluna, $id)->orderByDesc('id')->limit(40)->get(['tipo', 'criado_em', 'motivo'])->map(fn (stdClass $evento) => ['titulo' => $rotulos[Value::string($evento->tipo)] ?? ucfirst(str_replace('_', ' ', Value::string($evento->tipo))), 'data' => $this->format($evento->criado_em, 'datetime'), 'descricao' => $evento->motivo ?? ''])->all();
     }
+
+    private const EXPENSE_EVENT_LABELS = [
+        'registrada' => 'Registro',
+        'abastecimento_registrado' => 'Registro do abastecimento',
+        'editada' => 'Edição',
+        'abastecimento_editado' => 'Edição do abastecimento',
+        'enviada_conferencia' => 'Envio para conferência',
+        'correcao_solicitada' => 'Correção solicitada',
+        'aprovada' => 'Aprovação',
+        'pagamento_confirmado' => 'Pagamento confirmado',
+        'cancelada' => 'Cancelamento',
+    ];
 
     /**
      * @return array<array-key, mixed>
@@ -338,6 +351,19 @@ class FleetReadRepository
             return [];
         }
 
-        return $consulta->orderByDesc('a.id')->limit(40)->get(['a.id', 'f.nome_original', 'f.situacao'])->map(fn (stdClass $arquivo) => ['nome' => $arquivo->nome_original, 'situacao' => $arquivo->situacao, 'url' => $codigo === 'requests' && $arquivo->situacao === 'disponivel' ? route('solicitacoes.download', ['registro' => $id, 'anexo' => $arquivo->id]) : (in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) && $arquivo->situacao === 'disponivel' ? route($codigo.'.download', ['registro' => $id, 'anexo' => $arquivo->id]) : null)])->all();
+        $lista = $consulta->orderByDesc('a.id')->limit(40)->get(['a.id', 'f.nome_original', 'f.situacao'])->map(fn (stdClass $arquivo) => ['nome' => $arquivo->nome_original, 'situacao' => $arquivo->situacao, 'url' => $codigo === 'requests' && $arquivo->situacao === 'disponivel' ? route('solicitacoes.download', ['registro' => $id, 'anexo' => $arquivo->id]) : (in_array($codigo, ['expenses', 'fuel', 'maintenance'], true) && $arquivo->situacao === 'disponivel' ? route($codigo.'.download', ['registro' => $id, 'anexo' => $arquivo->id]) : null)])->all();
+        if (in_array($codigo, ['expenses', 'fuel'], true)) {
+            $comprovante = DB::table('pagamentos_despesa as p')->join('arquivos as f', 'f.id', '=', 'p.comprovante_arquivo_id')
+                ->where('p.despesa_id', $id)->first(['f.nome_original', 'f.situacao']);
+            if ($comprovante !== null) {
+                array_unshift($lista, [
+                    'nome' => 'Comprovante de pagamento: '.Value::string($comprovante->nome_original),
+                    'situacao' => $comprovante->situacao,
+                    'url' => $comprovante->situacao === 'disponivel' ? route($codigo.'.receipt', ['registro' => $id]) : null,
+                ]);
+            }
+        }
+
+        return $lista;
     }
 }

@@ -128,6 +128,60 @@ esse catálogo à consulta genérica. `OperationCatalog` resolve quais ações p
 ser oferecidas para um registro. Telas com fluxos próprios usam controladores e
 views especializados, mantendo o contexto de autorização compartilhado.
 
+### Regras do financeiro
+
+Os serviços do financeiro são `FinanceService` (escrita), `FinanceQueryService`
+(consultas), `ExpenseNotifier` (notificações) e `App\Support\Money` (aritmética
+em centavos, sem ponto flutuante). Nenhuma delas altera o esquema do banco.
+
+- **Veículo de referência.** Despesa, abastecimento, manutenção e instalação de
+  pneu exigem `frota.selecionar`, que o perfil financeiro padrão possui no
+  alcance de órgão. Quem já tinha `frota.consultar` continua aceito. A procedure
+  `sp_exigir_permissao` decide o alcance do vínculo sobre o veículo antes de
+  qualquer gravação; a recusa vira resposta 403 e a transação é desfeita.
+  Recusas das demais regras das procedures viram erro de validação, nunca erro
+  de servidor.
+- **Peças e serviços** (`manutencao_itens`). Operações `item-add`, `item-edit`
+  e `item-remove` em `/financeiro/manutencoes/{registro}/{acao}` exigem
+  `despesas.editar` e `ver_valores`, a versão atual da manutenção e a ordem em
+  `planejada` ou `em_execucao`. O item é sempre buscado pela manutenção da
+  rota. Quantidade tem até 3 casas e valor unitário até 2.
+- **Totais.** Cada linha é quantidade × valor unitário arredondado
+  meio-para-cima ao centavo; o total da manutenção é a soma das linhas já
+  arredondadas. O valor é calculado no servidor e não é gravado.
+- **Despesa vinculada** (`link-expense`). A despesa precisa ser do mesmo
+  veículo, da categoria Manutenção, não cancelada e ainda não usada por outra
+  manutenção; a manutenção não pode já ter despesa nem estar cancelada. O vínculo
+  só grava `manutencoes.despesa_id`: não cria despesa nem soma itens aos custos.
+  A manutenção pode permanecer sem despesa.
+- **Histórico.** `despesa_eventos` alimenta o histórico de despesas e
+  abastecimentos (registro, edição, envio, correção, aprovação, pagamento e
+  cancelamento) para quem alcança o registro. As triggers do banco impedem
+  alterar ou apagar eventos.
+- **Comprovante.** `GET /financeiro/despesas/{registro}/comprovante` (e
+  `/financeiro/abastecimentos/...`) entrega o arquivo de `pagamentos_despesa`
+  do próprio registro, com `despesas.consultar` e `ver_valores`. Nenhum
+  identificador de arquivo vem da requisição. Arquivo indisponível ou ausente do
+  disco privado responde 404.
+- **Notificações.** Enviada à conferência: quem pode aprovar. Correção
+  solicitada: o autor (com a justificativa). Aprovada: quem pode validar o
+  pagamento. Pagamento confirmado: o autor. Todos precisam alcançar a despesa
+  (órgão, unidade ou autoria) e quem agiu não é notificado. A chave
+  `despesa:{id}:v{versão}:{tipo}` evita duplicidade. Envio e conferência gravam a
+  notificação na mesma transação do estado; o pagamento usa uma procedure que
+  confirma a própria transação, então sua notificação é criada logo depois e uma
+  falha nela é apenas registrada, sem desfazer nem mascarar o pagamento.
+- **Consolidados.** Despesas registradas = despesas não canceladas do veículo;
+  pagas = pagamentos confirmados; saldo pendente = registradas − pagas. O custo
+  mensal soma as despesas não canceladas pela data da despesa; pagamentos
+  liquidam as mesmas despesas e nunca entram no custo como outro gasto. Como
+  agregam vários autores, exigem alcance de unidade ou órgão em
+  `despesas.consultar` e `despesas.ver_valores`; o mais restrito filtra por
+  unidade.
+- **Pagamento integral único.** Parcelamento, pagamento parcial e estorno não
+  existem; o banco garante um pagamento por despesa e bloqueia reescrever ou
+  cancelar uma despesa paga.
+
 O arquivo `app/Models/Solicitacao.php` é um adaptador de compatibilidade marcado
 como obsoleto: estende `RequestReadRepository`. Ele não representa um modelo
 Eloquent para gravar solicitações. A escrita fica em `RequestWorkflow`.
