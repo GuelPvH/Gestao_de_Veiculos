@@ -4,11 +4,9 @@
 
 Frota · PF é uma aplicação web monolítica em Laravel. Os módulos de negócio
 compartilham a aplicação, a autenticação, os componentes Blade e o banco MySQL.
-Os workers e o agendador executam o mesmo código em processos separados.
+O processamento das filas e o agendamento usam o mesmo código da aplicação, mas são executados em processos separados.
 
-O servidor monta o HTML com Blade; JavaScript complementa formulários, modais,
-mapas e acompanhamento da sessão. As rotas de sessão também
-trocam JSON. A interface não mantém uma cópia autônoma do domínio no navegador.
+O servidor gera as páginas em HTML com Blade. O JavaScript acrescenta os comportamentos de formulários, modais, mapas e acompanhamento da sessão. As rotas de sessão também trocam dados em JSON. O navegador não mantém uma cópia independente dos dados e das regras do domínio.
 
 ```mermaid
 flowchart TD
@@ -31,20 +29,20 @@ flowchart TD
 
 ## Camadas e responsabilidades
 
-| Camada              | Implementação                                           | Responsabilidade                                                            |
-| ------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Entrada             | `public/index.php`, `artisan`, `bootstrap/`             | Inicializar o framework para HTTP ou console.                               |
-| Contrato HTTP       | `routes/`, `app/Http/Middleware/`, `app/Http/Requests/` | Resolver endpoints, validar sessão, restringir acesso e validar entradas.   |
-| Coordenação         | `app/Http/Controllers/`                                 | Escolher leituras e ações, chamar serviços e produzir respostas.            |
-| Domínio             | `app/Services/`                                         | Executar fluxos, aplicar autorização, transações, concorrência e auditoria. |
-| Persistência        | Query Builder, Eloquent e `database/sql/`               | Consultar dados e executar o contrato relacional e suas rotinas.            |
-| Apresentação        | `resources/views/`, `resources/css/`, `resources/js/`   | Renderizar páginas e comportamentos da interface.                           |
-| Execução assíncrona | `app/Jobs/`, comandos e `routes/console.php`            | Entregar mensagens e supervisionar processos fora da requisição web.        |
+| Camada              | Implementação                                           | Responsabilidade                                                                 |
+| ------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Entrada             | `public/index.php`, `artisan`, `bootstrap/`             | Inicializar o framework para HTTP ou console.                                    |
+| Contrato HTTP       | `routes/`, `app/Http/Middleware/`, `app/Http/Requests/` | Resolver pontos de acesso, validar sessão, restringir acesso e validar entradas. |
+| Coordenação         | `app/Http/Controllers/`                                 | Escolher leituras e ações, chamar serviços e produzir respostas.                 |
+| Domínio             | `app/Services/`                                         | Executar fluxos, aplicar autorização, transações, concorrência e auditoria.      |
+| Persistência        | Query Builder, Eloquent e `database/sql/`               | Consultar dados e executar o contrato relacional e suas rotinas.                 |
+| Apresentação        | `resources/views/`, `resources/css/`, `resources/js/`   | Renderizar páginas e comportamentos da interface.                                |
+| Execução assíncrona | `app/Jobs/`, comandos e `routes/console.php`            | Entregar mensagens e supervisionar processos fora da requisição web.             |
 
-Os controllers recebem serviços por injeção de dependência. Os Form Requests
+Os controladores recebem serviços por injeção de dependência. Os Form Requests
 descrevem entradas e verificações de autorização da ação; os serviços voltam a
 verificar os registros e o alcance necessários à operação. O banco complementa
-essas regras com constraints, triggers e procedures.
+essas regras com restrições de integridade, triggers e procedures.
 
 ## Fluxo de uma requisição
 
@@ -54,7 +52,7 @@ essas regras com constraints, triggers e procedures.
    web do Laravel fornece sessão, cookies, proteção CSRF e tratamento de erros.
 3. Nas áreas autenticadas, `ValidateFleetSession` confere a identidade, a sessão
    de negócio e o vínculo. `RequireProfile` e `RequireEnabledRoute` acrescentam as restrições dos grupos que os utilizam.
-4. O controller consulta um repositório ou encaminha a entrada validada ao
+4. O controlador consulta um repositório ou encaminha a entrada validada ao
    serviço do módulo. Filtros, paginação e projeções são aplicados no servidor.
 5. A resposta é uma view Blade, redirecionamento, JSON ou download autorizado.
    `PrivateResponse` e o tratamento global de exceções definem cabeçalhos de
@@ -75,20 +73,20 @@ Há duas estruturas de sessão relacionadas: a sessão HTTP do Laravel e a sess�
 de negócio em `sessoes`. `FleetSession` cria um token aleatório, mantém seu hash
 no banco e associa o contexto ao usuário e ao vínculo selecionado. A validade
 considera inatividade, prazo para confirmar novamente a senha e duração máxima.
-A reautenticação gira os identificadores e tokens sem recuperar uma sessão já
+A reautenticação renova os identificadores e tokens sem recuperar uma sessão já
 expirada ou revogada.
 
-`AccessContext` é registrado com escopo de requisição. Sua matriz usa módulo,
+`AccessContext` é registrado com escopo limitado à requisição. Sua matriz usa módulo,
 ação e alcance: `0` sem acesso, `1` próprios registros, `2` unidade e `3` órgão.
 A projeção de valores financeiros e localização possui verificações próprias.
 `RequestAccessReader` reúne permissões e ativação das rotas em uma leitura
-quando o endpoint precisa das duas informações. Esse contexto não sobrevive à
+quando o ponto de acesso precisa das duas informações. Esse contexto não sobrevive à
 requisição, permitindo que mudanças de acesso sejam observadas nas seguintes.
 
 O perfil administrador usa identificador e senha, com sessão válida e as permissões
 do vínculo ativo. O cadastro e a confirmação por passkey/chave de segurança foram
 removidos em 07/11/2026. A URL antiga `/seguranca/mfa` redireciona ao painel;
-os endpoints de cadastro, confirmação e recuperação do fator não existem mais.
+os pontos de acesso de cadastro, confirmação e recuperação do fator não existem mais.
 As tabelas e os campos históricos de MFA permanecem no contrato SQL versionado
 para compatibilidade com instalações existentes, sem uso no fluxo da aplicação.
 
@@ -127,7 +125,7 @@ confirmação de e-mail de contato e a invalidação de credenciais e sessões.
 `config/screens.php` descreve tabelas/views de leitura, colunas, módulos,
 ações, filtros e campos adicionais de relatório. `FleetReadRepository` aplica
 esse catálogo à consulta genérica. `OperationCatalog` resolve quais ações podem
-ser oferecidas para um registro. Telas com fluxos próprios usam controllers e
+ser oferecidas para um registro. Telas com fluxos próprios usam controladores e
 views especializados, mantendo o contexto de autorização compartilhado.
 
 ### Regras do financeiro
@@ -241,7 +239,7 @@ O provisionamento e a transição estão em [MYSQL-RUNTIME.md](MYSQL-RUNTIME.md)
 
 `PrivateFileService` valida tipo e tamanho de upload, calcula SHA-256, gera uma
 chave de armazenamento e relaciona os metadados à identidade autenticada. Os
-controllers de cada módulo autorizam o vínculo do arquivo ao registro e seu
+controladores de cada módulo autorizam o vínculo do arquivo ao registro e seu
 download. A localização física padrão é o disco local privado configurado em
 `config/filesystems.php`.
 
@@ -251,10 +249,9 @@ obter o resultado. `ReportPdfRenderer` usa Dompdf e a view `reports/pdf.blade.ph
 com carregamento remoto, PHP embutido e JavaScript desabilitados no renderizador.
 
 `resources/js/app.js` coordena a interação geral; `session.js` sincroniza o
-acompanhamento e a confirmação de senha entre abas. Estado local de tema e
-coordenação entre abas não concede permissões no servidor.
+acompanhamento e a confirmação de senha entre abas. A preferência de tema e a coordenação entre abas são mantidas localmente e não concedem permissões no servidor.
 
-Os componentes de mapas atendem finalidades diferentes. A busca de locais usa
+Os componentes de mapas atendem a finalidades diferentes. A busca de locais usa
 a URL configurável de geocodificação, cujo padrão é Photon, com seleção
 geográfica apresentada no formulário. Percursos aprovados e reservas usam
 dados do domínio. `simulated-monitoring-map.blade.php` apresenta viaturas
@@ -262,11 +259,11 @@ simuladas em movimento e não representa ingestão de telemetria real.
 
 ## Execução e qualidade
 
-O Dockerfile separa dependências PHP, compilação de assets, runtime de produção
-e runtime de desenvolvimento. A imagem de desenvolvimento inclui ferramentas
+O Dockerfile separa dependências PHP, compilação de recursos de interface, ambiente de execução de produção
+e ambiente de execução de desenvolvimento. A imagem de desenvolvimento inclui ferramentas
 como Debugbar; a imagem padrão utiliza o conjunto de produção.
 
-`docker-compose.yml` define aplicação, workers, scheduler e serviços
+`docker-compose.yml` define aplicação, processos de execução das filas, agendador e serviços
 opcionais de administração e manutenção. O override acrescenta o ambiente de
 desenvolvimento e o Vite; `compose.local.yml` adapta a execução ao banco local
 com dados fictícios. `scripts/dev-remote.sh` verifica o alvo configurado antes
@@ -274,16 +271,20 @@ de iniciar o desenvolvimento com o banco remoto.
 
 As configurações Laravel são divididas por assunto em `config/`. Exemplos de
 ambiente ficam na raiz, enquanto valores privados pertencem à configuração da
-instalação. O sistema de logs e o coletor de Debugbar evitam registrar bindings
+instalação. O sistema de logs e o coletor de Debugbar evitam registrar parâmetros vinculados
 sensíveis em sua telemetria de banco.
 
 Os testes PHP separam unidades, páginas, autorização, fluxos e contratos MySQL.
-As fixtures montam o cenário de cada suíte; o contrato de procedures e triggers
+Os dados de teste preparam o cenário de cada suíte; o contrato de rotinas armazenadas e triggers
 é exercitado por um ambiente descartável próprio. Testes Python verificam a
 ferramenta de manutenção, e scripts de navegador cobrem interações da interface.
-O workflow verifica dependências, formatação, análise estática, testes, build
-frontend e imagem Docker. Prettier formata Blade e assets; Laravel Pint formata
+O fluxo de trabalho verifica dependências, formatação, análise estática, testes, compilação da
+interface e imagem Docker. Prettier formata Blade e recursos de interface; Laravel Pint formata
 o PHP da aplicação.
 
 Consulte a [estrutura de pastas](ESTRUTURA.md) para localizar cada camada e o
 [catálogo de arquivos](ARQUIVOS.md) para suas responsabilidades individuais.
+
+---
+
+[Voltar ao índice](README.md) · Referência: 09/11/2026.

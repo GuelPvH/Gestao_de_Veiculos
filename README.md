@@ -1,4 +1,4 @@
-# Frota · PF
+# Frota · PF — documentação do sistema
 
 Sistema de gestão de veículos organizado como uma aplicação Laravel com páginas
 renderizadas em Blade. Reúne solicitações de transporte, viagens e vistorias,
@@ -11,26 +11,35 @@ alcance sobre os registros. As regras são verificadas no servidor.
 
 ## Documentação técnica
 
-| Documento                                | Conteúdo                                                                    |
-| ---------------------------------------- | --------------------------------------------------------------------------- |
-| [Arquitetura](docs/ARQUITETURA.md)       | Camadas, fluxos, módulos, identidade, persistência e processos de execução. |
-| [Estrutura de pastas](docs/ESTRUTURA.md) | Organização do repositório e limites de responsabilidade de cada diretório. |
-| [Catálogo de arquivos](docs/ARQUIVOS.md) | Função e propósito de cada arquivo mantido pelo projeto.                    |
+| Objetivo                                  | Documento                                                     |
+| ----------------------------------------- | ------------------------------------------------------------- |
+| Aprender a usar o sistema                 | [Manual de uso](docs/USO.md)                                  |
+| Consultar todas as telas, estados e ações | [Catálogo funcional](docs/FUNCIONALIDADES.md)                 |
+| Administrar usuários e permissões         | [Guia de administração](docs/ADMINISTRACAO.md)                |
+| Entender as camadas e decisões            | [Arquitetura](docs/ARQUITETURA.md)                            |
+| Desenvolver e entender contratos          | [Referência técnica](docs/TECNICA.md)                         |
+| Instalar, operar e diagnosticar           | [Guia de operação](docs/OPERACAO.md)                          |
+| Entender o banco atual                    | [Banco remoto](docs/BANCO.md)                                 |
+| Consultar campos e relações               | [Dicionário atual](docs/DICIONARIO.md)                        |
+| Consultar rotinas e views                 | [Objetos SQL](docs/OBJETOS-SQL.md)                            |
+| Localizar arquivos                        | [Estrutura](docs/ESTRUTURA.md) e [catálogo](docs/ARQUIVOS.md) |
+| Conferir fontes e limites                 | [Evidências](docs/EVIDENCIAS.md)                              |
 
 ## Composição
 
 - **Aplicação:** PHP e Laravel; controllers, validação de entrada e serviços de domínio.
 - **Interface:** Blade, Bootstrap, JavaScript e CSS compilados pelo Vite.
-- **Persistência:** MySQL com tabelas, views, procedures, funções e triggers versionados em SQL.
-- **Processos auxiliares:** cache e filas no MySQL, workers de e-mail e agendador Laravel.
+- **Persistência.** Banco compatível com MySQL, com esquema versionado em `database/sql/`.
+- **Filas e agendamento.** No Docker Compose, o banco armazena o cache e as filas. Serviços separados processam e-mails e executam o agendador do Laravel.
 - **Arquivos:** armazenamento privado de anexos e exportações CSV/PDF.
-- **Entrega:** imagens Docker e verificações automatizadas no GitHub Actions.
+- **Entrega:** Construção de imagens Docker e verificações automatizadas no GitHub Actions.
 
-Os contratos de dependências estão em `composer.json`, `composer.lock`,
-`package.json` e `package-lock.json`. O esquema do domínio está em
-`database/sql/`; as configurações de execução estão em `config/` e nos
-arquivos de Compose. O catálogo explica a responsabilidade desses arquivos e
-como eles se relacionam com o restante do sistema.
+As dependências são declaradas em `composer.json` e `package.json`,
+com versões fixadas em `composer.lock` e `package-lock.json`.
+As configurações da aplicação ficam em `config/`,
+e os arquivos do Docker Compose definem os serviços e seus
+ambientes de execução. Para localizar os componentes e entender suas
+responsabilidades, consulte o catálogo de arquivos.
 
 ## Formatação do código
 
@@ -61,3 +70,7 @@ sem baseline ou regras de supressão.
 
 O provisionamento de cache, filas e monitoramento está em [docs/MYSQL-RUNTIME.md](docs/MYSQL-RUNTIME.md).
 O diagrama e o dicionário do banco estão em [docs/database-model/LEIA-ME.md](docs/database-model/LEIA-ME.md).
+
+## Tecnologia
+
+PHP ^8.3, Laravel ^13.17, Blade, Bootstrap, Vite, Leaflet e Dompdf. Persistência compatível com MySQL; servidor remoto consultado: MariaDB 11.8.9. Sessões em arquivos, cache e filas em banco na configuração Compose.
