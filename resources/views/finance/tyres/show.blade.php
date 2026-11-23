@@ -78,7 +78,16 @@
                 <x-ui.panel titulo="Instalar em veículo">
                     <form method="post" action="{{ route('tyres.install', $record->id) }}">
                         @csrf
-                        <x-forms.field nome="veiculo" rotulo="Placa do veículo" :obrigatorio="true" maxlength="20" />
+                        <x-forms.field
+                            nome="veiculo"
+                            rotulo="Veículo"
+                            tipo="select"
+                            :opcoes="$vehicles ?? []"
+                            :obrigatorio="true"
+                        />
+                        @if (empty($vehicles))
+                            <x-ui.alert tom="warning">Não há veículo ativo disponível nesta unidade.</x-ui.alert>
+                        @endif
                         <x-forms.field nome="posicao" rotulo="Posição" :obrigatorio="true" maxlength="40" />
                         <x-forms.field
                             nome="instalado_em"

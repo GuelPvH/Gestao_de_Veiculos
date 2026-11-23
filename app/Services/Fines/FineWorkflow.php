@@ -52,30 +52,66 @@ class FineWorkflow
     /**
      * @return array<array-key, mixed>
      */
-    public function tripOptions(int $multaId): array
+    public function tripOptions(int $multaId, ?stdClass $multa = null): array
     {
-        $multa = $this->fine($multaId);
-        $inicio = $multa->ocorrido_em;
-        $fim = $multa->precisao_ocorrencia === 'dia' ? $multa->fim_dia_ocorrencia_utc : $inicio;
-        $consulta = DB::table('viagens as v')->join('usuarios as u', 'u.id', '=', 'v.motorista_id')
-            ->where('v.veiculo_id', $multa->veiculo_id)->whereIn('v.situacao', ['em_andamento', 'concluida'])
-            ->whereNotNull('v.saida_real')->where('v.saida_real', $multa->precisao_ocorrencia === 'dia' ? '<' : '<=', $fim)
-            ->where(function (Builder $query) use ($inicio): void {
-                $query->whereNull('v.retorno_real')->orWhere('v.retorno_real', '>=', $inicio);
-            });
+        $multa ??= $this->fine($multaId);
 
-        return $consulta->orderByDesc('v.saida_real')->limit(200)->get(['v.id', 'v.protocolo', 'u.nome'])->mapWithKeys(fn (stdClass $viagem) => [Value::integer($viagem->id) => Value::string($viagem->protocolo).' · '.Value::string($viagem->nome)])->all();
+        return $this->tripOptionsQuery($multa)->orderByDesc('v.saida_real')->limit(200)->get(['v.id', 'v.protocolo', 'u.nome'])
+            ->mapWithKeys(fn (stdClass $viagem) => [Value::integer($viagem->id) => Value::string($viagem->protocolo).' · '.Value::string($viagem->nome)])->all();
     }
 
     /**
      * @return array<array-key, mixed>
      */
-    public function responsibleOptions(int $multaId): array
+    public function responsibleOptions(int $multaId, ?stdClass $multa = null): array
     {
-        $multa = $this->fine($multaId);
+        $multa ??= $this->fine($multaId);
 
-        return DB::table('usuarios')->where('ativo', 1)->where('unidade_id', $multa->unidade_id)
-            ->orderBy('nome')->limit(300)->pluck('nome', 'id')->all();
+        return $this->responsibleOptionsQuery($multa)->orderBy('nome')->limit(300)->pluck('nome', 'id')->all();
+    }
+
+    /**
+     * @return array{viagens: array<int, string>, responsaveis: array<int, string>}
+     */
+    public function assignOptions(stdClass $multa): array
+    {
+        $viagensSub = DB::query()->fromSub(
+            $this->tripOptionsQuery($multa)->orderByDesc('v.saida_real')->limit(200)
+                ->selectRaw("'trip' as kind, v.id as id, v.protocolo as a, u.nome as b, v.saida_real as ord"),
+            'trp',
+        );
+        $responsaveisSub = DB::query()->fromSub(
+            $this->responsibleOptionsQuery($multa)->orderBy('nome')->limit(300)
+                ->selectRaw("'responsible' as kind, id as id, nome as a, NULL as b, nome as ord"),
+            'rsp',
+        );
+        $linhas = $viagensSub->unionAll($responsaveisSub)->get();
+        $viagens = $linhas->where('kind', 'trip')->sortByDesc('ord')
+            ->mapWithKeys(fn (stdClass $row): array => [Value::integer($row->id) => Value::string($row->a).' · '.Value::string($row->b)])
+            ->all();
+        $responsaveis = $linhas->where('kind', 'responsible')->sortBy('ord')
+            ->mapWithKeys(fn (stdClass $row): array => [Value::integer($row->id) => Value::string($row->a)])
+            ->all();
+
+        return ['viagens' => $viagens, 'responsaveis' => $responsaveis];
+    }
+
+    private function tripOptionsQuery(stdClass $multa): Builder
+    {
+        $inicio = $multa->ocorrido_em;
+        $fim = $multa->precisao_ocorrencia === 'dia' ? $multa->fim_dia_ocorrencia_utc : $inicio;
+
+        return DB::table('viagens as v')->join('usuarios as u', 'u.id', '=', 'v.motorista_id')
+            ->where('v.veiculo_id', $multa->veiculo_id)->whereIn('v.situacao', ['em_andamento', 'concluida'])
+            ->whereNotNull('v.saida_real')->where('v.saida_real', $multa->precisao_ocorrencia === 'dia' ? '<' : '<=', $fim)
+            ->where(function (Builder $query) use ($inicio): void {
+                $query->whereNull('v.retorno_real')->orWhere('v.retorno_real', '>=', $inicio);
+            });
+    }
+
+    private function responsibleOptionsQuery(stdClass $multa): Builder
+    {
+        return DB::table('usuarios')->where('ativo', 1)->where('unidade_id', $multa->unidade_id);
     }
 
     /**

@@ -56,9 +56,10 @@ class FineWorkflowTest extends TestCase
         app()->instance(ProcedureRunner::class, $runner);
 
         $this->get(route('fines.create'))->assertOk()->assertSee('Veículo autuado');
-        $this->post(route('fines.store'), $this->fineData())->assertRedirect(route('fines.index'))->assertSessionHas('status');
+        $resposta = $this->post(route('fines.store'), $this->fineData())->assertRedirect(route('fines.index'))->assertSessionHas('status');
         $multa = DB::table('multas')->where('id', 4)->first();
         $this->assertNotNull($multa);
+        $this->assertStringContainsString($multa->protocolo, (string) $resposta->getSession()->get('status'));
         $this->assertSame('sem_responsavel', $multa->situacao);
         $this->assertNull($multa->responsabilidade_atual_id);
         $this->assertSame('125.5', (string) $multa->valor);

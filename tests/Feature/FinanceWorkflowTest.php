@@ -216,4 +216,45 @@ class FinanceWorkflowTest extends TestCase
         ])->assertRedirect(route('expenses.show', 1));
         $this->assertSame(2, DB::table('arquivos')->count());
     }
+
+    public function test_hyphenated_plates_and_conflict_validations_are_handled_without_server_errors(): void
+    {
+        $this->procedures();
+        DB::table('veiculos')->where('id', 1)->update(['placa' => 'XYZ-9876']);
+        DB::table('reservas')->where('veiculo_id', 1)->update(['situacao' => 'liberada']);
+
+        $this->post(route('expenses.store'), $this->expenseData(['veiculo' => 'XYZ-9876']))->assertRedirect(route('expenses.show', 4));
+        $this->post(route('expenses.store'), $this->expenseData(['veiculo' => 'xyz9876']))->assertRedirect(route('expenses.show', 5));
+
+        $local = CarbonImmutable::now(config('fleet.timezone'));
+        $maint = [
+            'veiculo' => 'XYZ-9876', 'tipo' => 'preventiva',
+            'inicio_previsto' => $local->addDays(2)->format('Y-m-d\TH:i'),
+            'fim_previsto' => $local->addDays(3)->format('Y-m-d\TH:i'),
+            'descricao' => 'Manutenção com placa com hífen.',
+        ];
+        $this->post(route('maintenance.store'), $maint)->assertRedirect(route('maintenance.show', 4));
+        $this->post(route('maintenance.store'), $maint)->assertSessionHasErrors('inicio_previsto');
+
+        $this->post(route('tyres.store'), [
+            'despesa_aquisicao_id' => 4, 'codigo' => 'PN-DUP-1', 'numero_serie' => 'SER-DUP-1', 'medida' => '205/60 R16',
+        ])->assertRedirect(route('tyres.show', 1));
+        $this->post(route('tyres.store'), [
+            'despesa_aquisicao_id' => 4, 'codigo' => 'PN-DUP-1', 'medida' => '205/60 R16',
+        ])->assertSessionHasErrors('codigo');
+        $this->post(route('tyres.store'), [
+            'despesa_aquisicao_id' => 4, 'codigo' => 'PN-DUP-2', 'numero_serie' => 'SER-DUP-1', 'medida' => '205/60 R16',
+        ])->assertSessionHasErrors('numero_serie');
+        $this->post(route('tyres.store'), [
+            'despesa_aquisicao_id' => 4, 'codigo' => 'PN-DUP-2', 'medida' => '205/60 R16',
+        ])->assertRedirect(route('tyres.show', 2));
+
+        $when = $local->subHour()->format('Y-m-d\TH:i');
+        $this->post(route('tyres.install', 1), [
+            'veiculo' => 'XYZ-9876', 'posicao' => 'dianteira esquerda', 'instalado_em' => $when, 'quilometragem_instalacao' => '25000.0',
+        ])->assertRedirect(route('tyres.show', 1));
+        $this->post(route('tyres.install', 2), [
+            'veiculo' => 'XYZ-9876', 'posicao' => 'dianteira esquerda', 'instalado_em' => $when, 'quilometragem_instalacao' => '25000.0',
+        ])->assertSessionHasErrors('posicao');
+    }
 }

@@ -62,10 +62,44 @@ class FinanceService
         ]);
     }
 
+    private function handleDatabaseError(PDOException $error, string $field, string $duplicateMessage, string $ruleMessage): never
+    {
+        $sqlState = Value::string($error->errorInfo[0] ?? $error->getCode());
+        $driverCode = $error->errorInfo[1] ?? null;
+        if ($sqlState === '23000' || $driverCode === 1062) {
+            throw ValidationException::withMessages([$field => $duplicateMessage]);
+        }
+        if ($sqlState === '45000') {
+            if (str_starts_with(Value::string($error->errorInfo[2] ?? ''), 'Acesso negado:')) {
+                abort(403);
+            }
+
+            throw ValidationException::withMessages([$field => $ruleMessage]);
+        }
+
+        throw $error;
+    }
+
+    private function checkMaintenanceAvailability(int $vehicleId, string $startUtc, string $endUtc, ?int $ignoreReservationId = null): void
+    {
+        $overlap = DB::table('reservas')->where('veiculo_id', $vehicleId)->where('situacao', 'ativa')
+            ->where('inicio', '<', $endUtc)->where('fim', '>', $startUtc);
+        if ($ignoreReservationId !== null) {
+            $overlap->where('id', '<>', $ignoreReservationId);
+        }
+        $tripOverlap = DB::table('viagens')->where('veiculo_id', $vehicleId)->where('situacao', 'concluida')
+            ->where('saida_real', '<', $endUtc)->where('retorno_real', '>', $startUtc)->exists();
+        if ($overlap->exists() || $tripOverlap) {
+            throw ValidationException::withMessages(['inicio_previsto' => 'O veículo já possui reserva, bloqueio ou viagem nesse período.']);
+        }
+    }
+
     private function vehicle(string $plate): stdClass
     {
         $plate = strtoupper(Value::string(preg_replace('/[\s-]+/', '', $plate)));
-        $vehicle = DB::table('veiculos')->where('placa', $plate)->where('situacao_cadastro', 'ativo')
+        $vehicle = DB::table('veiculos')
+            ->whereRaw("REPLACE(REPLACE(UPPER(placa), ' ', ''), '-', '') = ?", [$plate])
+            ->where('situacao_cadastro', 'ativo')
             ->lockForUpdate()->first(['id', 'placa', 'unidade_id', 'criado_por']);
         if ($vehicle === null) {
             throw ValidationException::withMessages(['veiculo' => 'Veículo ativo não encontrado.']);
@@ -442,14 +476,19 @@ class FinanceService
             if ($end <= $start) {
                 throw ValidationException::withMessages(['fim_previsto' => 'O fim deve ocorrer depois do início.']);
             }
-            $reservationId = (int) DB::table('reservas')->insertGetId([
-                'veiculo_id' => Value::integer($vehicle->id),
-                'tipo' => 'manutencao',
-                'inicio' => $start,
-                'fim' => $end,
-                'descricao' => mb_substr(Value::string($data['descricao']), 0, 500),
-                'criado_por' => Value::integer($this->actor()->usuario_id),
-            ]);
+            $this->checkMaintenanceAvailability(Value::integer($vehicle->id), $start, $end);
+            try {
+                $reservationId = (int) DB::table('reservas')->insertGetId([
+                    'veiculo_id' => Value::integer($vehicle->id),
+                    'tipo' => 'manutencao',
+                    'inicio' => $start,
+                    'fim' => $end,
+                    'descricao' => mb_substr(Value::string($data['descricao']), 0, 500),
+                    'criado_por' => Value::integer($this->actor()->usuario_id),
+                ]);
+            } catch (PDOException $error) {
+                $this->handleDatabaseError($error, 'inicio_previsto', 'O veículo já possui reserva, bloqueio ou viagem nesse período.', 'O veículo já possui reserva, bloqueio ou viagem nesse período.');
+            }
             $id = (int) DB::table('manutencoes')->insertGetId([
                 'protocolo' => 'MAN-'.strtoupper(str_replace('-', '', (string) Str::uuid())),
                 'veiculo_id' => Value::integer($vehicle->id),
@@ -486,9 +525,14 @@ class FinanceService
             if ($end <= $start) {
                 throw ValidationException::withMessages(['fim_previsto' => 'O fim deve ocorrer depois do início.']);
             }
-            $updated = DB::table('reservas')->where('id', $record->reserva_id)->where('situacao', 'ativa')->update([
-                'inicio' => $start, 'fim' => $end, 'descricao' => mb_substr(Value::string($data['descricao']), 0, 500),
-            ]);
+            $this->checkMaintenanceAvailability(Value::integer($record->veiculo_id), $start, $end, $record->reserva_id !== null ? Value::integer($record->reserva_id) : null);
+            try {
+                $updated = DB::table('reservas')->where('id', $record->reserva_id)->where('situacao', 'ativa')->update([
+                    'inicio' => $start, 'fim' => $end, 'descricao' => mb_substr(Value::string($data['descricao']), 0, 500),
+                ]);
+            } catch (PDOException $error) {
+                $this->handleDatabaseError($error, 'inicio_previsto', 'O veículo já possui reserva, bloqueio ou viagem nesse período.', 'O veículo já possui reserva, bloqueio ou viagem nesse período.');
+            }
             if ($updated !== 1) {
                 throw ValidationException::withMessages(['versao' => 'A reserva da manutenção não está mais ativa.']);
             }
@@ -721,15 +765,32 @@ class FinanceService
             if (Value::integer($expense->categoria_id) !== $this->category('pneus') || $expense->situacao === 'cancelada') {
                 throw ValidationException::withMessages(['despesa_aquisicao_id' => 'Informe uma despesa válida de pneus.']);
             }
-            $id = (int) DB::table('pneus')->insertGetId([
-                'codigo' => $data['codigo'],
-                'numero_serie' => $data['numero_serie'] ?? null,
-                'marca' => $data['marca'] ?? null,
-                'modelo' => $data['modelo'] ?? null,
-                'medida' => $data['medida'],
-                'adquirido_em' => $data['adquirido_em'] ?? null,
-                'despesa_aquisicao_id' => Value::integer($expense->id),
-            ]);
+            if (DB::table('pneus')->where('codigo', $data['codigo'])->exists()) {
+                throw ValidationException::withMessages(['codigo' => 'Já existe um pneu cadastrado com este código.']);
+            }
+            $serial = Value::nullableString($data['numero_serie'] ?? null);
+            if ($serial !== null && trim($serial) !== '' && DB::table('pneus')->where('numero_serie', $serial)->exists()) {
+                throw ValidationException::withMessages(['numero_serie' => 'Já existe um pneu cadastrado com este número de série.']);
+            }
+            try {
+                $id = (int) DB::table('pneus')->insertGetId([
+                    'codigo' => $data['codigo'],
+                    'numero_serie' => $serial !== null && trim($serial) !== '' ? $serial : null,
+                    'marca' => $data['marca'] ?? null,
+                    'modelo' => $data['modelo'] ?? null,
+                    'medida' => $data['medida'],
+                    'adquirido_em' => $data['adquirido_em'] ?? null,
+                    'despesa_aquisicao_id' => Value::integer($expense->id),
+                ]);
+            } catch (PDOException $error) {
+                $isSerial = str_contains($error->getMessage(), 'uq_pneu_serie');
+                $this->handleDatabaseError(
+                    $error,
+                    $isSerial ? 'numero_serie' : 'codigo',
+                    $isSerial ? 'Já existe um pneu cadastrado com este número de série.' : 'Já existe um pneu cadastrado com este código.',
+                    'Não foi possível cadastrar o pneu com os dados informados.',
+                );
+            }
             $this->audit('pneu_cadastrado', 'pneus', $id, 'Pneu vinculado à despesa de aquisição.');
 
             return $id;
@@ -756,15 +817,28 @@ class FinanceService
             if ($installedAt > now('UTC')->format('Y-m-d H:i:s.u')) {
                 throw ValidationException::withMessages(['instalado_em' => 'Instalação futura não permitida.']);
             }
-            $installation = (int) DB::table('pneu_instalacoes')->insertGetId([
-                'pneu_id' => $id,
-                'veiculo_id' => Value::integer($vehicle->id),
-                'posicao' => $data['posicao'],
-                'instalado_em' => $installedAt,
-                'quilometragem_instalacao' => $data['quilometragem_instalacao'],
-                'registrado_por' => Value::integer($this->actor()->usuario_id),
-                'manutencao_id' => $maintenance,
-            ]);
+            if (DB::table('pneu_instalacoes')->where('veiculo_id', $vehicle->id)->where('posicao', $data['posicao'])->whereNull('removido_em')->exists()) {
+                throw ValidationException::withMessages(['posicao' => 'Já existe um pneu instalado nesta posição do veículo.']);
+            }
+            try {
+                $installation = (int) DB::table('pneu_instalacoes')->insertGetId([
+                    'pneu_id' => $id,
+                    'veiculo_id' => Value::integer($vehicle->id),
+                    'posicao' => $data['posicao'],
+                    'instalado_em' => $installedAt,
+                    'quilometragem_instalacao' => $data['quilometragem_instalacao'],
+                    'registrado_por' => Value::integer($this->actor()->usuario_id),
+                    'manutencao_id' => $maintenance,
+                ]);
+            } catch (PDOException $error) {
+                $isPosition = str_contains($error->getMessage(), 'uq_pneu_posicao');
+                $this->handleDatabaseError(
+                    $error,
+                    $isPosition ? 'posicao' : 'pneu',
+                    $isPosition ? 'Já existe um pneu instalado nesta posição do veículo.' : 'Este pneu já possui instalação ativa.',
+                    'A instalação do pneu foi recusada pelas regras de estoque e posição.',
+                );
+            }
             $this->audit('pneu_instalado', 'pneu_instalacoes', $installation, 'Instalação histórica de pneu registrada.');
 
             return $installation;
@@ -790,11 +864,15 @@ class FinanceService
             if ($removedAt < $installation->instalado_em || $removedAt > now('UTC')->format('Y-m-d H:i:s.u')) {
                 throw ValidationException::withMessages(['removido_em' => 'Data de remoção incompatível com a instalação.']);
             }
-            $updated = DB::table('pneu_instalacoes')->where('id', $installationId)->whereNull('removido_em')->update([
-                'removido_em' => $removedAt,
-                'quilometragem_remocao' => $data['quilometragem_remocao'],
-                'motivo_remocao' => $data['motivo_remocao'],
-            ]);
+            try {
+                $updated = DB::table('pneu_instalacoes')->where('id', $installationId)->whereNull('removido_em')->update([
+                    'removido_em' => $removedAt,
+                    'quilometragem_remocao' => $data['quilometragem_remocao'],
+                    'motivo_remocao' => $data['motivo_remocao'],
+                ]);
+            } catch (PDOException $error) {
+                $this->handleDatabaseError($error, 'pneu', 'A instalação foi alterada. Recarregue a página.', 'Não foi possível registrar a remoção do pneu.');
+            }
             if ($updated !== 1) {
                 throw ValidationException::withMessages(['pneu' => 'A instalação foi alterada. Recarregue a página.']);
             }
@@ -812,9 +890,13 @@ class FinanceService
             if ($tyre->situacao !== 'estoque') {
                 throw ValidationException::withMessages(['pneu' => 'Somente pneu em estoque pode ser descartado.']);
             }
-            DB::table('pneus')->where('id', $id)->where('situacao', 'estoque')->update([
-                'situacao' => 'descartado', 'descartado_em' => now('UTC'), 'motivo_descarte' => $reason,
-            ]);
+            try {
+                DB::table('pneus')->where('id', $id)->where('situacao', 'estoque')->update([
+                    'situacao' => 'descartado', 'descartado_em' => now('UTC'), 'motivo_descarte' => $reason,
+                ]);
+            } catch (PDOException $error) {
+                $this->handleDatabaseError($error, 'pneu', 'Não foi possível descartar o pneu.', 'Remova o pneu do veículo antes de descartá-lo.');
+            }
             $this->audit('pneu_descartado', 'pneus', $id, mb_substr($reason, 0, 1000));
 
             return $id;

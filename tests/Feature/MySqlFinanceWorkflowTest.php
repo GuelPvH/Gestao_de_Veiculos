@@ -542,6 +542,56 @@ class MySqlFinanceWorkflowTest extends TestCase
         }
     }
 
+    public function test_hyphenated_plates_ui_pages_and_mysql_constraints_return_validation_errors(): void
+    {
+        [$user, $password] = $this->account('financeiro');
+        $plate = 'Q'.strtoupper(substr(bin2hex(random_bytes(2)), 0, 2)).'-'.random_int(1000, 9999);
+        DB::table('veiculos')->insert([
+            'unidade_id' => 1, 'categoria_id' => 1, 'nome' => 'Veículo placa hífen', 'placa' => $plate, 'capacidade' => 4, 'criado_por' => $this->owner,
+        ]);
+        $this->login($user, $password);
+
+        $this->post(route('expenses.store'), $this->expenseData($plate, ['categoria' => $this->category('pneus')]))->assertSessionHasNoErrors();
+        $pneuExpense = $this->lastExpense($user);
+        $this->post(route('expenses.store'), $this->expenseData($plate, ['categoria' => $this->category('manutencao')]))->assertSessionHasNoErrors();
+        $maintExpense = $this->lastExpense($user);
+        $this->post(route('fuel.store'), $this->fuelData($plate))->assertSessionHasNoErrors();
+
+        $maintData = $this->maintenanceData($plate);
+        $this->post(route('maintenance.store'), $maintData)->assertSessionHasNoErrors();
+        $maintId = $this->lastMaintenance($user);
+        $this->post(route('maintenance.store'), $maintData)->assertSessionHasErrors('inicio_previsto');
+
+        $this->post(route('maintenance.perform', ['registro' => $maintId, 'acao' => 'item-add']), [
+            'versao' => $this->maintenanceVersion($maintId), 'tipo' => 'peca', 'descricao' => 'Pastilha de freio', 'quantidade' => '2', 'valor_unitario' => '85.50',
+        ])->assertSessionHasNoErrors();
+        $this->get(route('maintenance.show', $maintId))->assertOk()
+            ->assertSee('Pastilha de freio')
+            ->assertSee('171,00')
+            ->assertSee('Despesa vinculada');
+        $this->post(route('maintenance.perform', ['registro' => $maintId, 'acao' => 'link-expense']), [
+            'versao' => $this->maintenanceVersion($maintId), 'despesa_id' => $maintExpense,
+        ])->assertSessionHasNoErrors();
+        $this->get(route('maintenance.show', $maintId))->assertOk()->assertSee(route('expenses.show', $maintExpense));
+
+        $code = 'PN-'.strtoupper(bin2hex(random_bytes(4)));
+        $this->post(route('tyres.store'), ['despesa_aquisicao_id' => $pneuExpense, 'codigo' => $code, 'medida' => '205/55 R16'])->assertSessionHasNoErrors();
+        $tyre1 = (int) DB::table('pneus')->where('codigo', $code)->value('id');
+        $this->post(route('tyres.store'), ['despesa_aquisicao_id' => $pneuExpense, 'codigo' => $code, 'medida' => '205/55 R16'])->assertSessionHasErrors('codigo');
+
+        $code2 = 'PN-'.strtoupper(bin2hex(random_bytes(4)));
+        $this->post(route('tyres.store'), ['despesa_aquisicao_id' => $pneuExpense, 'codigo' => $code2, 'medida' => '205/55 R16'])->assertSessionHasNoErrors();
+        $tyre2 = (int) DB::table('pneus')->where('codigo', $code2)->value('id');
+
+        $when = CarbonImmutable::now(config('fleet.timezone'))->subHour()->format('Y-m-d\TH:i');
+        $this->post(route('tyres.install', $tyre1), ['veiculo' => $plate, 'posicao' => 'DE', 'instalado_em' => $when, 'quilometragem_instalacao' => '25000.0'])->assertSessionHasNoErrors();
+        $this->post(route('tyres.install', $tyre2), ['veiculo' => $plate, 'posicao' => 'DE', 'instalado_em' => $when, 'quilometragem_instalacao' => '25000.0'])->assertSessionHasErrors('posicao');
+
+        $this->get(route('finance.summary', ['veiculo' => $plate]))->assertOk()
+            ->assertSee($plate)
+            ->assertSee('Custos mensais');
+    }
+
     /**
      * @param  array{plate?: string, valor?: string, data_despesa?: string}  $overrides
      * @return array{id: int, author: int, verifier: int, plate: string, vehicle: int, version: int}
