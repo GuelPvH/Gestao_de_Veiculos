@@ -33,9 +33,15 @@ RUN apt-get update \
 COPY --from=composer:2.10 /usr/bin/composer /usr/local/bin/composer
 COPY composer.json composer.lock ./
 
-RUN composer install \
-    --no-dev --no-scripts --no-plugins --no-autoloader \
-    --no-interaction --no-progress --prefer-dist
+RUN set -eu; \
+    for attempt in 1 2 3 4 5; do \
+        COMPOSER_ALLOW_SUPERUSER=1 composer install \
+            --no-dev --no-scripts --no-plugins --no-autoloader \
+            --no-interaction --no-progress --prefer-dist && exit 0; \
+        [ "$attempt" -eq 5 ] && exit 1; \
+        echo "composer install falhou (tentativa ${attempt}/5); tentando novamente em 5s..." >&2; \
+        sleep 5; \
+    done
 
 COPY app ./app
 COPY bootstrap ./bootstrap
@@ -44,14 +50,20 @@ COPY database ./database
 COPY routes ./routes
 COPY artisan ./artisan
 
-RUN composer dump-autoload --no-dev --optimize --no-scripts --no-plugins
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer dump-autoload --no-dev --optimize --no-scripts --no-plugins
 
 # Development-only Composer dependencies stay out of the production runtime.
 FROM vendor AS vendor-development
-RUN composer install \
-    --no-scripts --no-plugins \
-    --no-interaction --no-progress --prefer-dist
-RUN composer dump-autoload --optimize --no-scripts --no-plugins
+RUN set -eu; \
+    for attempt in 1 2 3 4 5; do \
+        COMPOSER_ALLOW_SUPERUSER=1 composer install \
+            --no-scripts --no-plugins \
+            --no-interaction --no-progress --prefer-dist && exit 0; \
+        [ "$attempt" -eq 5 ] && exit 1; \
+        echo "composer install (dev) falhou (tentativa ${attempt}/5); tentando novamente em 5s..." >&2; \
+        sleep 5; \
+    done
+RUN COMPOSER_ALLOW_SUPERUSER=1 composer dump-autoload --optimize --no-scripts --no-plugins
 
 FROM node:26-bookworm-slim AS assets
 
