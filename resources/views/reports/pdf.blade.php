@@ -18,8 +18,13 @@
             top: -64px;
             left: 0;
             right: 0;
-            border-bottom: 3px solid #153b66;
-            padding-bottom: 12px;
+            border-bottom: 3px solid #0b3c8c;
+            padding-bottom: 10px;
+        }
+        .brand-logo {
+            display: block;
+            height: 36px;
+            width: auto;
         }
         .brand {
             font-size: 15px;
@@ -145,8 +150,12 @@
 </head>
 <body>
     <div class="header">
-        <div class="brand">GESTÃO DE VEÍCULOS</div>
-        <div class="brand-sub">Controle de frota e operações</div>
+        @if (! empty($logoDataUri))
+            <img src="{{ $logoDataUri }}" alt="Frota Pública RO — Gestão de veículos" class="brand-logo" />
+        @else
+            <div class="brand">FROTA PÚBLICA RO</div>
+            <div class="brand-sub">Gestão de veículos · Rondônia</div>
+        @endif
         <div class="ref">
             <strong>RELATÓRIO #{{ str_pad((string) $id, 6, '0', STR_PAD_LEFT) }}</strong><br />Emitido em {{ $emitido }}
         </div>

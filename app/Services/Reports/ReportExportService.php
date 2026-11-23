@@ -19,6 +19,8 @@ use Throwable;
 class ReportExportService
 {
     private const TARGETS = [
+        'requests' => 'solicitacao_id',
+        'trips' => 'viagem_id',
         'vehicles' => 'veiculo_id',
         'monitoring' => 'posicao_rastreamento_id', 'expenses' => 'despesa_id', 'fines' => 'multa_id',
         'tickets' => 'chamado_id', 'users' => 'usuario_id', 'roles' => 'perfil_id',
@@ -38,7 +40,6 @@ class ReportExportService
      */
     public function create(string $codigo, array $selecionados, array $filtros, Collection $campos): int
     {
-        abort_if(in_array($codigo, ['trips', 'requests'], true), 404);
         $tela = $this->leituras->definition($codigo);
         abort_unless(isset(self::TARGETS[$codigo]), 404);
         $vinculo = $this->acesso->link();
@@ -130,8 +131,8 @@ class ReportExportService
             return $this->monitoramento->ids($filtros);
         }
         $tela = $this->leituras->definition($codigo);
-        $consulta = $this->leituras->filtered($codigo, $filtros);
-        $this->acesso->scope($consulta, $tela['module'], 'exportar', $tela['owner'], $tela['unit']);
+        $consulta = $this->leituras->filtered($codigo, $filtros, $codigo === 'requests');
+        $this->leituras->scope($consulta, $codigo, 'exportar');
 
         return $consulta->orderBy($tela['id'] ?? 'r.id')->limit(10001)->pluck($tela['id'] ?? 'r.id')->map(fn ($id) => Value::integer($id))->values();
     }
@@ -318,7 +319,7 @@ class ReportExportService
             $dono = $tela['owner'];
             $unidade = $tela['unit'];
             $identificador = $tela['id'] ?? 'r.id';
-            $this->acesso->scope($consulta, $tela['module'], 'exportar', $dono, $unidade);
+            $this->leituras->scope($consulta, $codigo, 'exportar');
             foreach ($acoes as $acao) {
                 $this->acesso->scope($consulta, $tela['module'], Value::string($acao), $dono, $unidade);
             }

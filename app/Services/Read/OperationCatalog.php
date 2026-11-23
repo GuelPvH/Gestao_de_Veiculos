@@ -43,11 +43,12 @@ class OperationCatalog
             $situacao = $registro->situacao ?? '';
             $valida = true;
             if ($codigo === 'requests') {
+                $viagemIniciada = (bool) ($registro->__trip_started ?? false);
                 $valida = match ($acao) {
                     'approve', 'deny', 'adjust' => $situacao === 'aguardando_analise' && Value::integer($registro->__owner) !== Value::integer($this->acesso->requireLink()->usuario_id),
-                    'revision' => in_array($situacao, ['aguardando_analise', 'ajustes_solicitados', 'aprovada'], true),
+                    'revision' => in_array($situacao, ['aguardando_analise', 'ajustes_solicitados', 'aprovada'], true) && ! $viagemIniciada,
                     'edit', 'send' => $situacao === 'rascunho',
-                    'cancel' => ! in_array($situacao, ['negada', 'cancelada'], true),
+                    'cancel' => ! in_array($situacao, ['negada', 'cancelada'], true) && ! $viagemIniciada,
                     default => false,
                 };
             } elseif ($codigo === 'trips') {
@@ -64,6 +65,8 @@ class OperationCatalog
                     'release' => isset($registro->__manual_block) ? (bool) $registro->__manual_block : DB::table('reservas as r')->leftJoin('manutencoes as m', 'm.reserva_id', '=', 'r.id')
                         ->where('r.veiculo_id', $registro->id)->where('r.situacao', 'ativa')
                         ->whereIn('r.tipo', ['indisponibilidade', 'manutencao'])->whereNull('m.id')->exists(),
+                    'transfer' => $this->acesso->level('frota', 'gerenciar') === 3
+                        && (($registro->__vehicle_situacao_cadastro ?? ($registro->situacao ?? '')) !== 'baixado'),
                     default => false,
                 };
             } elseif ($codigo === 'fines') {
@@ -78,7 +81,8 @@ class OperationCatalog
                 };
             } elseif ($codigo === 'expenses') {
                 $valida = match ($acao) {
-                    'edit', 'submit' => $situacao === 'registrada',
+                    'edit' => $situacao === 'registrada' && ! ((bool) ($registro->__is_fuel ?? false)),
+                    'submit' => $situacao === 'registrada',
                     'verify' => $situacao === 'em_conferencia' && Value::integer($registro->__owner) !== Value::integer($this->acesso->requireLink()->usuario_id),
                     'pay' => $situacao === 'aprovada',
                     'cancel' => ! in_array($situacao, ['paga', 'cancelada'], true),

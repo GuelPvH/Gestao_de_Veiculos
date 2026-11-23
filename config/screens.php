@@ -8,7 +8,7 @@ return [
         'columns' => ['protocolo' => ['r.protocolo', 'Protocolo'], 'destino' => ['r.destino', 'Destino'], 'saida_prevista' => ['r.saida_prevista', 'Saída prevista', 'datetime'], 'situacao' => ['r.situacao', 'Situação']],
         'details' => ['finalidade' => ['r.finalidade', 'Finalidade'], 'origem' => ['r.origem', 'Origem'], 'retorno_previsto' => ['r.retorno_previsto', 'Retorno previsto', 'datetime'], 'passageiros' => ['r.quantidade_passageiros', 'Passageiros'], 'solicitante' => ['r.solicitante', 'Solicitante'], 'unidade' => ['r.unidade', 'Unidade'], 'trajeto' => ['r.trajeto_planejado', 'Trajeto planejado']],
         'states' => ['rascunho', 'aguardando_analise', 'ajustes_solicitados', 'aprovada', 'negada', 'cancelada'],
-        'actions' => ['edit' => ['Editar solicitação', 'editar'], 'send' => ['Revisar envio', 'enviar'], 'revision' => ['Abrir nova revisão', 'editar'], 'approve' => ['Aprovar solicitação', 'aprovar'], 'deny' => ['Negar solicitação', 'negar'], 'adjust' => ['Solicitar ajustes', 'solicitar_ajustes']],
+        'actions' => ['edit' => ['Editar solicitação', 'editar'], 'send' => ['Revisar envio', 'enviar'], 'revision' => ['Abrir nova revisão', 'editar'], 'approve' => ['Aprovar solicitação', 'aprovar'], 'deny' => ['Negar solicitação', 'negar'], 'adjust' => ['Solicitar ajustes', 'solicitar_ajustes'], 'cancel' => ['Cancelar solicitação', 'cancelar']],
         'create' => true,
     ],
     'trips' => [
@@ -34,7 +34,7 @@ return [
         'columns' => ['placa' => ['r.placa', 'Placa'], 'nome' => ['r.nome', 'Veículo'], 'categoria' => ['r.categoria', 'Categoria'], 'situacao' => ['r.situacao_operacional', 'Situação']],
         'details' => ['marca' => ['r.marca', 'Marca'], 'modelo' => ['r.modelo', 'Modelo'], 'ano' => ['r.ano_modelo', 'Ano'], 'capacidade' => ['r.capacidade', 'Capacidade'], 'quilometragem' => ['r.quilometragem_atual', 'Quilometragem'], 'unidade' => ['r.unidade', 'Unidade']],
         'states' => ['disponivel', 'em_viagem', 'manutencao', 'indisponivel', 'inativo', 'baixado'],
-        'actions' => ['edit' => ['Editar veículo', 'editar'], 'block' => ['Bloquear período', 'gerenciar'], 'release' => ['Liberar bloqueio manual', 'gerenciar']], 'create' => true,
+        'actions' => ['edit' => ['Editar veículo', 'editar'], 'block' => ['Bloquear período', 'gerenciar'], 'release' => ['Liberar bloqueio manual', 'gerenciar'], 'transfer' => ['Transferir unidade', 'gerenciar']], 'create' => true,
     ],
     'monitoring' => [
         'title' => 'Monitoramento', 'module' => 'rastreamento', 'icon' => 'map-pinned', 'url' => 'monitoramento',
@@ -56,7 +56,7 @@ return [
         'joins' => [['abastecimentos as f', 'f.despesa_id', 'r.id'], ['veiculos as v', 'v.id', 'r.veiculo_id']], 'required' => 'f.despesa_id',
         'columns' => ['protocolo' => ['r.protocolo', 'Protocolo'], 'placa' => ['v.placa', 'Placa'], 'quantidade' => ['f.quantidade', 'Quantidade'], 'valor' => ['r.valor', 'Valor', 'money', 'ver_valores'], 'situacao' => ['r.situacao', 'Situação']],
         'details' => ['combustivel' => ['f.combustivel', 'Combustível'], 'unidade_medida' => ['f.unidade_medida', 'Unidade de medida'], 'preco_unitario' => ['f.preco_unitario', 'Preço unitário', 'money', 'ver_valores'], 'quilometragem' => ['f.quilometragem', 'Quilometragem'], 'data_despesa' => ['r.data_despesa', 'Data', 'date']],
-        'states' => [], 'actions' => ['edit' => ['Editar abastecimento', 'editar']], 'create' => true,
+        'states' => ['registrada', 'em_conferencia', 'aprovada', 'paga', 'cancelada'], 'actions' => ['edit' => ['Editar abastecimento', 'editar']], 'create' => true,
     ],
     'maintenance' => [
         'title' => 'Manutenção', 'module' => 'despesas', 'icon' => 'car-front', 'url' => 'financeiro/manutencoes', 'table' => 'manutencoes', 'owner' => 'r.criado_por', 'unit' => 'v.unidade_id', 'date' => 'r.inicio_previsto',
@@ -96,9 +96,27 @@ return [
     ],
     'tickets' => [
         'title' => 'Chamados', 'module' => 'chamados', 'icon' => 'life-buoy', 'url' => 'chamados', 'table' => 'chamados', 'owner' => 'r.solicitante_id', 'unit' => 'r.unidade_id', 'date' => 'r.criado_em',
-        'joins' => [['categorias_chamado as c', 'c.id', 'r.categoria_id']],
-        'columns' => ['protocolo' => ['r.protocolo', 'Protocolo'], 'assunto' => ['r.assunto', 'Assunto'], 'categoria' => ['c.nome', 'Categoria'], 'situacao' => ['r.situacao', 'Situação']],
-        'details' => ['descricao' => ['r.descricao', 'Descrição'], 'criado_em' => ['r.criado_em', 'Abertura', 'datetime']],
+        'joins' => [
+            ['categorias_chamado as c', 'c.id', 'r.categoria_id'],
+            ['usuarios as sol', 'sol.id', 'r.solicitante_id'],
+            ['unidades as un', 'un.id', 'r.unidade_id'],
+            ['usuarios as atd', 'atd.id', 'r.atribuido_a'],
+        ],
+        'columns' => [
+            'protocolo' => ['r.protocolo', 'Protocolo'],
+            'assunto' => ['r.assunto', 'Assunto'],
+            'categoria' => ['c.nome', 'Categoria'],
+            'solicitante' => ['sol.nome', 'Solicitante'],
+            'unidade' => ['un.nome', 'Unidade'],
+            'atendente' => ['atd.nome', 'Atendente'],
+            'situacao' => ['r.situacao', 'Situação'],
+        ],
+        'details' => [
+            'pagina_contexto' => ['r.pagina_contexto', 'Página de contexto'],
+            'descricao' => ['r.descricao', 'Descrição'],
+            'criado_em' => ['r.criado_em', 'Abertura', 'datetime'],
+            'resolvido_em' => ['r.resolvido_em', 'Resolução', 'datetime'],
+        ],
         'states' => ['aberto', 'em_atendimento', 'aguardando_solicitante', 'resolvido'], 'actions' => ['respond' => ['Responder chamado', 'responder'], 'assign' => ['Atribuir atendimento', 'atender'], 'resolve' => ['Resolver chamado', 'resolver']], 'create' => true,
     ],
 ];

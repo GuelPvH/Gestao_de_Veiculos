@@ -83,6 +83,14 @@
                         :valor="$registro->trajeto ?? ''"
                         maxlength="3000"
                     />
+                    <x-forms.field
+                        nome="paradas"
+                        rotulo="Paradas intermediárias (opcional)"
+                        tipo="textarea"
+                        :valor="$registro->paradas_texto ?? ''"
+                        maxlength="4000"
+                        nota="Informe uma parada por linha, na ordem do percurso (até 20 paradas, máx. 255 caracteres por linha)."
+                    />
                 </section>
                 <section class="form-stage" hidden>
                     <h2 class="h5" tabindex="-1">Passageiros e condutor</h2>

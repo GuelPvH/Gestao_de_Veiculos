@@ -14,9 +14,13 @@ class AdminController extends Controller
 {
     public function storeUser(AdminActionRequest $requisicao, AdminWorkflow $fluxo): RedirectResponse
     {
-        $usuario = $fluxo->storeUser($requisicao->validated());
+        $dados = $requisicao->validated();
+        $usuario = $fluxo->storeUser($dados);
+        $mensagem = ! empty($dados['perfil_id'])
+            ? 'Usuário criado e vínculo de perfil atribuído. Entregue o código temporário ao titular.'
+            : 'Usuário criado. Atribua um perfil para liberar o acesso ao painel.';
 
-        return $this->showCredential($usuario['id'], $usuario['codigo'], 'Usuário criado. Atribua um perfil para liberar o acesso ao painel.');
+        return $this->showCredential($usuario['id'], $usuario['codigo'], $mensagem);
     }
 
     public function issueTemporaryCredential(AdminActionRequest $requisicao, AdminWorkflow $fluxo, int $registro): RedirectResponse

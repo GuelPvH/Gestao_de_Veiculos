@@ -16,21 +16,80 @@
                     <dd>{{ $usuario->email ?? '—' }}</dd>
                 </div>
                 <div>
+                    <dt>Telefone</dt>
+                    <dd>{{ $usuario->telefone ?? '—' }}</dd>
+                </div>
+                <div>
                     <dt>Perfil atual</dt>
                     <dd>{{ $vinculoAtual->perfil_nome }}</dd>
                 </div>
             </dl>
             <a class="btn btn-outline-secondary" href="{{ route('password.edit') }}">Alterar senha</a></x-ui.panel
         >
-        <x-ui.panel titulo="Aparência">
-            <label for="theme-choice" class="form-label">Tema neste dispositivo</label
-            ><select class="form-select" id="theme-choice" data-theme-select>
-                <option value="system">Preferência do dispositivo</option>
-                <option value="light">Claro</option>
-                <option value="dark">Escuro</option>
-            </select>
-            <p class="form-text">A preferência é aplicada imediatamente neste navegador.</p></x-ui.panel
-        >
+        <x-ui.panel titulo="Contato e preferências">
+            @if ($podeEditar)
+                <form action="{{ route('account.update') }}" method="post">
+                    @csrf
+                    <x-forms.field
+                        nome="telefone"
+                        rotulo="Telefone de contato"
+                        :valor="old('telefone', $usuario->telefone ?? '')"
+                        maxlength="30"
+                        placeholder="(69) 99999-0000"
+                    />
+                    <div class="mb-3">
+                        <label for="theme-choice" class="form-label">Tema</label>
+                        <select
+                            class="form-select"
+                            id="theme-choice"
+                            name="tema"
+                            data-theme-select
+                            data-theme-persist="1"
+                        >
+                            @foreach (['dispositivo' => 'Preferência do dispositivo', 'claro' => 'Claro', 'escuro' => 'Escuro'] as $chave => $rotulo)
+                                <option
+                                    value="{{ $chave }}"
+                                    @selected (old('tema', $preferencias->tema ?? 'dispositivo') === $chave)
+                                >
+                                    {{ $rotulo }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <x-forms.field
+                                nome="itens_por_pagina"
+                                rotulo="Itens por página"
+                                tipo="select"
+                                :valor="old('itens_por_pagina', (string) ($preferencias->itens_por_pagina ?? 10))"
+                                :opcoes="['10' => '10 itens', '20' => '20 itens', '50' => '50 itens', '100' => '100 itens']"
+                                :obrigatorio="true"
+                            />
+                        </div>
+                        <div class="col-md-6">
+                            <x-forms.field
+                                nome="notificacoes_internas"
+                                rotulo="Notificações internas"
+                                tipo="select"
+                                :valor="old('notificacoes_internas', (string) ($preferencias->notificacoes_internas ?? 1))"
+                                :opcoes="['1' => 'Ativadas', '0' => 'Silenciadas']"
+                                :obrigatorio="true"
+                            />
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Salvar preferências</button>
+                </form>
+            @else
+                <label for="theme-choice" class="form-label">Tema neste dispositivo</label
+                ><select class="form-select" id="theme-choice" data-theme-select>
+                    <option value="system">Preferência do dispositivo</option>
+                    <option value="light">Claro</option>
+                    <option value="dark">Escuro</option>
+                </select>
+                <p class="form-text">A preferência é aplicada imediatamente neste navegador.</p>
+            @endif
+        </x-ui.panel>
     </div>
     <x-ui.panel titulo="Segurança do e-mail">
         @if (session('status'))

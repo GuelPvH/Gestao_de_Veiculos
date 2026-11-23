@@ -11,6 +11,11 @@
             @include ('gestor.solicitacoes.filters')
         @else
             <form method="get" action="{{ route('solicitacoes.index') }}" class="filter-grid">
+                @foreach (['de', 'ate'] as $campo)
+                    @if (! empty($filtros[$campo]))
+                        <input type="hidden" name="{{ $campo }}" value="{{ $filtros[$campo] }}" />
+                    @endif
+                @endforeach
                 <x-forms.field nome="q" rotulo="Buscar registros" :valor="$filtros['q'] ?? ''" maxlength="150" />
                 <x-forms.field
                     nome="situacao"
@@ -26,6 +31,10 @@
                     :valor="$filtros['ordem'] ?? 'recentes'"
                     :opcoes="['recentes' => 'Mais recentes', 'antigos' => 'Mais antigos']"
                 />
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary">Filtrar</button
+                    ><a class="btn btn-link" href="{{ route('solicitacoes.index') }}">Limpar</a>
+                </div>
             </form>
             @if (isset($tela['date']))
                 <form method="get" class="row g-3 mb-4">

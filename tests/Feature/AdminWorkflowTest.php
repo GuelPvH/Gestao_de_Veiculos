@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\Auth\ProcedureRunner;
+use App\Services\Authorization\AccessContext;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Mockery;
@@ -159,7 +160,7 @@ class AdminWorkflowTest extends TestCase
             ->withArgs(function ($nome, $dados): bool {
                 $this->assertSame('sp_duplicar_perfil', $nome);
                 $this->assertSame(10, $dados[0]);
-                $this->assertSame(1, $dados[1]);
+                $this->assertSame(4, $dados[1]);
                 $this->assertSame('perfil_duplicado', $dados[2]);
                 $this->assertSame('Perfil Duplicado de Teste', $dados[3]);
 
@@ -188,12 +189,25 @@ class AdminWorkflowTest extends TestCase
             'justificativa' => 'Atualização de nomenclatura autorizada',
         ])->assertRedirect(route('roles.show', $novoPerfil->id))->assertSessionHas('status');
 
-        // Duplicate role
-        $this->post(route('roles.duplicate', 1), [
+        // Duplicate delegable role (uses sp_duplicar_perfil)
+        $this->post(route('roles.duplicate', 4), [
             'codigo' => 'perfil_duplicado',
             'nome' => 'Perfil Duplicado de Teste',
-            'justificativa' => 'Criação de variação operacional',
+            'justificativa' => 'Criação de variação administrativa',
         ])->assertRedirect(route('roles.show', 77))->assertSessionHas('status');
+
+        // Duplicate operational role (Servidor = 1) via agency governance
+        $this->post(route('roles.duplicate', 1), [
+            'codigo' => 'servidor_variacao',
+            'nome' => 'Servidor Variação Operacional',
+            'justificativa' => 'Criação de variação operacional',
+        ])->assertRedirect()->assertSessionHas('status');
+        $duplicadoOperacional = DB::table('perfis')->where('codigo', 'servidor_variacao')->first();
+        $this->assertNotNull($duplicadoOperacional);
+        $this->assertSame(
+            DB::table('perfil_permissoes')->where('perfil_id', 1)->count(),
+            DB::table('perfil_permissoes')->where('perfil_id', $duplicadoOperacional->id)->count(),
+        );
     }
 
     public function test_admin_grants_and_revokes_permission_on_role(): void
@@ -341,19 +355,88 @@ class AdminWorkflowTest extends TestCase
     public function test_admin_forms_offer_only_allowed_link_and_permission_actions(): void
     {
         $this->get(route('users.operation', ['registro' => 2, 'acao' => 'links']))
-            ->assertOk()->assertSee('Atribuir vínculo')->assertDontSee('>Financeiro<', false);
+            ->assertOk()->assertSee('Atribuir vínculo')
+            ->assertSee('Servidor')->assertSee('Gestor')->assertSee('Financeiro');
         $this->get(route('users.operation', ['registro' => 2, 'acao' => 'revoke']))
             ->assertOk()->assertSee(route('users.revoke', 2))->assertSee('confirmar_revogacao');
         $this->get(route('users.operation', ['registro' => 1, 'acao' => 'links']))->assertForbidden();
 
+        // Admin can assign Financeiro (3) to another user, but cannot escalate own active profile (4)
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->withArgs(fn ($nome) => in_array($nome, ['sp_exigir_permissao', 'sp_auditar'], true))->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+        $this->post(route('users.link', 2), [
+            'perfil_id' => 3,
+            'unidade_id' => 1,
+            'vigente_desde' => '2026-10-05T08:00',
+            'justificativa' => 'Designação financeira para servidor',
+        ])->assertRedirect(route('users.show', 2))->assertSessionHas('status');
+        $this->assertDatabaseHas('usuario_perfis', ['usuario_id' => 2, 'perfil_id' => 3, 'unidade_id' => 1, 'ativo' => 1]);
+
+        $permissaoOperacional = (int) DB::table('permissoes')
+            ->where('modulo_codigo', 'solicitacoes')->where('acao_codigo', 'aprovar')->where('alcance', 'orgao')->value('id');
+        $this->get(route('roles.operation', ['registro' => 1, 'acao' => 'grant']))
+            ->assertOk()->assertSee('solicitacoes / aprovar / orgao');
+        $this->post(route('roles.grant', 1), [
+            'permissao_id' => $permissaoOperacional,
+            'delegavel' => 0,
+        ])->assertRedirect(route('roles.show', 1))->assertSessionHas('status');
+        $this->assertDatabaseHas('perfil_permissoes', ['perfil_id' => 1, 'permissao_id' => $permissaoOperacional]);
+
         $this->get(route('roles.operation', ['registro' => 4, 'acao' => 'grant']))
-            ->assertOk()->assertSee(route('roles.grant', 4))->assertSee('delegavel');
+            ->assertOk()->assertSee(route('roles.grant', 4))->assertSee('delegavel')
+            ->assertDontSee('solicitacoes / aprovar / orgao');
+        $this->post(route('roles.grant', 4), [
+            'permissao_id' => $permissaoOperacional,
+            'delegavel' => 0,
+        ])->assertForbidden();
+        $this->assertDatabaseMissing('perfil_permissoes', ['perfil_id' => 4, 'permissao_id' => $permissaoOperacional]);
         $this->get(route('roles.operation', ['registro' => 4, 'acao' => 'revoke']))
             ->assertOk()->assertSee(route('roles.revoke', 4))->assertSee('confirmar_revogacao');
+
+        // Restricted delegator (unit-level) still cannot assign Financeiro
+        DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'usuarios')->where('acao_codigo', 'delegar')->update(['nivel_alcance' => 2]);
+        app(AccessContext::class)->load(app(AccessContext::class)->link());
+        $this->get(route('users.operation', ['registro' => 2, 'acao' => 'links']))
+            ->assertOk()->assertDontSee('Financeiro');
 
         ReadFixture::profile(1);
         $this->get(route('roles.operation', ['registro' => 4, 'acao' => 'grant']))->assertForbidden();
         $this->get(route('users.operation', ['registro' => 2, 'acao' => 'revoke']))->assertForbidden();
+    }
+
+    public function test_admin_can_create_user_with_initial_profile_in_one_step(): void
+    {
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')
+            ->withArgs(fn ($nome) => in_array($nome, ['sp_exigir_permissao', 'sp_auditar'], true))
+            ->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+
+        $this->get(route('users.create'))->assertOk()
+            ->assertSee('name="perfil_id"', false)
+            ->assertSee('Servidor')->assertSee('Gestor')->assertSee('Financeiro');
+
+        $this->post(route('users.store'), [
+            'unidade_id' => 1,
+            'identificador' => '529.982.247-25',
+            'nome' => 'Servidor Novo Em Etapa Única',
+            'telefone' => '69999990000',
+            'perfil_id' => 1,
+            'justificativa' => 'Cadastro inicial já vinculado ao perfil Servidor',
+        ])->assertRedirect()->assertSessionHas('status');
+
+        $usuario = DB::table('usuarios')->where('identificador', '52998224725')->first();
+        $this->assertNotNull($usuario);
+        $this->assertSame('69999990000', $usuario->telefone);
+        $this->assertDatabaseHas('usuario_perfis', ['usuario_id' => $usuario->id, 'perfil_id' => 1, 'unidade_id' => 1, 'ativo' => 1]);
+    }
+
+    public function test_audit_index_hides_empty_state_filter_select(): void
+    {
+        $this->get(route('audit.index'))
+            ->assertOk()
+            ->assertDontSee('name="situacao"', false);
     }
 
     public function test_monitoring_url_rejects_the_admin_without_tracking_access(): void

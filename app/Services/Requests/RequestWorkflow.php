@@ -48,6 +48,11 @@ class RequestWorkflow
         if ($id < 1) {
             throw new \RuntimeException('A criação da solicitação não retornou identificador.');
         }
+        $paradas = $this->stopDescriptions(Value::nullableString($dados['paradas'] ?? null));
+        $revisaoId = Value::integer($resultado[0]['revisao_id'] ?? 0);
+        if ($paradas->isNotEmpty() && $revisaoId > 0) {
+            $this->replaceStops($revisaoId, $paradas);
+        }
 
         return $id;
     }
@@ -82,6 +87,32 @@ class RequestWorkflow
     private function passengerNames(?string $nomes): Collection
     {
         return collect(preg_split('/\r\n|\r|\n/', (string) $nomes) ?: [])->map(fn (string $nome) => trim($nome))->filter(fn (string $nome) => $nome !== '')->values();
+    }
+
+    /**
+     * @return Collection<int, non-empty-string>
+     */
+    private function stopDescriptions(?string $paradas): Collection
+    {
+        return collect(preg_split('/\r\n|\r|\n/', (string) $paradas) ?: [])->map(fn (string $item) => trim($item))->filter(fn (string $item) => $item !== '')->values();
+    }
+
+    /**
+     * @param  Collection<int, non-empty-string>  $paradas
+     */
+    private function replaceStops(int $revisaoId, Collection $paradas): void
+    {
+        DB::table('solicitacao_paradas')->where('revisao_id', $revisaoId)->delete();
+        if ($paradas->isEmpty()) {
+            return;
+        }
+        DB::table('solicitacao_paradas')->insert(
+            $paradas->values()->map(fn (string $descricao, int $indice): array => [
+                'revisao_id' => $revisaoId,
+                'ordem' => $indice + 1,
+                'descricao' => $descricao,
+            ])->all(),
+        );
     }
 
     /**
@@ -122,6 +153,7 @@ class RequestWorkflow
             'quantidade_passageiros' => Value::integer($dados['quantidade_passageiros']), 'necessita_motorista' => Value::integer($dados['necessita_motorista']),
             'motorista_sugerido_id' => $motorista, 'veiculo_pretendido_id' => Value::integer($dados['veiculo_pretendido_id']),
             'observacoes' => $dados['observacoes'] ?? null, 'passageiros' => $dados['passageiros'] ?? null,
+            'paradas' => $dados['paradas'] ?? null,
         ];
     }
 
@@ -155,13 +187,14 @@ class RequestWorkflow
                 throw ValidationException::withMessages(['operacao' => 'Esta revisão já foi enviada. Abra uma nova revisão para alterar os dados.']);
             }
             $revisaoDados = $this->revisionData($dados, Value::integer($solicitacao->solicitante_id));
-            unset($revisaoDados['passageiros']);
+            unset($revisaoDados['passageiros'], $revisaoDados['paradas']);
             DB::table('solicitacao_revisoes')->where('id', $revisao->id)->update($revisaoDados + $this->coordinates($dados) + ['etapa_atual' => 4]);
             DB::table('solicitacao_passageiros')->where('revisao_id', $revisao->id)->delete();
             $nomes = $this->passengerNames(Value::nullableString($dados['passageiros'] ?? null));
             if ($nomes->isNotEmpty()) {
                 DB::table('solicitacao_passageiros')->insert($nomes->map(fn (string $nome) => ['revisao_id' => $revisao->id, 'nome' => $nome])->all());
             }
+            $this->replaceStops(Value::integer($revisao->id), $this->stopDescriptions(Value::nullableString($dados['paradas'] ?? null)));
             DB::table('solicitacoes')->where('id', $id)->update(['versao' => $versao + 1]);
             $this->procedimentos->call('sp_auditar', [$vinculo, 'rascunho_atualizado', 'solicitacoes', $id, 'Dados da revisão vigente atualizados.']);
             if ($arquivoId !== null) {
@@ -183,6 +216,7 @@ class RequestWorkflow
             'approve' => $this->procedimentos->call('sp_aprovar_solicitacao', [$vinculo, $id, $versao, Value::integer($dados['veiculo_confirmado_id']), Value::integer($dados['motorista_confirmado_id']), $dados['justificativa']]),
             'deny', 'adjust' => $this->procedimentos->call('sp_decidir_solicitacao', [$vinculo, $id, $versao, $acao === 'deny' ? 'negada' : 'ajustes_solicitados', $dados['justificativa']]),
             'revision' => $this->procedimentos->call('sp_abrir_revisao', [$vinculo, $id, $versao, $dados['justificativa']]),
+            'cancel' => $this->procedimentos->call('sp_cancelar_solicitacao', [$vinculo, $id, $versao, trim(Value::string($dados['justificativa']))]),
             default => abort(404),
         };
     }

@@ -45,10 +45,15 @@ class AdminWorkflow
             $id = $this->identidades->provisionUser($credencial['campos'] + [
                 'unidade_id' => $unidade, 'identificador' => $cpf, 'nome' => trim(Value::string($dados['nome'])),
                 'email' => ($dados['email'] ?? null) ?: null,
+                'telefone' => ($dados['telefone'] ?? null) ?: null,
             ]);
             $this->audit('usuario_criado', 'usuarios', $id, 'Cadastro por CPF com troca obrigatória de senha.');
-            if (isset($dados['perfil_id'])) {
-                $this->grantLink($id, $dados);
+            if (! empty($dados['perfil_id'])) {
+                $dadosVinculo = $dados;
+                if (empty($dadosVinculo['vigente_desde'])) {
+                    $dadosVinculo['vigente_desde'] = CarbonImmutable::now(config('fleet.timezone'))->format('Y-m-d\TH:i');
+                }
+                $this->grantLink($id, $dadosVinculo);
             }
 
             return ['id' => $id, 'codigo' => $credencial['codigo']];
@@ -165,15 +170,17 @@ class AdminWorkflow
         abort_unless(mb_strlen(trim(Value::string($dados['justificativa'] ?? ''))) >= 5, 422);
         $grantLevel = Value::integer(DB::table('vw_permissoes_efetivas')->where('vinculo_id', $this->linkId())
             ->where('modulo_codigo', 'usuarios')->where('acao_codigo', 'delegar')->max('nivel_alcance'));
-        foreach (DB::table('perfil_permissoes as pp')->join('permissoes as p', 'p.id', '=', 'pp.permissao_id')
-            ->where('pp.perfil_id', Value::integer($dados['perfil_id']))->get(['p.modulo_codigo', 'p.acao_codigo', 'p.alcance']) as $permission) {
-            $level = match ($permission->alcance) {
-                'proprios' => 1, 'unidade' => 2, default => 3
-            };
-            $canDelegate = DB::table('vw_permissoes_efetivas')->where('vinculo_id', $this->linkId())
-                ->where('modulo_codigo', $permission->modulo_codigo)->where('acao_codigo', $permission->acao_codigo)
-                ->where('delegavel', 1)->where('nivel_alcance', '>=', $level)->exists();
-            abort_unless($canDelegate && $level <= $grantLevel, 403);
+        if (! $this->hasAgencyGovernance()) {
+            foreach (DB::table('perfil_permissoes as pp')->join('permissoes as p', 'p.id', '=', 'pp.permissao_id')
+                ->where('pp.perfil_id', Value::integer($dados['perfil_id']))->get(['p.modulo_codigo', 'p.acao_codigo', 'p.alcance']) as $permission) {
+                $level = match ($permission->alcance) {
+                    'proprios' => 1, 'unidade' => 2, default => 3
+                };
+                $canDelegate = DB::table('vw_permissoes_efetivas')->where('vinculo_id', $this->linkId())
+                    ->where('modulo_codigo', $permission->modulo_codigo)->where('acao_codigo', $permission->acao_codigo)
+                    ->where('delegavel', 1)->where('nivel_alcance', '>=', $level)->exists();
+                abort_unless($canDelegate && $level <= $grantLevel, 403);
+            }
         }
         $inicio = CarbonImmutable::parse(Value::date($dados['vigente_desde']), config('fleet.timezone'))->utc();
         $fim = empty($dados['vigente_ate']) ? null : CarbonImmutable::parse(Value::date($dados['vigente_ate']), config('fleet.timezone'))->utc();
@@ -256,11 +263,45 @@ class AdminWorkflow
     {
         $this->visible('roles', $id);
         abort_unless($this->acesso->can('perfis', 'criar'), 403);
-        $retorno = $this->procedimentos->call('sp_duplicar_perfil', [
-            $this->linkId(), $id, $dados['codigo'], trim(Value::string($dados['nome'])), trim(Value::string($dados['justificativa'])),
-        ]);
+        $permissoesOrigem = DB::table('perfil_permissoes as pp')->join('permissoes as p', 'p.id', '=', 'pp.permissao_id')
+            ->where('pp.perfil_id', $id)->get(['pp.permissao_id', 'pp.delegavel', 'p.modulo_codigo', 'p.acao_codigo', 'p.alcance']);
+        $todasDelegaveisDiretas = $permissoesOrigem->every(function (stdClass $permissao): bool {
+            $nivel = match ($permissao->alcance) {
+                'proprios' => 1, 'unidade' => 2, default => 3,
+            };
 
-        return $this->resultId($retorno, 'perfil_id');
+            return $this->acesso->delegationLevel(Value::string($permissao->modulo_codigo), Value::string($permissao->acao_codigo)) >= $nivel;
+        });
+        if ($todasDelegaveisDiretas || ! $this->hasAgencyGovernance()) {
+            $retorno = $this->procedimentos->call('sp_duplicar_perfil', [
+                $this->linkId(), $id, $dados['codigo'], trim(Value::string($dados['nome'])), trim(Value::string($dados['justificativa'])),
+            ]);
+
+            return $this->resultId($retorno, 'perfil_id');
+        }
+
+        return DB::transaction(function () use ($id, $dados, $permissoesOrigem): int {
+            $this->lockAdmin();
+            $this->requirePermission('perfis', 'criar');
+            $this->requirePermission('perfis', 'gerenciar');
+            $origem = DB::table('perfis')->where('id', $id)->first(['id', 'descricao']);
+            abort_unless($origem !== null, 404);
+            $ator = Value::integer($this->acesso->requireLink()->usuario_id);
+            $novoId = (int) DB::table('perfis')->insertGetId([
+                'codigo' => $dados['codigo'], 'nome' => trim(Value::string($dados['nome'])),
+                'descricao' => $origem->descricao, 'perfil_origem_id' => $id, 'criado_por' => $ator,
+                'criado_em' => now('UTC'), 'atualizado_em' => now('UTC'),
+            ]);
+            foreach ($permissoesOrigem as $permissao) {
+                DB::table('perfil_permissoes')->insert([
+                    'perfil_id' => $novoId, 'permissao_id' => Value::integer($permissao->permissao_id),
+                    'delegavel' => Value::integer($permissao->delegavel), 'concedido_por' => $ator,
+                ]);
+            }
+            $this->audit('perfil_duplicado', 'perfis', $novoId, trim(Value::string($dados['justificativa'])));
+
+            return $novoId;
+        });
     }
 
     /**
@@ -283,10 +324,35 @@ class AdminWorkflow
         $nivel = match ($permissao->alcance) {
             'proprios' => 1, 'unidade' => 2, default => 3,
         };
-        abort_unless($this->acesso->delegationLevel(Value::string($permissao->modulo_codigo), Value::string($permissao->acao_codigo)) >= $nivel, 403);
-        $this->procedimentos->call('sp_conceder_permissao', [
-            $this->linkId(), $id, Value::integer($dados['permissao_id']), Value::integer($dados['delegavel']),
-        ]);
+        $delegavelDireta = $this->acesso->delegationLevel(Value::string($permissao->modulo_codigo), Value::string($permissao->acao_codigo)) >= $nivel;
+        if ($delegavelDireta) {
+            $this->procedimentos->call('sp_conceder_permissao', [
+                $this->linkId(), $id, Value::integer($dados['permissao_id']), Value::integer($dados['delegavel']),
+            ]);
+
+            return;
+        }
+        $perfilAtivo = Value::integer($this->acesso->requireLink()->perfil_id);
+        abort_unless($this->hasAgencyGovernance() && $id !== $perfilAtivo, 403);
+        DB::transaction(function () use ($id, $dados): void {
+            $this->lockAdmin();
+            $this->requirePermission('perfis', 'delegar');
+            $this->requirePermission('perfis', 'gerenciar');
+            $ator = Value::integer($this->acesso->requireLink()->usuario_id);
+            $permissaoId = Value::integer($dados['permissao_id']);
+            $delegavel = Value::integer($dados['delegavel']);
+            $existente = DB::table('perfil_permissoes')->where('perfil_id', $id)->where('permissao_id', $permissaoId)->exists();
+            if ($existente) {
+                DB::table('perfil_permissoes')->where('perfil_id', $id)->where('permissao_id', $permissaoId)->update([
+                    'delegavel' => $delegavel, 'concedido_por' => $ator, 'concedido_em' => now('UTC')->format('Y-m-d H:i:s.u'),
+                ]);
+            } else {
+                DB::table('perfil_permissoes')->insert([
+                    'perfil_id' => $id, 'permissao_id' => $permissaoId, 'delegavel' => $delegavel, 'concedido_por' => $ator,
+                ]);
+            }
+            $this->audit('permissao_concedida', 'perfis', $id, 'Permissão '.$permissaoId.' concedida pela governança administrativa.');
+        });
     }
 
     /**
@@ -306,7 +372,9 @@ class AdminWorkflow
             $nivel = match ($permissao->alcance) {
                 'proprios' => 1, 'unidade' => 2, default => 3,
             };
-            abort_unless($this->acesso->delegationLevel(Value::string($permissao->modulo_codigo), Value::string($permissao->acao_codigo)) >= $nivel, 403);
+            $delegavelDireta = $this->acesso->delegationLevel(Value::string($permissao->modulo_codigo), Value::string($permissao->acao_codigo)) >= $nivel;
+            $perfilAtivo = Value::integer($this->acesso->requireLink()->perfil_id);
+            abort_unless($delegavelDireta || ($this->hasAgencyGovernance() && $id !== $perfilAtivo), 403);
             $this->requirePermission('perfis', 'delegar', $dono);
             $excluidos = DB::table('perfil_permissoes')->where('perfil_id', $id)->where('permissao_id', Value::integer($dados['permissao_id']))->delete();
             if ($excluidos !== 1) {
@@ -404,6 +472,14 @@ class AdminWorkflow
         if ($protegida && (Value::integer($dados['ativa']) !== 1 || Value::integer($dados['visivel_menu']) !== 1)) {
             throw ValidationException::withMessages(['ativa' => 'Uma rota administrativa protegida deve permanecer ativa e visível.']);
         }
+    }
+
+    private function hasAgencyGovernance(): bool
+    {
+        return $this->acesso->level('usuarios', 'delegar') === 3
+            && $this->acesso->level('usuarios', 'gerenciar') === 3
+            && $this->acesso->level('perfis', 'delegar') === 3
+            && $this->acesso->level('perfis', 'gerenciar') === 3;
     }
 
     private function linkId(): int

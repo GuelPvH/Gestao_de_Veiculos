@@ -24,6 +24,7 @@ class RequestWorkflowTest extends TestCase
         ReadFixture::grant('frota', 'selecionar', 2);
         DB::table('veiculos')->update(['categoria_id' => 1, 'capacidade' => 4]);
         DB::table('vw_frota')->update(['capacidade' => 4]);
+        DB::table('reservas')->update(['inicio' => '2026-10-04 12:00:00', 'fim' => '2026-10-04 18:00:00']);
         foreach ([1, 2, 3] as $usuario) {
             DB::table('motoristas')->insert(['usuario_id' => $usuario, 'numero_cnh' => 'QA'.$usuario, 'categoria_cnh' => 'B', 'categorias_autorizadas' => 'B', 'validade_cnh' => '2027-12-31', 'ativo' => 1]);
         }
@@ -136,21 +137,105 @@ class RequestWorkflowTest extends TestCase
             ->assertSee(route('solicitacoes.show', 1), false);
     }
 
-    public function test_decisions_use_modals_and_cancel_routes_are_removed(): void
+    public function test_decisions_and_pre_approval_cancel_use_modals_and_require_reason(): void
     {
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->once()->with('sp_cancelar_solicitacao', [10, 2, 1, 'Deslocamento remarcado pela chefia.'])->andReturn([]);
+        $procedimentos->shouldReceive('call')->times(3)->with('sp_cancelar_solicitacao', [10, 1, 1, 'Cancelado antes da análise.'])->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+
         ReadFixture::profile(2);
         $this->get(route('solicitacoes.show', 2))->assertOk()
             ->assertSee('id="request-approve"', false)->assertSee('Confirmar aprovação')
             ->assertSee('Motivo da negativa')->assertSee('Explique os ajustes necessários')
-            ->assertDontSee('Cancelar solicitação');
-        foreach (['approve', 'deny', 'adjust', 'send', 'revision'] as $acao) {
+            ->assertSee('id="request-cancel"', false)->assertSee('Cancelar solicitação');
+        foreach (['approve', 'deny', 'adjust', 'send', 'revision', 'cancel'] as $acao) {
             $this->get('/solicitacoes/2/'.$acao)->assertStatus(405);
         }
-        $this->get('/solicitacoes/2/cancel')->assertNotFound();
-        $this->post('/solicitacoes/2/cancel')->assertNotFound();
-        foreach (['deny', 'adjust'] as $acao) {
+        foreach (['deny', 'adjust', 'cancel'] as $acao) {
             $this->post(route('solicitacoes.'.$acao.'.submit', 2), ['versao' => 1])->assertSessionHasErrors('justificativa');
         }
+
+        $this->post(route('solicitacoes.cancel.submit', 2), ['versao' => 1, 'justificativa' => 'Deslocamento remarcado pela chefia.'])
+            ->assertRedirect(route('solicitacoes.show', 2))->assertSessionHas('status');
+
+        ReadFixture::profile(1);
+        foreach (['rascunho', 'aguardando_analise', 'ajustes_solicitados'] as $estado) {
+            DB::table('vw_solicitacoes_atuais')->where('id', 1)->update(['situacao' => $estado]);
+            $this->get(route('solicitacoes.show', 1))->assertOk()
+                ->assertSee('id="request-cancel"', false)->assertSee('Cancelar solicitação');
+            $this->post(route('solicitacoes.cancel.submit', 1), ['versao' => 1, 'justificativa' => 'Cancelado antes da análise.'])
+                ->assertRedirect(route('solicitacoes.show', 1))->assertSessionHas('status');
+        }
+    }
+
+    public function test_server_request_filter_bar_has_submit_and_clear_buttons(): void
+    {
+        $this->get(route('solicitacoes.index', ['q' => 'QA-REQUESTS-1']))
+            ->assertOk()
+            ->assertSee('type="submit" class="btn btn-primary">Filtrar', false)
+            ->assertSee('Limpar');
+    }
+
+    public function test_request_supports_intermediate_stops_on_create_edit_and_show(): void
+    {
+        $this->draft();
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->once()->with('sp_exigir_permissao', [10, 'solicitacoes', 'editar', 1, 1])->andReturn([]);
+        $procedimentos->shouldReceive('call')->once()->with('sp_auditar', [10, 'rascunho_atualizado', 'solicitacoes', 1, 'Dados da revisão vigente atualizados.'])->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+
+        $this->patch(route('solicitacoes.update', 1), $this->formData([
+            'versao' => 1,
+            'paradas' => ['invalido'],
+        ]))->assertSessionHasErrors('paradas');
+
+        $this->patch(route('solicitacoes.update', 1), $this->formData([
+            'versao' => 1,
+            'paradas' => "Delegacia Regional\nFórum Estadual",
+        ]))->assertRedirect(route('solicitacoes.show', 1));
+
+        $paradas = DB::table('solicitacao_paradas')->where('revisao_id', 1)->orderBy('ordem')->get();
+        $this->assertCount(2, $paradas);
+        $this->assertSame('Delegacia Regional', $paradas[0]->descricao);
+        $this->assertSame('Fórum Estadual', $paradas[1]->descricao);
+
+        $this->get(route('solicitacoes.show', 1))->assertOk()
+            ->assertSee('Paradas intermediárias')
+            ->assertSee('Delegacia Regional')
+            ->assertSee('Fórum Estadual');
+    }
+
+    public function test_approval_filters_overlapping_vehicles_validates_cnh_and_surfaces_sql_business_error(): void
+    {
+        $erroSql = new PDOException('SQLSTATE[45000]: <<Unknown error>>: 1644 Veículo indisponível no intervalo informado.');
+        $erroSql->errorInfo = ['45000', 1644, 'Veículo indisponível no intervalo informado.'];
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->once()->with('sp_aprovar_solicitacao', Mockery::type('array'))->andThrow($erroSql);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+
+        ReadFixture::profile(2);
+        DB::table('reservas')->where('id', 1)->update([
+            'veiculo_id' => 1,
+            'inicio' => '2026-10-05 12:00:00',
+            'fim' => '2026-10-05 18:00:00',
+            'situacao' => 'ativa',
+        ]);
+        $this->post(route('solicitacoes.approve.submit', 2), [
+            'versao' => 1, 'veiculo_confirmado_id' => 1, 'motorista_confirmado_id' => 2, 'justificativa' => 'Conflito esperado.',
+        ])->assertSessionHasErrors('veiculo_confirmado_id');
+
+        DB::table('reservas')->where('id', 1)->update(['situacao' => 'liberada']);
+        DB::table('categorias_veiculo')->where('id', 1)->update(['categoria_cnh_requerida' => 'D']);
+        DB::table('motoristas')->where('usuario_id', 2)->update(['categorias_autorizadas' => 'B']);
+        $this->post(route('solicitacoes.approve.submit', 2), [
+            'versao' => 1, 'veiculo_confirmado_id' => 1, 'motorista_confirmado_id' => 2, 'justificativa' => 'CNH incompatível.',
+        ])->assertSessionHasErrors('motorista_confirmado_id');
+
+        DB::table('categorias_veiculo')->where('id', 1)->update(['categoria_cnh_requerida' => 'B']);
+        $this->post(route('solicitacoes.approve.submit', 2), [
+            'versao' => 1, 'veiculo_confirmado_id' => 1, 'motorista_confirmado_id' => 2, 'justificativa' => 'Teste de erro SQL.',
+        ])->assertSessionHasErrors(['operacao' => 'Veículo indisponível no intervalo informado.']);
     }
 
     public function test_approval_uses_explicit_authorized_choices_and_reason(): void

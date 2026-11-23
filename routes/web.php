@@ -7,8 +7,10 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\IdentityController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\SessionController;
+use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DriverController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\FineController;
 use App\Http\Controllers\MonitoringController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SolicitacoesController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\TrackerController;
 use App\Http\Controllers\TripController;
 use App\Http\Controllers\TyreController;
 use App\Http\Controllers\VehicleController;
@@ -43,7 +46,7 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/acesso-restrito', [AuthController::class, 'restricted'])->name('access.restricted');
     Route::middleware('fleet.session')->group(function (): void {
         Route::post('/conta/email', [IdentityController::class, 'changeEmail'])->name('identity.changeEmail')->block();
-        Route::get('/sessao/status', [SessionController::class, 'status'])->name('session.status')->block();
+        Route::get('/sessao/status', [SessionController::class, 'status'])->name('session.status');
         Route::post('/sessao/reautenticar', [SessionController::class, 'reauthenticate'])->name('session.reauthenticate')->block();
         Route::redirect('/seguranca/mfa', '/painel')->name('mfa.legacy');
 
@@ -58,9 +61,15 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     foreach (['despesas' => 'financeiro/despesas', 'multas' => 'financeiro/multas', 'usuarios' => 'administracao/usuarios', 'perfis' => 'administracao/perfis', 'rotas' => 'administracao/rotas', 'auditoria' => 'administracao/auditoria', 'configuracao' => 'administracao/configuracoes'] as $origem => $destino) {
         Route::redirect('/'.$origem, '/'.$destino);
     }
+    Route::get('/sistema/logo', [ConfigurationController::class, 'logo'])->name('configuration.logo');
     Route::get('/administracao/configuracoes', [ConfigurationController::class, 'index'])->name('configuration.index');
     Route::post('/administracao/configuracoes/exportar', [ConfigurationController::class, 'export'])->name('configuration.export');
     Route::post('/administracao/configuracoes', [ConfigurationController::class, 'update'])->name('configuration.update');
+    Route::get('/administracao/cadastros', [CatalogController::class, 'index'])->name('catalogs.index');
+    Route::get('/administracao/cadastros/fornecedores', [CatalogController::class, 'section'])->defaults('tipo', 'fornecedores')->name('catalogs.suppliers');
+    Route::get('/administracao/cadastros/{tipo}', [CatalogController::class, 'section'])->where('tipo', 'unidades|categorias-veiculo|categorias-despesa|categorias-chamado|checklist|fornecedores')->name('catalogs.section');
+    Route::post('/administracao/cadastros/{tipo}', [CatalogController::class, 'store'])->where('tipo', 'unidades|categorias-veiculo|categorias-despesa|categorias-chamado|checklist|fornecedores')->name('catalogs.store');
+    Route::post('/administracao/cadastros/{tipo}/{registro}', [CatalogController::class, 'update'])->where('tipo', 'unidades|categorias-veiculo|categorias-despesa|categorias-chamado|checklist|fornecedores')->whereNumber('registro')->name('catalogs.update');
     Route::post('/administracao/usuarios/novo', [AdminController::class, 'storeUser'])->defaults('tela', 'users')->defaults('area', 'users')->defaults('operacao', 'store')->name('users.store');
     Route::post('/administracao/usuarios/{registro}/edit', [AdminController::class, 'updateUser'])->whereNumber('registro')->defaults('tela', 'users')->defaults('area', 'users')->defaults('operacao', 'update')->name('users.update');
     Route::post('/administracao/usuarios/{registro}/temporary', [AdminController::class, 'issueTemporaryCredential'])->whereNumber('registro')->defaults('tela', 'users')->defaults('area', 'users')->defaults('operacao', 'temporary')->name('users.temporary')->block();
@@ -90,6 +99,7 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
         }
     }
 
+    Route::get('/financeiro/resumo', [FinanceController::class, 'summary'])->name('finance.summary');
     Route::get('/financeiro/pneus', [TyreController::class, 'index'])->name('tyres.index');
     Route::get('/financeiro/pneus/novo', [TyreController::class, 'create'])->name('tyres.create');
     Route::post('/financeiro/pneus/novo', [TyreController::class, 'store'])->defaults('acao', 'create')->name('tyres.store');
@@ -123,7 +133,28 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
         Route::post('{registro}/approve', 'approveSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('approve.submit');
         Route::post('{registro}/deny', 'denySubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('deny.submit');
         Route::post('{registro}/adjust', 'adjustSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('adjust.submit');
+        Route::post('{registro}/cancel', 'cancelSubmit')->whereNumber('registro')->defaults('tela', 'requests')->name('cancel.submit');
     });
+
+    Route::prefix('motoristas')->as('drivers.')->controller(DriverController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::get('novo', 'create')->name('create');
+        Route::post('novo', 'store')->name('store');
+        Route::get('{registro}', 'show')->whereNumber('registro')->name('show');
+        Route::get('{registro}/edit', 'edit')->whereNumber('registro')->name('edit');
+        Route::post('{registro}/edit', 'update')->whereNumber('registro')->name('update');
+        Route::get('{registro}/cnh', 'downloadCnh')->whereNumber('registro')->name('cnh');
+    });
+
+    Route::prefix('monitoramento/rastreadores')->as('trackers.')->controller(TrackerController::class)->group(function (): void {
+        Route::get('', 'index')->name('index');
+        Route::post('', 'store')->name('store');
+        Route::post('{rastreador}/edit', 'update')->whereNumber('rastreador')->name('update');
+        Route::post('{rastreador}/instalar', 'install')->whereNumber('rastreador')->name('install');
+        Route::post('{rastreador}/remover', 'remove')->whereNumber('rastreador')->name('remove');
+    });
+    Route::post('/monitoramento/{registro}/posicoes', [MonitoringController::class, 'storePosition'])->whereNumber('registro')->name('monitoring.positions.store');
+    Route::post('/monitoramento/{registro}/posicoes-manuais', [MonitoringController::class, 'storeManualPosition'])->whereNumber('registro')->name('monitoring.manual-positions.store');
 
     // Rotas Gestor
     // Compartilhadas com outros perfis conforme as permissoes do vinculo ativo.
@@ -132,6 +163,7 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::get('/agenda', [AgendaController::class, 'index'])->name('agenda.index');
     Route::get('/agenda/reservas/{reserva}', [AgendaController::class, 'show'])->whereNumber('reserva')->name('agenda.show');
     Route::get('/conta', [AccountController::class, 'index'])->name('account.index');
+    Route::post('/conta', [AccountController::class, 'update'])->name('account.update');
     Route::get('/notificacoes', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notificacoes/{evento}/ler', [NotificationController::class, 'read'])->whereNumber('evento')->name('notifications.read');
     Route::post('/notificacoes/{evento}/ocultar', [NotificationController::class, 'hide'])->whereNumber('evento')->name('notifications.hide');
@@ -151,8 +183,10 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::get('/frota/novo', [VehicleController::class, 'create'])->defaults('tela', 'vehicles')->name('vehicles.create');
     Route::post('/frota/novo', [VehicleController::class, 'store'])->defaults('tela', 'vehicles')->name('vehicles.store');
     Route::get('/frota/{registro}', [RecordController::class, 'show'])->whereNumber('registro')->defaults('tela', 'vehicles')->name('vehicles.show');
-    Route::get('/frota/{registro}/{acao}', [VehicleController::class, 'operation'])->whereNumber('registro')->where('acao', 'edit|block|release')->defaults('tela', 'vehicles')->name('vehicles.operation');
-    Route::post('/frota/{registro}/{acao}', [VehicleController::class, 'perform'])->whereNumber('registro')->where('acao', 'edit|block|release')->defaults('tela', 'vehicles')->name('vehicles.perform');
+    Route::post('/frota/{registro}/documentos', [VehicleController::class, 'storeDocument'])->whereNumber('registro')->defaults('tela', 'vehicles')->name('vehicles.documents.store');
+    Route::get('/frota/{registro}/documentos/{documento}', [VehicleController::class, 'downloadDocument'])->whereNumber('registro')->whereNumber('documento')->defaults('tela', 'vehicles')->name('vehicles.documents.download');
+    Route::get('/frota/{registro}/{acao}', [VehicleController::class, 'operation'])->whereNumber('registro')->where('acao', 'edit|block|release|transfer')->defaults('tela', 'vehicles')->name('vehicles.operation');
+    Route::post('/frota/{registro}/{acao}', [VehicleController::class, 'perform'])->whereNumber('registro')->where('acao', 'edit|block|release|transfer')->defaults('tela', 'vehicles')->name('vehicles.perform');
 
     foreach (config('screens') as $codigo => $tela) {
         if (! in_array($codigo, ['trips', 'monitoring'], true)) {

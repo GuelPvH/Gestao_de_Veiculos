@@ -6,6 +6,9 @@ use App\Services\Authorization\AccessContext;
 use App\Services\Read\DashboardReadRepository;
 use App\Services\Read\FleetReadRepository;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -47,10 +50,35 @@ class DashboardController extends Controller
         foreach ($telasIndicadores as $codigo => $tela) {
             $indicadores[] = ['rotulo' => $tela['title'], 'valor' => $resumos[$codigo]['total'], 'nota' => 'Registros no alcance do perfil'];
         }
+        /** @var Collection<string, \stdClass> $rotasMenu */
+        $rotasMenu = app(Request::class)->attributes->get('fleet.menu_routes', collect());
+        $despesasRota = $rotasMenu->get('/financeiro/despesas');
+        $despesasAtiva = $despesasRota === null || (bool) $despesasRota->ativa;
+        $rotaAtiva = function (string $caminho, bool $subareaDespesas = false) use ($rotasMenu, $despesasAtiva): bool {
+            if ($subareaDespesas && ! $despesasAtiva) {
+                return false;
+            }
+            $rota = $rotasMenu->get($caminho);
+
+            return $rota === null || (bool) $rota->ativa;
+        };
         $atalhos = [];
         $atividade = null;
         foreach ($telas as $codigo => $tela) {
-            $atalhos[] = ['title' => $tela['title'], 'route' => ($tela['route'] ?? $codigo).'.index', 'icon' => $tela['icon']];
+            if ($rotaAtiva('/'.$tela['url'], $tela['module'] === 'despesas')) {
+                $atalhos[] = ['title' => $tela['title'], 'route' => ($tela['route'] ?? $codigo).'.index', 'icon' => $tela['icon']];
+            }
+            if ($codigo === 'maintenance' && $acesso->level('despesas') > 0) {
+                if (Route::has('tyres.index') && $rotaAtiva('/financeiro/pneus', true)) {
+                    $atalhos[] = ['title' => 'Pneus', 'route' => 'tyres.index', 'icon' => 'car-front'];
+                }
+                if (min($acesso->level('despesas', 'consultar'), $acesso->level('despesas', 'ver_valores')) >= 2 && Route::has('finance.summary') && $rotaAtiva('/financeiro/resumo', true)) {
+                    $atalhos[] = ['title' => 'Resumo financeiro', 'route' => 'finance.summary', 'icon' => 'file-text'];
+                }
+                if (Route::has('catalogs.suppliers') && $rotaAtiva('/administracao/cadastros/fornecedores', true)) {
+                    $atalhos[] = ['title' => 'Fornecedores', 'route' => 'catalogs.suppliers', 'icon' => 'clipboard-list'];
+                }
+            }
             if ($atividade !== null || (isset($telasIndicadores[$codigo]) && $resumos[$codigo]['total'] === 0)) {
                 continue;
             }
@@ -59,6 +87,15 @@ class DashboardController extends Controller
             if ($registros->isNotEmpty()) {
                 $atividade = ['tela' => $tela, 'codigo' => $codigo, 'registros' => $leituras->rows($codigo, $registros, $campos)];
             }
+        }
+        if (($acesso->level('frota') > 0 || $acesso->level('usuarios') > 0) && Route::has('drivers.index') && $rotaAtiva('/motoristas')) {
+            $atalhos[] = ['title' => 'Motoristas', 'route' => 'drivers.index', 'icon' => 'car-front'];
+        }
+        if (($acesso->level('rastreamento') > 0 || $acesso->can('configuracoes', 'gerenciar')) && Route::has('trackers.index') && $rotaAtiva('/monitoramento/rastreadores')) {
+            $atalhos[] = ['title' => 'Rastreadores', 'route' => 'trackers.index', 'icon' => 'map-pinned'];
+        }
+        if ($acesso->can('configuracoes') && Route::has('catalogs.index') && $rotaAtiva('/administracao/cadastros')) {
+            $atalhos[] = ['title' => 'Cadastros auxiliares', 'route' => 'catalogs.index', 'icon' => 'clipboard-list'];
         }
         $periodos = [];
         foreach ($faixas as $indice => $faixa) {

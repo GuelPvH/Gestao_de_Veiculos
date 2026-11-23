@@ -7,6 +7,7 @@ use App\Services\Auth\DispatchPendingMail;
 use App\Services\Auth\IdentityService;
 use App\Services\Auth\ProcedureRunner;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -180,8 +181,15 @@ class MySqlWorkflowTest extends TestCase
         $this->assertNull($exportacaoFalha->arquivo_id);
         $this->assertSame(0, DB::table('arquivos')->where('nome_original', 'frota-pf-relatorio-'.$exportacaoFalha->id.'.csv')->count());
 
+        $permissaoRevogada = DB::table('perfil_permissoes')->where('perfil_id', 2)->where('permissao_id', 72)->first();
         DB::table('perfil_permissoes')->where('perfil_id', 2)->where('permissao_id', 72)->delete();
-        $this->get(route('reports.download', $exportacao->id))->assertForbidden();
+        try {
+            $this->get(route('reports.download', $exportacao->id))->assertForbidden();
+        } finally {
+            if ($permissaoRevogada !== null) {
+                DB::table('perfil_permissoes')->insertOrIgnore((array) $permissaoRevogada);
+            }
+        }
     }
 
     public function test_admin_delegates_with_real_procedures_and_disables_only_a_post_route(): void
@@ -234,6 +242,163 @@ class MySqlWorkflowTest extends TestCase
         $this->login($gestor, $senhaGestor);
         $this->get(route('vehicles.create'))->assertOk();
         $this->post(route('vehicles.store'), [])->assertStatus(403);
+    }
+
+    public function test_profiles_completion_flows_work_against_real_mysql_procedures_and_triggers(): void
+    {
+        Storage::fake('local');
+        [$administrador, $senhaAdmin] = $this->user('administrador');
+        [$gestor, $senhaGestor] = $this->user('gestor');
+        [$servidor, $senhaServidor] = $this->user('servidor');
+        $pdf = UploadedFile::fake()->createWithContent('doc.pdf', "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n");
+        $png = UploadedFile::fake()->createWithContent('logo.png', (string) base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', true));
+
+        // 1. Admin: auxiliary unit, 1-step user with Servidor profile, assign Financeiro to other user,
+        //    delegate operational permission to custom profile (blocked on own role 4), branding + logo.
+        $this->login($administrador, $senhaAdmin);
+        $codigoUnidade = 'QA'.strtoupper(bin2hex(random_bytes(3)));
+        $this->post(route('catalogs.store', ['tipo' => 'unidades']), [
+            'codigo' => $codigoUnidade, 'nome' => 'Delegacia QA '.$codigoUnidade,
+            'cidade' => 'Porto Velho', 'uf' => 'RO', 'ativa' => 1,
+        ])->assertSessionHas('status');
+        $novaUnidade = (int) DB::table('unidades')->where('codigo', $codigoUnidade)->value('id');
+        $this->assertGreaterThan(1, $novaUnidade);
+
+        $idNovo = '52998224725';
+        $this->post(route('users.store'), [
+            'unidade_id' => 1, 'identificador' => '529.982.247-25', 'nome' => 'Servidor Etapa Única QA',
+            'telefone' => '69991112222', 'perfil_id' => 1,
+            'justificativa' => 'Cadastro inicial com perfil Servidor em etapa única.',
+        ])->assertSessionHas('status');
+        $novoUsuario = (int) DB::table('usuarios')->where('identificador', $idNovo)->value('id');
+        $this->assertDatabaseHas('usuario_perfis', ['usuario_id' => $novoUsuario, 'perfil_id' => 1, 'ativo' => 1]);
+
+        $this->post(route('users.link', $novoUsuario), [
+            'perfil_id' => 3, 'unidade_id' => 1,
+            'vigente_desde' => CarbonImmutable::now(config('fleet.timezone'))->subMinute()->format('Y-m-d\TH:i'),
+            'justificativa' => 'Atribuição de perfil Financeiro pela governança administrativa.',
+        ])->assertSessionHas('status');
+        $this->assertDatabaseHas('usuario_perfis', ['usuario_id' => $novoUsuario, 'perfil_id' => 3, 'ativo' => 1]);
+
+        $codigoPerfil = 'qa_op_'.bin2hex(random_bytes(4));
+        $this->post(route('roles.store'), ['codigo' => $codigoPerfil, 'nome' => 'Perfil Operacional QA'])->assertSessionHas('status');
+        $perfilOperacional = (int) DB::table('perfis')->where('codigo', $codigoPerfil)->value('id');
+        $permissaoAprovar = (int) DB::table('permissoes')->where('modulo_codigo', 'solicitacoes')->where('acao_codigo', 'aprovar')->where('alcance', 'orgao')->value('id');
+        $this->post(route('roles.grant', $perfilOperacional), ['permissao_id' => $permissaoAprovar, 'delegavel' => 0])->assertSessionHas('status');
+        $this->assertDatabaseHas('perfil_permissoes', ['perfil_id' => $perfilOperacional, 'permissao_id' => $permissaoAprovar]);
+        $this->post(route('roles.grant', 4), ['permissao_id' => $permissaoAprovar, 'delegavel' => 0])->assertForbidden();
+
+        $this->post(route('configuration.update'), [
+            'nome_sistema' => 'Frota PF · QA',
+            'nome_orgao' => 'SR/PF/RO QA',
+            'sigla_orgao' => 'PF-RO',
+            'fuso_horario' => 'America/Porto_Velho',
+            'sessao_inatividade_minutos' => 30,
+            'limite_sem_comunicacao_minutos' => 15,
+            'logo' => $png,
+        ])->assertSessionHas('status');
+        $this->get(route('configuration.logo'))->assertOk();
+        $this->post('/sair');
+
+        // 2. Gestor: driver CRUD, vehicle doc upload, tracker install + GPS position, vehicle unit transfer.
+        $this->login($gestor, $senhaGestor);
+        $this->post(route('drivers.store'), [
+            'usuario_id' => $servidor, 'numero_cnh' => substr('9'.bin2hex(random_bytes(6)), 0, 11),
+            'categoria_cnh' => 'B', 'categorias_autorizadas' => 'B',
+            'validade_cnh' => CarbonImmutable::now('UTC')->addYear()->toDateString(),
+            'ativo' => 1, 'cnh_arquivo' => $pdf,
+        ])->assertSessionHas('status');
+        $this->get(route('drivers.cnh', $servidor))->assertOk();
+
+        $placa = strtoupper(substr(bin2hex(random_bytes(4)), 0, 7));
+        $veiculo = DB::table('veiculos')->insertGetId([
+            'unidade_id' => 1, 'categoria_id' => 1, 'nome' => 'Viatura QA Completa',
+            'placa' => $placa, 'capacidade' => 5, 'criado_por' => $gestor,
+        ]);
+        $this->post(route('vehicles.documents.store', $veiculo), [
+            'tipo' => 'CRLV', 'numero' => 'CRLV-QA-2026', 'exercicio' => 2026,
+            'emitido_em' => '2026-01-10', 'vence_em' => '2027-01-10', 'arquivo' => $pdf,
+        ])->assertSessionHas('status');
+        $docId = (int) DB::table('documentos_veiculo')->where('veiculo_id', $veiculo)->value('id');
+        $this->get(route('vehicles.documents.download', ['registro' => $veiculo, 'documento' => $docId]))->assertOk();
+
+        $imei = 'IMEI-'.bin2hex(random_bytes(4));
+        $this->post(route('trackers.store'), [
+            'provedor' => 'QA-GPS', 'identificador_externo' => $imei,
+            'tipo' => 'gps', 'modelo' => 'Tracker X1', 'ativo' => 1,
+        ])->assertSessionHas('status');
+        $rastreadorId = (int) DB::table('rastreadores')->where('identificador_externo', $imei)->value('id');
+        $this->post(route('trackers.install', $rastreadorId), [
+            'veiculo_id' => $veiculo,
+            'instalado_em' => CarbonImmutable::now(config('fleet.timezone'))->subHours(2)->format('Y-m-d\TH:i'),
+        ])->assertSessionHas('status');
+        $this->post(route('monitoring.positions.store', $veiculo), [
+            'capturado_em' => CarbonImmutable::now(config('fleet.timezone'))->subHour()->format('Y-m-d\TH:i'),
+            'latitude' => -8.7611, 'longitude' => -63.9022, 'velocidade_kmh' => 42.0, 'ignicao' => '1',
+        ])->assertSessionHas('status');
+        $this->get(route('monitoring.index'))->assertOk()->assertSee($placa)->assertSee(route('monitoring.show', $veiculo), false);
+
+        $this->post(route('vehicles.perform', ['registro' => $veiculo, 'acao' => 'transfer']), [
+            'versao' => 1, 'unidade_destino_id' => $novaUnidade, 'justificativa' => 'Transferência de unidade QA.',
+        ])->assertSessionHas('status');
+        $this->assertSame($novaUnidade, (int) DB::table('veiculos')->where('id', $veiculo)->value('unidade_id'));
+        $this->post('/sair');
+
+        // 3. Servidor: create request with stops + self-driving, cancel pre-approval via sp_cancelar_solicitacao,
+        //    export requests CSV via real sp_preparar_exportacao, update account phone & preferences, attach ticket with audit snapshot.
+        $veiculoUnidade1 = DB::table('veiculos')->insertGetId([
+            'unidade_id' => 1, 'categoria_id' => 1, 'nome' => 'Viatura QA Sede',
+            'placa' => strtoupper(substr(bin2hex(random_bytes(4)), 0, 7)), 'capacidade' => 4, 'criado_por' => $gestor,
+        ]);
+        $this->login($servidor, $senhaServidor);
+        $local = CarbonImmutable::now(config('fleet.timezone'));
+        $this->post(route('solicitacoes.store'), [
+            'finalidade' => 'Diligência com paradas QA', 'origem' => 'Sede', 'destino' => 'Posto Avançado',
+            'origem_latitude' => -8.76, 'origem_longitude' => -63.90,
+            'destino_latitude' => -8.77, 'destino_longitude' => -63.91,
+            'saida_prevista' => $local->addHours(2)->format('Y-m-d\TH:i'),
+            'retorno_previsto' => $local->addHours(5)->format('Y-m-d\TH:i'),
+            'paradas' => "Parada Alpha\nParada Beta",
+            'quantidade_passageiros' => 1, 'necessita_motorista' => '0',
+            'veiculo_pretendido_id' => $veiculoUnidade1,
+        ])->assertSessionHas('status');
+        $solId = (int) DB::table('solicitacoes')->where('solicitante_id', $servidor)->orderByDesc('id')->value('id');
+        $revId = (int) DB::table('solicitacoes')->where('id', $solId)->value('revisao_atual_id');
+        $this->assertSame(2, DB::table('solicitacao_paradas')->where('revisao_id', $revId)->count());
+
+        $versao = (int) DB::table('solicitacoes')->where('id', $solId)->value('versao');
+        $this->post(route('solicitacoes.cancel.submit', $solId), [
+            'versao' => $versao, 'justificativa' => 'Cancelamento pré-aprovação pelo servidor QA.',
+        ])->assertSessionHas('status');
+        $this->assertSame('cancelada', DB::table('solicitacoes')->where('id', $solId)->value('situacao'));
+
+        $this->post(route('reports.export'), [
+            'modulo' => 'requests', 'campos' => ['protocolo', 'situacao'], 'formato' => 'csv',
+        ])->assertRedirect();
+        $exportSol = DB::table('exportacoes')->where('modulo_codigo', 'solicitacoes')->orderByDesc('id')->first();
+        $this->assertNotNull($exportSol);
+        $this->assertSame('concluida', $exportSol->situacao);
+        $this->get(route('reports.download', $exportSol->id))->assertOk();
+
+        $this->post(route('account.update'), [
+            'telefone' => '(69) 98877-6655', 'tema' => 'escuro', 'itens_por_pagina' => 20, 'notificacoes_internas' => 1,
+        ])->assertSessionHas('status');
+        $this->assertSame('(69) 98877-6655', DB::table('usuarios')->where('id', $servidor)->value('telefone'));
+        $this->assertSame('escuro', DB::table('preferencias_usuario')->where('usuario_id', $servidor)->value('tema'));
+
+        $catChamado = (int) DB::table('categorias_chamado')->where('ativa', 1)->value('id');
+        $this->post(route('tickets.store'), [
+            'categoria' => $catChamado, 'assunto' => 'Chamado QA auditoria', 'descricao' => 'Verificação de anexo auditado.',
+            'pagina_contexto' => '/solicitacoes',
+        ])->assertSessionHas('status');
+        $chamadoId = (int) DB::table('chamados')->where('solicitante_id', $servidor)->orderByDesc('id')->value('id');
+        $this->post(route('tickets.perform', ['registro' => $chamadoId, 'acao' => 'attach']), [
+            'arquivo' => $pdf,
+        ])->assertSessionHas('status');
+        $audAnexo = DB::table('auditoria')->where('evento', 'anexo_chamado')->where('entidade_id', $chamadoId)->orderByDesc('id')->first();
+        $this->assertNotNull($audAnexo);
+        $this->assertNotEmpty($audAnexo->ator_nome_snapshot);
+        $this->assertSame('Servidor', $audAnexo->perfil_nome_snapshot);
     }
 
     public function test_recovery_uses_local_smtp_and_consumes_hashed_token_once_in_mysql(): void
