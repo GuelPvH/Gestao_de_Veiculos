@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\VehicleBlockRequest;
+use App\Http\Requests\VehicleDocumentRequest;
 use App\Http\Requests\VehicleInputRequest;
+use App\Http\Requests\VehicleTransferRequest;
 use App\Services\Authorization\AccessContext;
 use App\Services\Read\FleetReadRepository;
 use App\Services\Read\OperationCatalog;
@@ -13,8 +15,10 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use PDOException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VehicleController extends Controller
 {
@@ -37,10 +41,27 @@ class VehicleController extends Controller
     {
         $visivel = $this->leituras->record('vehicles', $registro);
         abort_unless(isset($this->operacoes->allowed('vehicles', $visivel)[$acao]), 403);
-        $veiculo = DB::table('veiculos')->where('id', $registro)->first();
-        abort_unless($veiculo !== null, 404);
+        abort_unless(property_exists($visivel, '__vehicle_id') && $visivel->__vehicle_id !== null, 404);
+        $veiculo = (object) [
+            'id' => $visivel->__vehicle_id,
+            'unidade_id' => $visivel->__vehicle_unidade_id,
+            'categoria_id' => $visivel->__vehicle_categoria_id,
+            'nome' => $visivel->__vehicle_nome,
+            'placa' => $visivel->__vehicle_placa,
+            'renavam' => $visivel->__vehicle_renavam,
+            'chassi' => $visivel->__vehicle_chassi,
+            'marca' => $visivel->__vehicle_marca,
+            'modelo' => $visivel->__vehicle_modelo,
+            'ano_fabricacao' => $visivel->__vehicle_ano_fabricacao,
+            'ano_modelo' => $visivel->__vehicle_ano_modelo,
+            'capacidade' => $visivel->__vehicle_capacidade,
+            'quilometragem_atual' => $visivel->__vehicle_quilometragem_atual,
+            'situacao_cadastro' => $visivel->__vehicle_situacao_cadastro,
+            'observacoes' => $visivel->__vehicle_observacoes,
+            'versao' => $visivel->__vehicle_versao,
+        ];
 
-        return $this->form($acao, $veiculo, $this->options($acao, $registro));
+        return $this->form($acao, $veiculo, $this->options($acao, $registro, Value::integer($veiculo->unidade_id)));
     }
 
     public function store(VehicleInputRequest $requisicao): RedirectResponse
@@ -58,14 +79,19 @@ class VehicleController extends Controller
     {
         $visivel = $this->leituras->record('vehicles', $registro);
         abort_unless(isset($this->operacoes->allowed('vehicles', $visivel)[$acao]), 403);
-        abort_unless(in_array($acao, ['edit', 'block', 'release'], true), 404);
-        $requisicao = $acao === 'edit' ? app(VehicleInputRequest::class) : app(VehicleBlockRequest::class);
+        abort_unless(in_array($acao, ['edit', 'block', 'release', 'transfer'], true), 404);
+        $requisicao = match ($acao) {
+            'edit' => app(VehicleInputRequest::class),
+            'transfer' => app(VehicleTransferRequest::class),
+            default => app(VehicleBlockRequest::class),
+        };
         $dados = $requisicao->validated();
         try {
             match ($acao) {
                 'edit' => $this->fluxo->update($registro, $dados),
                 'block' => $this->fluxo->block($registro, $dados),
                 'release' => $this->fluxo->release($registro, $dados),
+                'transfer' => $this->fluxo->transfer($registro, $dados),
             };
         } catch (QueryException|PDOException) {
             return back()->withErrors(['operacao' => 'A agenda ou o cadastro mudou. Atualize a página e confira os dados.'])->withInput();
@@ -75,7 +101,31 @@ class VehicleController extends Controller
             'edit' => 'Veículo atualizado.',
             'block' => 'Período bloqueado na agenda.',
             'release' => 'Bloqueio liberado.',
+            'transfer' => 'Unidade responsável do veículo transferida.',
         });
+    }
+
+    public function storeDocument(VehicleDocumentRequest $requisicao, int $registro): RedirectResponse
+    {
+        $visivel = $this->leituras->record('vehicles', $registro);
+        abort_unless($this->acesso->can('frota', 'editar', null, Value::integer($visivel->__unit)), 403);
+        $arquivo = $requisicao->file('arquivo');
+        abort_unless($arquivo !== null, 422);
+        try {
+            $this->fluxo->storeDocument($registro, $requisicao->validated(), $arquivo);
+        } catch (QueryException|PDOException) {
+            return back()->withErrors(['arquivo' => 'Não foi possível registrar o documento do veículo. Confira os dados e tente novamente.'])->withInput();
+        }
+
+        return redirect()->route('vehicles.show', $registro)->with('status', 'Documento do veículo registrado.');
+    }
+
+    public function downloadDocument(int $registro, int $documento): StreamedResponse
+    {
+        $arquivo = $this->fluxo->downloadDocument($registro, $documento);
+        abort_unless(Storage::disk('local')->exists(Value::string($arquivo->chave_armazenamento)), 404);
+
+        return Storage::disk('local')->download(Value::string($arquivo->chave_armazenamento), Value::nullableString($arquivo->nome_original), ['Content-Type' => 'application/octet-stream']);
     }
 
     /**
@@ -89,6 +139,7 @@ class VehicleController extends Controller
             'edit' => 'Editar veículo',
             'block' => 'Bloquear agenda do veículo',
             'release' => 'Liberar bloqueio manual',
+            'transfer' => 'Transferir unidade do veículo',
             default => abort(404),
         };
 
@@ -106,12 +157,15 @@ class VehicleController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function options(string $acao, ?int $registro = null): array
+    private function options(string $acao, ?int $registro = null, ?int $unidadeAtual = null): array
     {
         $unidadesDisponiveis = [];
         if ($acao === 'create') {
             $unidades = DB::table('unidades')->where('ativa', 1)->orderBy('nome')->get(['id', 'nome']);
             $unidadesDisponiveis = $unidades->filter(fn ($unidade) => $this->acesso->can('frota', 'criar', null, Value::integer($unidade->id)))->pluck('nome', 'id')->all();
+        } elseif ($acao === 'transfer') {
+            $unidades = DB::table('unidades')->where('ativa', 1)->when($unidadeAtual !== null, fn ($q) => $q->where('id', '<>', $unidadeAtual))->orderBy('nome')->get(['id', 'nome']);
+            $unidadesDisponiveis = $unidades->filter(fn ($unidade) => $this->acesso->can('frota', 'gerenciar', null, Value::integer($unidade->id)))->pluck('nome', 'id')->all();
         }
         $categorias = in_array($acao, ['create', 'edit'], true)
             ? DB::table('categorias_veiculo')->where('ativa', 1)->orderBy('nome')->pluck('nome', 'id')->all()

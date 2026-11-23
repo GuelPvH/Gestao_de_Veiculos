@@ -72,7 +72,11 @@ class AdminActionRequest extends FormRequest
         return match ($operacao) {
             'users.store' => [
                 'unidade_id' => $unidade, 'identificador' => $identificador, 'nome' => ['required', 'string', 'max:150'],
-                'email' => $email,
+                'email' => $email, 'telefone' => ['nullable', 'string', 'max:30'],
+                'perfil_id' => ['nullable', 'integer', Rule::exists('perfis', 'id')->where('ativo', 1)],
+                'vigente_desde' => ['nullable', 'date_format:Y-m-d\\TH:i'],
+                'vigente_ate' => ['nullable', 'date_format:Y-m-d\\TH:i', 'after:vigente_desde'],
+                'justificativa' => ['required_with:perfil_id', 'nullable', 'string', 'min:5', 'max:1000'],
             ],
             'users.update' => [
                 'versao' => ['required', 'integer', 'min:1'], 'unidade_id' => $unidade,

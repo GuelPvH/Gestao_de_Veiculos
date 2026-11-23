@@ -1,4 +1,4 @@
-import { Modal } from 'bootstrap';
+import Modal from 'bootstrap/js/dist/modal';
 
 const panel = document.querySelector('[data-session-status]');
 if (panel) {

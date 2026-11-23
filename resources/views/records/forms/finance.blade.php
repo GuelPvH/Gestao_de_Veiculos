@@ -1,7 +1,16 @@
 @if ($codigo === 'expenses')
     @if (in_array($acao, ['create', 'edit'], true))
         @if ($acao === 'create')
-            <x-forms.field nome="veiculo" rotulo="Placa do veículo" :obrigatorio="true" maxlength="20" />
+            <x-forms.field
+                nome="veiculo"
+                rotulo="Veículo"
+                tipo="select"
+                :opcoes="$veiculosDisponiveis ?? []"
+                :obrigatorio="true"
+            />
+            @if (empty($veiculosDisponiveis))
+                <x-ui.alert tom="warning">Não há veículo ativo disponível para seu alcance.</x-ui.alert>
+            @endif
             <x-forms.field
                 nome="categoria"
                 rotulo="Categoria da despesa"
@@ -118,7 +127,16 @@
     @endif
 @elseif ($codigo === 'fuel')
     @if ($acao === 'create')
-        <x-forms.field nome="veiculo" rotulo="Placa do veículo" :obrigatorio="true" maxlength="20" />
+        <x-forms.field
+            nome="veiculo"
+            rotulo="Veículo"
+            tipo="select"
+            :opcoes="$veiculosDisponiveis ?? []"
+            :obrigatorio="true"
+        />
+        @if (empty($veiculosDisponiveis))
+            <x-ui.alert tom="warning">Não há veículo ativo disponível para seu alcance.</x-ui.alert>
+        @endif
     @else
         <p>Veículo: <strong>{{ $registro->placa }}</strong></p>
     @endif
@@ -213,7 +231,16 @@
 @elseif ($codigo === 'maintenance')
     @if (in_array($acao, ['create', 'edit'], true))
         @if ($acao === 'create')
-            <x-forms.field nome="veiculo" rotulo="Placa do veículo" :obrigatorio="true" maxlength="20" />
+            <x-forms.field
+                nome="veiculo"
+                rotulo="Veículo"
+                tipo="select"
+                :opcoes="$veiculosDisponiveis ?? []"
+                :obrigatorio="true"
+            />
+            @if (empty($veiculosDisponiveis))
+                <x-ui.alert tom="warning">Não há veículo ativo disponível para seu alcance.</x-ui.alert>
+            @endif
         @else
             <p>Veículo: <strong>{{ $registro->placa }}</strong></p>
         @endif

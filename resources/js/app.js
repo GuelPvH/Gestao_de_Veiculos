@@ -1,6 +1,9 @@
 import './session';
-import { Modal } from 'bootstrap';
-import 'bootstrap';
+import './frota-motion';
+import Modal from 'bootstrap/js/dist/modal';
+import 'bootstrap/js/dist/dropdown';
+import 'bootstrap/js/dist/offcanvas';
+import 'bootstrap/js/dist/collapse';
 const temaFixo = new URLSearchParams(location.search).get('tema');
 function aplicarTema(preferencia) {
     const tema =
@@ -24,11 +27,14 @@ document
             salvarTema(document.documentElement.dataset.bsTheme === 'dark' ? 'light' : 'dark'),
         ),
     );
+const temaMapa = { claro: 'light', escuro: 'dark', dispositivo: 'system' };
 document.querySelectorAll('[data-theme-select]').forEach((campo) => {
     try {
-        campo.value = localStorage.getItem('frota-tema') || 'system';
+        if (!campo.dataset.themePersist) {
+            campo.value = localStorage.getItem('frota-tema') || document.documentElement.dataset.userTheme || 'system';
+        }
     } catch (_) {}
-    campo.addEventListener('change', () => salvarTema(campo.value));
+    campo.addEventListener('change', () => salvarTema(temaMapa[campo.value] || campo.value));
 });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     try {

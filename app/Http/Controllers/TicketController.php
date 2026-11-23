@@ -21,7 +21,14 @@ class TicketController extends Controller
     {
         $chamados->authorizeList();
         /** @var array<string, mixed> $filtros */
-        $filtros = $requisicao->validate(['q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60', 'page' => 'nullable|integer|min:1']);
+        $filtros = $requisicao->validate([
+            'q' => 'nullable|string|max:150',
+            'situacao' => 'nullable|string|max:60',
+            'de' => 'nullable|date_format:Y-m-d',
+            'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de',
+            'ordem' => 'nullable|in:recentes,antigos',
+            'page' => 'nullable|integer|min:1',
+        ]);
         $paginacao = $leituras->page('tickets', $filtros);
 
         return view('tickets.index', [
@@ -34,22 +41,45 @@ class TicketController extends Controller
     public function show(int $registro, TicketService $chamados, FleetReadRepository $leituras, AccessContext $acesso): View
     {
         $chamado = $chamados->ticket($registro);
-        $mensagens = DB::table('chamado_mensagens as m')->join('usuario_perfis as v', 'v.id', '=', 'm.autor_vinculo_id')
+        $mensagensQuery = DB::table('chamado_mensagens as m')->join('usuario_perfis as v', 'v.id', '=', 'm.autor_vinculo_id')
             ->join('usuarios as u', 'u.id', '=', 'v.usuario_id')->where('m.chamado_id', $registro);
         if (! $acesso->can('chamados', 'atender', Value::integer($chamado->__owner), Value::integer($chamado->__unit))) {
-            $mensagens->where('m.interna', 0);
+            $mensagensQuery->where('m.interna', 0);
         }
-        $anexos = DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id')
-            ->where('a.chamado_id', $registro)->where('f.situacao', 'disponivel')->orderByDesc('a.id')->limit(40)
-            ->get(['a.id', 'f.nome_original', 'f.tamanho_bytes']);
+        $mensagensSub = DB::query()->fromSub(
+            $mensagensQuery->orderBy('m.id')->limit(100)
+                ->selectRaw("'message' as kind, m.id as ord, u.nome as a, m.mensagem as b, m.interna as c, m.criado_em as d"),
+            'msg',
+        );
+        $anexosSub = DB::query()->fromSub(
+            DB::table('anexos as a')->join('arquivos as f', 'f.id', '=', 'a.arquivo_id')
+                ->where('a.chamado_id', $registro)->where('f.situacao', 'disponivel')->orderByDesc('a.id')->limit(40)
+                ->selectRaw("'attachment' as kind, a.id as ord, f.nome_original as a, f.tamanho_bytes as b, NULL as c, NULL as d"),
+            'att',
+        );
+        $eventosSub = DB::query()->fromSub(
+            DB::table('chamado_eventos')->where('chamado_id', $registro)->orderByDesc('id')->limit(40)
+                ->selectRaw("'event' as kind, id as ord, tipo as a, criado_em as b, motivo as c, NULL as d"),
+            'evt',
+        );
+        $linhas = $mensagensSub->unionAll($anexosSub)->unionAll($eventosSub)->get();
+        $mensagens = $linhas->where('kind', 'message')->sortBy('ord')
+            ->map(fn (\stdClass $row): \stdClass => (object) [
+                'autor' => $row->a, 'mensagem' => $row->b, 'interna' => $row->c, 'criado_em' => $row->d,
+            ])->values();
+        $anexos = $linhas->where('kind', 'attachment')->sortByDesc('ord')
+            ->map(fn (\stdClass $row): \stdClass => (object) [
+                'id' => $row->ord, 'nome_original' => $row->a, 'tamanho_bytes' => $row->b,
+            ])->values();
+        $eventos = $leituras->mapHistoryRows('tickets', $linhas->where('kind', 'event')->sortByDesc('ord')->values());
 
         return view('tickets.show', [
             'chamado' => $chamado,
             'valores' => $leituras->rows('tickets', collect([$chamado]))->sole()['valores'],
             'tela' => $leituras->definition('tickets'),
-            'mensagens' => $mensagens->orderBy('m.id')->limit(100)->get(['u.nome as autor', 'm.mensagem', 'm.interna', 'm.criado_em']),
+            'mensagens' => $mensagens,
             'anexos' => $anexos,
-            'eventos' => $leituras->history('tickets', $registro),
+            'eventos' => $eventos,
             'operacoes' => $chamados->actions($chamado),
             'leituras' => $leituras,
         ]);

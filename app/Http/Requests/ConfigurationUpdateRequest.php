@@ -19,9 +19,14 @@ class ConfigurationUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'nome_sistema' => ['nullable', 'string', 'max:120'],
+            'nome_orgao' => ['nullable', 'string', 'max:150'],
+            'sigla_orgao' => ['nullable', 'string', 'max:30'],
             'fuso_horario' => ['required', 'string', 'max:64', Rule::in(timezone_identifiers_list())],
             'sessao_inatividade_minutos' => ['required', 'integer', 'between:5,1440'],
             'limite_sem_comunicacao_minutos' => ['required', 'integer', 'between:1,1440'],
+            'logo' => ['nullable', 'file', 'mimes:png,jpg,jpeg', 'max:2048'],
+            'remover_logo' => ['nullable', 'boolean'],
         ];
     }
 }

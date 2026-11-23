@@ -1,7 +1,7 @@
 <x-layouts.authenticated titulo="Histórico de trajetos" :breadcrumbs="[['label'=>'Histórico de trajetos']]">
     <x-ui.title
         titulo="Histórico de trajetos"
-        subtitulo="Consulte os percursos planejados das solicitações aprovadas no período."
+        subtitulo="Consulte os percursos planejados das solicitações aprovadas e as posições observadas (rastreador e manual) no período."
     />
     <x-ui.panel>
         <form method="get" class="row g-3 mb-4">
@@ -34,9 +34,10 @@
         @if ($limiteAtingido)
             <x-ui.alert tom="info">Exibindo os primeiros 500 trajetos. Selecione um período menor.</x-ui.alert>
         @endif
-        <x-fleet.approved-route-map :trajetos="$trajetos" :consultado="$consultado" />
+        <x-fleet.approved-route-map :trajetos="$trajetos" :posicoes="$posicoesObservadas" :consultado="$consultado" />
         @if ($trajetos->isNotEmpty())
-            <div class="table-responsive mt-4">
+            <h2 class="h5 mt-4">Percursos planejados (viagens aprovadas)</h2>
+            <div class="table-responsive mt-2">
                 <table class="table">
                     <thead>
                         <tr>
@@ -60,6 +61,35 @@
                                 <td>{{ $trajeto->destino }}</td>
                                 <td>{{ $leituras->format($trajeto->saida_prevista, 'datetime') }}</td>
                                 <td>{{ $leituras->format($trajeto->retorno_previsto, 'datetime') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+        @if ($posicoesObservadas->isNotEmpty())
+            <h2 class="h5 mt-4">Posições percorridas / registradas (rastreador e manual)</h2>
+            <div class="table-responsive mt-2">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Data e hora</th>
+                            <th>Fonte</th>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th>Velocidade</th>
+                            <th>Descrição</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($posicoesObservadas as $ponto)
+                            <tr>
+                                <td>{{ $leituras->format($ponto->ocorrido_em, 'datetime') }}</td>
+                                <td>{{ $ponto->fonte }}</td>
+                                <td>{{ $ponto->latitude }}</td>
+                                <td>{{ $ponto->longitude }}</td>
+                                <td>{{ $ponto->velocidade_kmh !== null ? $ponto->velocidade_kmh.' km/h' : '—' }}</td>
+                                <td>{{ $ponto->descricao ?? '—' }}</td>
                             </tr>
                         @endforeach
                     </tbody>

@@ -89,11 +89,31 @@ class ReadPagesTest extends TestCase
             if ($acesso->can('configuracoes')) {
                 $registrar($perfil, route('configuration.index'), 'configuration');
             }
+            if ($acesso->level('frota', 'gerenciar') > 0 || $acesso->level('usuarios', 'consultar') > 0) {
+                $registrar($perfil, route('drivers.index'), 'drivers-index');
+                if ($acesso->level('frota', 'gerenciar') > 0 || $acesso->level('usuarios', 'editar') > 0) {
+                    $registrar($perfil, route('drivers.create'), 'drivers-create');
+                }
+            }
+            if ($acesso->level('rastreamento') > 0) {
+                $registrar($perfil, route('trackers.index'), 'trackers-index');
+            }
+            if ($acesso->level('configuracoes', 'consultar') > 0) {
+                $registrar($perfil, route('catalogs.index'), 'catalogs-index');
+                foreach (['unidades', 'categorias-veiculo', 'categorias-despesa', 'categorias-chamado', 'checklist', 'fornecedores'] as $secao) {
+                    $registrar($perfil, route('catalogs.section', ['tipo' => $secao]), 'catalogs-'.$secao);
+                }
+            } elseif ($acesso->level('despesas', 'consultar') > 0) {
+                $registrar($perfil, route('catalogs.suppliers'), 'catalogs-suppliers');
+            }
             if ($acesso->level('despesas') > 0) {
                 $registrar($perfil, route('tyres.index'), 'tyres-index');
                 $registrar($perfil, route('tyres.show', 1), 'tyres-detail');
                 if ($acesso->can('despesas', 'criar', 1, 1)) {
                     $registrar($perfil, route('tyres.create'), 'tyres-create');
+                }
+                if (min($acesso->level('despesas', 'consultar'), $acesso->level('despesas', 'ver_valores')) >= 2) {
+                    $registrar($perfil, route('finance.summary'), 'finance-summary');
                 }
             }
             if ($perfil === 'gestor') {

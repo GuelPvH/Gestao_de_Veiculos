@@ -3,6 +3,7 @@
 namespace App\Services\Read;
 
 use App\Services\Authorization\AccessContext;
+use App\Support\SingleQueryPaginator;
 use App\Support\Value;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -17,43 +18,43 @@ class AdminReadRepository
     /** @return LengthAwarePaginator<int, stdClass> */
     public function paginate(Builder $consulta): LengthAwarePaginator
     {
-        $pagina = LengthAwarePaginator::resolveCurrentPage();
-        // The scalar count is independent of each result row. Keep filters and
-        // authorization in both reads, but send them in one database request.
-        $contagem = $consulta->cloneWithout(['columns', 'orders', 'limit', 'offset'])
-            ->cloneWithoutBindings(['select', 'order'])->selectRaw('COUNT(*) AS aggregate');
-        $registros = (clone $consulta)->selectSub($contagem, '__total')->forPage($pagina, 10)->get();
-        $total = $registros->isNotEmpty()
-            ? Value::integer($registros->first()->__total)
-            : ($pagina === 1 ? 0 : Value::integer($contagem->first()?->aggregate));
-        foreach ($registros as $registro) {
-            unset($registro->__total);
-        }
+        return SingleQueryPaginator::paginate($consulta, 10);
+    }
 
-        return (new LengthAwarePaginator($registros, $total, 10, $pagina, [
-            'path' => LengthAwarePaginator::resolveCurrentPath(), 'pageName' => 'page',
-        ]))->withQueryString();
+    public function hasAgencyGovernance(): bool
+    {
+        return $this->acesso->level('usuarios', 'delegar') === 3
+            && $this->acesso->level('usuarios', 'gerenciar') === 3
+            && $this->acesso->level('perfis', 'delegar') === 3
+            && $this->acesso->level('perfis', 'gerenciar') === 3;
     }
 
     /**
      * @return Collection<int, stdClass>
      */
-    public function matrix(?int $id): Collection
+    public function matrix(?int $id, ?int $targetPerfil = null): Collection
     {
         if ($id !== null) {
             return DB::table('perfil_permissoes as p')->join('permissoes as a', 'a.id', '=', 'p.permissao_id')->where('p.perfil_id', $id)->orderBy('a.id')->get(['a.id', 'a.modulo_codigo', 'a.acao_codigo', 'a.alcance', 'p.delegavel']);
         }
 
-        return DB::table('permissoes')->orderBy('id')->get(['id', 'modulo_codigo', 'acao_codigo', 'alcance'])->filter($this->canDelegate(...))->map(function ($permissao) {
-            $permissao->delegavel = true;
+        return DB::table('permissoes')->orderBy('id')->get(['id', 'modulo_codigo', 'acao_codigo', 'alcance'])
+            ->filter(fn (stdClass $permissao): bool => $this->canDelegate($permissao, $targetPerfil))
+            ->map(function ($permissao) {
+                $permissao->delegavel = true;
 
-            return $permissao;
-        });
+                return $permissao;
+            });
     }
 
-    public function canDelegate(stdClass $permissao): bool
+    public function canDelegate(stdClass $permissao, ?int $targetPerfil = null): bool
     {
-        return $this->acesso->delegationLevel(Value::string($permissao->modulo_codigo), Value::string($permissao->acao_codigo)) >= $this->scopeLevel($permissao);
+        if ($this->acesso->delegationLevel(Value::string($permissao->modulo_codigo), Value::string($permissao->acao_codigo)) >= $this->scopeLevel($permissao)) {
+            return true;
+        }
+        $ativoPerfil = $this->acesso->link() !== null ? Value::integer($this->acesso->link()->perfil_id) : null;
+
+        return $this->hasAgencyGovernance() && $targetPerfil !== null && $targetPerfil !== $ativoPerfil;
     }
 
     private function scopeLevel(stdClass $permissao): int
@@ -64,9 +65,10 @@ class AdminReadRepository
     }
 
     /** @return array<int, string> */
-    public function permissionOptions(?int $perfil, ?int $rota = null): array
+    public function permissionOptions(?int $perfil, ?int $rota = null, ?int $targetPerfil = null): array
     {
-        $permissoes = $this->matrix($perfil)->filter($this->canDelegate(...));
+        $alvo = $targetPerfil ?? $perfil;
+        $permissoes = $this->matrix($perfil, $alvo)->filter(fn (stdClass $permissao): bool => $this->canDelegate($permissao, $alvo));
         if ($rota !== null) {
             $requisitos = $this->routeRequirements($rota)->map(
                 fn (stdClass $regra): string => Value::string($regra->modulo_codigo).'.'.Value::string($regra->acao_codigo),
@@ -133,11 +135,14 @@ class AdminReadRepository
      */
     public function assignableRoles(): array
     {
-        if ($this->acesso->level('perfis') === 0) {
+        if ($this->acesso->level('perfis') === 0 || $this->acesso->level('usuarios', 'delegar') === 0) {
             return [];
         }
         $consulta = DB::table('perfis as r')->where('r.ativo', 1)->orderBy('r.nome');
         $perfis = $this->acesso->scope($consulta, 'perfis', 'consultar', 'r.criado_por', null)->pluck('r.nome', 'r.id');
+        if ($this->hasAgencyGovernance()) {
+            return $perfis->all();
+        }
         $permissoes = DB::table('perfil_permissoes as pp')->join('permissoes as p', 'p.id', '=', 'pp.permissao_id')
             ->whereIn('pp.perfil_id', $perfis->keys())
             ->get(['pp.perfil_id', 'p.modulo_codigo', 'p.acao_codigo', 'p.alcance'])->groupBy('perfil_id');

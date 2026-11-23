@@ -62,6 +62,59 @@ class FleetSession
             }
             // Re-read and lock before closing: a concurrent renewal may have changed this snapshot.
         }
+        if ($atividade && ! $requisicao->routeIs('profiles.index', 'profiles.select')) {
+            $dados = $requisicao->session()->get('fleet_session', []);
+            abort_unless(is_array($dados) && isset($dados['id'], $dados['token']) && preg_match('/^[0-9a-f]{64}$/', Value::string($dados['token'])), 401, 'SESSION_ENDED');
+            /** @var array{user_id: int, active: bool, session: stdClass, link: ?stdClass, configuration: ?stdClass}|null $snapshot */
+            $snapshot = $requisicao->attributes->get('fleet.page_snapshot');
+            $requisicao->attributes->remove('fleet.page_snapshot');
+            if (! is_array($snapshot) || Value::integer($snapshot['user_id']) !== Value::integer($usuario->id)) {
+                $snapshot = app(SessionStatusReader::class)->pageSnapshot($requisicao, Value::integer($usuario->id));
+            }
+            if ($snapshot !== null) {
+                $sessao = $snapshot['session'];
+                abort_unless($sessao->id && Value::integer($sessao->usuario_id) === Value::integer($usuario->id) && hash_equals(Value::string($sessao->token_hash), hash('sha256', Value::string($dados['token']), true)), 401, 'SESSION_ENDED');
+                abort_unless($sessao->encerrada_em === null, 401, 'SESSION_ENDED');
+                $vinculo = $snapshot['link'];
+                if ($snapshot['active'] && $sessao->vinculo_ativo_id !== null && $vinculo instanceof stdClass && $sessao->reautenticar_ate && $this->deadline($sessao)->isFuture()) {
+                    $configuracao = $snapshot['configuration'];
+                    abort_unless($configuracao instanceof stdClass, 503);
+                    $minutos = Value::integer($configuracao->sessao_inatividade_minutos ?? 0);
+                    abort_unless($minutos > 0, 503);
+                    $agora = CarbonImmutable::now('UTC');
+                    $intervalo = Value::integer(config('fleet.session_activity_write_seconds', 60));
+                    $deveAtualizar = $intervalo <= 0
+                        || $sessao->ultima_atividade_em === null
+                        || CarbonImmutable::parse(Value::date($sessao->ultima_atividade_em), 'UTC')->addSeconds($intervalo)->lessThanOrEqualTo($agora);
+                    $atualizado = true;
+                    if ($deveAtualizar) {
+                        $ultimaAtividade = $agora->format('Y-m-d H:i:s.u');
+                        $expiraEm = $agora->addMinutes($minutos)->format('Y-m-d H:i:s.u');
+                        $afetados = DB::table('sessoes')
+                            ->where('id', $sessao->id)
+                            ->where('usuario_id', $usuario->id)
+                            ->whereNull('encerrada_em')
+                            ->update(['ultima_atividade_em' => $ultimaAtividade, 'expira_em' => $expiraEm]);
+                        if ($afetados === 1) {
+                            $sessao->ultima_atividade_em = $ultimaAtividade;
+                            $sessao->expira_em = $expiraEm;
+                        } else {
+                            $atualizado = false;
+                        }
+                    }
+                    if ($atualizado) {
+                        $requisicao->attributes->set('fleet.session', $sessao);
+                        $requisicao->attributes->set('fleet.configuration', $configuracao);
+                        $requisicao->attributes->set('fleet.link', $vinculo);
+                        $requisicao->attributes->set('fleet.links', collect([$vinculo]));
+                        $requisicao->attributes->set('fleet.links_complete', false);
+
+                        return $vinculo;
+                    }
+                }
+                // Fall through to locked transaction to verify/close expired, revoked or unlinked sessions.
+            }
+        }
         /** @var array{sessao: stdClass, vinculo: stdClass|null, configuracao: stdClass|null, vinculos: Collection<int, stdClass>, todos_vinculos: bool}|null $resultado */
         $resultado = DB::transaction(function () use ($requisicao, $usuario, $atividade): ?array {
             $identidade = DB::table('usuarios')->where('id', $usuario->id)->lockForUpdate()->first(['id', 'ativo']);
@@ -70,13 +123,15 @@ class FleetSession
             $consulta = $this->linksQuery((int) $usuario->id);
             if (! $todosVinculos) {
                 $consulta->where('va.vinculo_id', $sessao->vinculo_ativo_id);
+            } else {
+                $consulta->orderBy('pf.nome');
             }
             if ($atividade) {
                 $consulta->leftJoin('configuracao_sistema as cs', 'cs.id', '=', DB::raw('1'))
                     ->addSelect('cs.sessao_inatividade_minutos', 'cs.fuso_horario');
             }
             /** @var Collection<int, stdClass> $vinculos */
-            $vinculos = $identidade && $identidade->ativo ? $consulta->orderBy('pf.nome')->get() : collect();
+            $vinculos = $identidade && $identidade->ativo ? $consulta->get() : collect();
             if (! $this->eligible($sessao, $identidade, $vinculos)) {
                 return null;
             }

@@ -15,31 +15,36 @@
             @include ('records.gestor-filters')
         @else
             <form method="get" action="{{ route($codigo.'.index') }}" class="filter-grid">
+                @foreach (['de', 'ate'] as $campo)
+                    @if (! empty($filtros[$campo]))
+                        <input type="hidden" name="{{ $campo }}" value="{{ $filtros[$campo] }}" />
+                    @endif
+                @endforeach
                 <x-forms.field nome="q" rotulo="Buscar registros" :valor="$filtros['q'] ?? ''" maxlength="150" />
-                <x-forms.field
-                    nome="situacao"
-                    rotulo="Situação"
-                    tipo="select"
-                    :valor="$filtros['situacao'] ?? ''"
-                    :opcoes="$tela['stateLabels'] ?? array_combine($tela['states'] ?? [], array_map(fn($valor) => config('statuses.'.$valor,ucfirst(str_replace('_',' ',$valor))), $tela['states'] ?? [])) ?: []"
-                />
-                @if ($codigo !== 'trips')
+                @if (! empty($tela['states']) || ! empty($tela['stateLabels']))
                     <x-forms.field
-                        nome="ordem"
-                        rotulo="Ordenação"
+                        nome="situacao"
+                        rotulo="Situação"
                         tipo="select"
-                        :valor="$filtros['ordem'] ?? 'recentes'"
-                        :opcoes="['recentes' => 'Mais recentes', 'antigos' => 'Mais antigos']"
+                        :valor="$filtros['situacao'] ?? ''"
+                        :opcoes="$tela['stateLabels'] ?? array_combine($tela['states'] ?? [], array_map(fn($valor) => config('statuses.'.$valor,ucfirst(str_replace('_',' ',$valor))), $tela['states'] ?? [])) ?: []"
                     />
                 @endif
+                <x-forms.field
+                    nome="ordem"
+                    rotulo="Ordenação"
+                    tipo="select"
+                    :valor="$filtros['ordem'] ?? 'recentes'"
+                    :opcoes="['recentes' => 'Mais recentes', 'antigos' => 'Mais antigos']"
+                />
                 <div class="mb-3">
                     <button type="submit" class="btn btn-primary">Filtrar</button
                     ><a class="btn btn-link" href="{{ route($codigo.'.index') }}">Limpar</a>
                 </div>
             </form>
-            @if ($codigo !== 'trips' && isset($tela['date']))
+            @if (isset($tela['date']))
                 <form method="get" class="row g-3 mb-4">
-                    @foreach (['q','situacao','ordem'] as $campo)
+                    @foreach ((! empty($tela['states']) || ! empty($tela['stateLabels'])) ? ['q', 'situacao', 'ordem'] : ['q', 'ordem'] as $campo)
                         <input type="hidden" name="{{ $campo }}" value="{{ $filtros[$campo] ?? '' }}" />
                     @endforeach
                     <div class="col-md-4">

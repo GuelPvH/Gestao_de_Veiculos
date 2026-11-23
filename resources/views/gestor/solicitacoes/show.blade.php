@@ -27,6 +27,15 @@
                         </div>
                     @endforeach</dl
             ></x-ui.panel>
+            @if (isset($paradas) && $paradas->isNotEmpty())
+                <x-ui.panel titulo="Paradas intermediárias">
+                    <ol class="mb-0">
+                        @foreach ($paradas as $parada)
+                            <li>{{ $parada->descricao }}</li>
+                        @endforeach
+                    </ol>
+                </x-ui.panel>
+            @endif
             <x-ui.panel titulo="Histórico"><x-fleet.history :eventos="$eventos" /></x-ui.panel>
         </div>
         <div class="stack">
@@ -84,7 +93,7 @@
                         <x-forms.field
                             :nome="'justificativa'"
                             :id="'justificativa-'.$acao"
-                            :rotulo="$acao === 'deny' ? 'Motivo da negativa' : ($acao === 'adjust' ? 'Explique os ajustes necessários' : 'Motivo da nova revisão')"
+                            :rotulo="$acao === 'deny' ? 'Motivo da negativa' : ($acao === 'adjust' ? 'Explique os ajustes necessários' : ($acao === 'cancel' ? 'Motivo do cancelamento' : 'Motivo da nova revisão'))"
                             tipo="textarea"
                             :obrigatorio="true"
                             maxlength="3000"
@@ -92,8 +101,8 @@
                     @endif
                     <div class="d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button
-                        ><button type="submit" class="btn btn-primary">
-                            {{ $acao === 'approve' ? 'Confirmar aprovação' : 'Confirmar' }}
+                        ><button type="submit" class="btn {{ $acao === 'cancel' ? 'btn-danger' : 'btn-primary' }}">
+                            {{ $acao === 'approve' ? 'Confirmar aprovação' : ($acao === 'cancel' ? 'Confirmar cancelamento' : 'Confirmar') }}
                         </button>
                     </div>
                 </form>

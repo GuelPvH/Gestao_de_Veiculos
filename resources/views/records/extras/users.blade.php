@@ -37,3 +37,39 @@
             </tbody>
         </table></div
 ></x-ui.panel>
+<x-ui.panel titulo="Habilitação de motorista (CNH)">
+    @if ($motoristaUsuario !== null)
+        <dl class="detail-grid mb-3">
+            <div>
+                <dt>CNH</dt>
+                <dd>{{ $motoristaUsuario->numero_cnh }}</dd>
+            </div>
+            <div>
+                <dt>Categoria</dt>
+                <dd>
+                    {{ $motoristaUsuario->categoria_cnh }} (Autorizadas: {{ $motoristaUsuario->categorias_autorizadas }})
+                </dd>
+            </div>
+            <div>
+                <dt>Validade</dt>
+                <dd>{{ $leituras->format($motoristaUsuario->validade_cnh, 'date') }}</dd>
+            </div>
+            <div>
+                <dt>Situação</dt>
+                <dd><x-ui.status :valor="$motoristaUsuario->ativo ? 'ativo' : 'inativo'" /></dd>
+            </div>
+        </dl>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ route('drivers.show', $registro->id) }}"
+            >Gerenciar motorista</a
+        >
+    @else
+        <p class="text-body-secondary mb-2">Este usuário ainda não possui cadastro de motorista habilitado.</p>
+        @if ($acesso->level('usuarios', 'editar') > 0 || $acesso->level('frota', 'gerenciar') > 0)
+            <a
+                class="btn btn-outline-primary btn-sm"
+                href="{{ route('drivers.create', ['usuario_id' => $registro->id]) }}"
+                >Cadastrar como motorista</a
+            >
+        @endif
+    @endif
+</x-ui.panel>

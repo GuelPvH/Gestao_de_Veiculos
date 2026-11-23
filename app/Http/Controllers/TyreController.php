@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TyreActionRequest;
 use App\Services\Authorization\AccessContext;
+use App\Services\Finance\FinanceQueryService;
 use App\Services\Finance\FinanceService;
+use App\Support\SingleQueryPaginator;
 use App\Support\Value;
 use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\RedirectResponse;
@@ -15,13 +17,14 @@ class TyreController extends Controller
 {
     public function index(AccessContext $access): View
     {
-        $records = $access->scope(
+        $query = $access->scope(
             DB::table('pneus as p')->join('despesas as d', 'd.id', '=', 'p.despesa_aquisicao_id')
                 ->leftJoin('pneu_instalacoes as i', function (JoinClause $join): void {
                     $join->on('i.pneu_id', '=', 'p.id')->whereNull('i.removido_em');
                 })->leftJoin('veiculos as v', 'v.id', '=', 'i.veiculo_id'),
             'despesas', 'consultar', 'd.criado_por', 'd.unidade_id',
-        )->orderByDesc('p.id')->paginate(15, ['p.id', 'p.codigo', 'p.medida', 'p.situacao', 'v.placa']);
+        )->select(['p.id', 'p.codigo', 'p.medida', 'p.situacao', 'v.placa'])->orderByDesc('p.id');
+        $records = SingleQueryPaginator::paginate($query, 15);
         $link = $access->requireLink();
         $canCreate = $access->can('despesas', 'criar', Value::integer($link->usuario_id), Value::integer($link->unidade_id));
 
@@ -60,8 +63,11 @@ class TyreController extends Controller
             ->get(['i.id', 'i.posicao', 'i.instalado_em', 'i.removido_em', 'i.quilometragem_instalacao', 'i.quilometragem_remocao', 'i.motivo_remocao', 'v.placa']);
         $canEdit = $access->can('despesas', 'editar', Value::integer($record->criado_por), Value::integer($record->unidade_id));
         $canDiscard = $access->can('despesas', 'cancelar', Value::integer($record->criado_por), Value::integer($record->unidade_id));
+        $vehicles = $canEdit && $record->situacao === 'estoque'
+            ? app(FinanceQueryService::class)->vehicleOptions(Value::integer($record->unidade_id))
+            : [];
 
-        return view('finance.tyres.show', compact('record', 'installations', 'canEdit', 'canDiscard'));
+        return view('finance.tyres.show', compact('record', 'installations', 'canEdit', 'canDiscard', 'vehicles'));
     }
 
     public function install(TyreActionRequest $request, FinanceService $finance, int $registro): RedirectResponse

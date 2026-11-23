@@ -4,17 +4,58 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\FinanceActionRequest;
 use App\Services\Authorization\AccessContext;
+use App\Services\Finance\FinanceQueryService;
 use App\Services\Finance\FinanceService;
 use App\Services\Read\FleetReadRepository;
+use App\Support\Money;
 use App\Support\Value;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FinanceController extends Controller
 {
+    public function summary(Request $request, FinanceQueryService $queries, FleetReadRepository $reads): View
+    {
+        /** @var array{veiculo?: ?string, de?: ?string, ate?: ?string} $filtros */
+        $filtros = $request->validate([
+            'veiculo' => ['nullable', 'string', 'max:20'],
+            'de' => ['nullable', 'regex:/^\d{4}-(0[1-9]|1[0-2])$/'],
+            'ate' => ['nullable', 'regex:/^\d{4}-(0[1-9]|1[0-2])$/'],
+        ]);
+        $placa = trim(Value::string($filtros['veiculo'] ?? ''));
+        $de = trim(Value::string($filtros['de'] ?? ''));
+        $ate = trim(Value::string($filtros['ate'] ?? ''));
+        if ($de !== '' && $ate !== '' && $de > $ate) {
+            throw ValidationException::withMessages(['de' => 'O mês inicial não pode ser posterior ao final.']);
+        }
+        $todos = $queries->vehicleSummary();
+        $opcoesVeiculos = [];
+        foreach ($todos as $linha) {
+            $opcoesVeiculos[$linha['placa']] = $linha['placa'];
+        }
+        $resumo = $placa !== '' ? $queries->vehicleSummary($placa) : $todos;
+        $mensal = $placa !== '' ? $queries->monthlyCosts($placa, $de !== '' ? $de : null, $ate !== '' ? $ate : null) : null;
+        $totais = [
+            'registradas' => Money::sum(array_column($resumo, 'despesas_registradas')),
+            'pagas' => Money::sum(array_column($resumo, 'despesas_pagas')),
+            'pendente' => Money::sum(array_column($resumo, 'saldo_pendente')),
+        ];
+
+        return view('finance.summary', [
+            'resumo' => $resumo,
+            'mensal' => $mensal,
+            'totais' => $totais,
+            'opcoesVeiculos' => $opcoesVeiculos,
+            'filtros' => ['veiculo' => $placa, 'de' => $de, 'ate' => $ate],
+            'leituras' => $reads,
+        ]);
+    }
+
     public function store(FinanceActionRequest $request, FinanceService $finance): RedirectResponse
     {
         $data = $request->validated();

@@ -239,6 +239,56 @@ class FinanceBackendTest extends TestCase
         $this->assertSame(403, $this->statusOf(fn () => $queries->monthlyCosts('ABC1D21')));
     }
 
+    public function test_finance_menu_summary_maintenance_ui_and_disabled_route_guard_work_together(): void
+    {
+        $this->procedures();
+        foreach ([[1, 'ABC-1D21', 1, '330.00', '200.00'], [3, 'ABC1D23', 2, '999.00', '0.00']] as [$vehicle, $plate, $unit, $registered, $paid]) {
+            DB::table('vw_resumo_financeiro_veiculo')->insert(['veiculo_id' => $vehicle, 'placa' => $plate, 'unidade_id' => $unit, 'despesas_registradas' => $registered, 'despesas_pagas' => $paid]);
+        }
+        DB::table('veiculos')->where('id', 1)->update(['placa' => 'ABC-1D21']);
+        DB::table('vw_custos_veiculo_mensais')->insert(['veiculo_id' => 1, 'unidade_id' => 1, 'mes' => '2026-02-01', 'valor_despesas' => '330.00', 'quantidade_despesas' => 2]);
+
+        $this->get(route('dashboard'))->assertOk()
+            ->assertSee(route('tyres.index'))
+            ->assertSee(route('finance.summary'));
+        $this->get(route('expenses.create'))->assertOk()->assertSee('ABC-1D21 · Veículo de teste 1');
+        $this->get(route('fuel.index'))->assertOk()->assertSee('Em conferência');
+        $this->get(route('fuel.show', 1))->assertOk()->assertSee(route('expenses.show', 1));
+
+        DB::table('vw_despesas_detalhadas')->where('id', 1)->update(['situacao' => 'registrada', 'categoria_id' => $this->category('abastecimento')]);
+        $this->get(route('expenses.show', 1))->assertOk()
+            ->assertDontSee(route('expenses.operation', ['registro' => 1, 'acao' => 'edit']))
+            ->assertSee(route('fuel.show', 1));
+        $this->get(route('expenses.operation', ['registro' => 1, 'acao' => 'edit']))->assertForbidden();
+
+        DB::table('despesas')->where('id', 1)->update(['categoria_id' => $this->category('manutencao'), 'situacao' => 'registrada']);
+        $this->get(route('maintenance.show', 1))->assertOk()
+            ->assertSee('Peças e serviços')
+            ->assertSee('Adicionar peça ou serviço')
+            ->assertSee('Despesa vinculada')
+            ->assertSee('QA-EXP-1');
+
+        $this->get(route('finance.summary', ['veiculo' => 'abc1d21']))->assertOk()
+            ->assertSee('Resumo financeiro')
+            ->assertSee('ABC-1D21')
+            ->assertSee('2026-02')
+            ->assertSee('330,00');
+
+        DB::table('vw_permissoes_efetivas')->where('acao_codigo', 'ver_valores')->delete();
+        $this->reload();
+        $this->get(route('finance.summary'))->assertForbidden();
+        $this->get(route('maintenance.show', 1))->assertOk()->assertDontSee('Peças e serviços');
+
+        ReadFixture::profile(3);
+        DB::table('rotas_sistema')->where('caminho', '/financeiro/despesas')->update(['ativa' => 0]);
+        foreach (['expenses.index', 'fuel.index', 'maintenance.index', 'tyres.index', 'finance.summary'] as $routeName) {
+            $this->get(route($routeName))->assertForbidden()->assertViewIs('errors.disabled');
+        }
+        $this->get(route('dashboard'))->assertOk()
+            ->assertDontSee(route('tyres.index'))
+            ->assertDontSee(route('finance.summary'));
+    }
+
     private function statusOf(callable $call): int
     {
         try {

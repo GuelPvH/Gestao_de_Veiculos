@@ -4,12 +4,15 @@ namespace App\Services\Vehicles;
 
 use App\Services\Auth\ProcedureRunner;
 use App\Services\Authorization\AccessContext;
+use App\Services\Files\PrivateFileService;
 use App\Support\Value;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use stdClass;
+use Throwable;
 
 class VehicleWorkflow
 {
@@ -145,6 +148,100 @@ class VehicleWorkflow
             $this->incrementVersion($id, Value::integer($dados['versao']));
             $this->audit('veiculo_liberado', $id, 'Bloqueio de agenda '.Value::string($reserva->id).' liberado.');
         }, 3);
+    }
+
+    /**
+     * @param  array<string, mixed>  $dados
+     */
+    public function transfer(int $id, array $dados): void
+    {
+        DB::transaction(function () use ($id, $dados): void {
+            abort_unless($this->acesso->level('frota', 'gerenciar') === 3, 403);
+            $veiculo = $this->vehicle($id);
+            $origemId = Value::integer($veiculo->unidade_id);
+            $destinoId = Value::integer($dados['unidade_destino_id']);
+            $this->authorize('gerenciar', $origemId);
+            $this->authorize('gerenciar', $destinoId, false);
+            $this->version($veiculo, Value::integer($dados['versao']));
+            if ($veiculo->situacao_cadastro === 'baixado') {
+                throw ValidationException::withMessages(['unidade_destino_id' => 'Veículo baixado não pode ser transferido de unidade.']);
+            }
+            if ($destinoId === $origemId) {
+                throw ValidationException::withMessages(['unidade_destino_id' => 'Selecione uma unidade de destino diferente da atual.']);
+            }
+            $this->activeUnit($destinoId);
+            $ocupado = DB::table('reservas')->where('veiculo_id', $id)->where('situacao', 'ativa')->exists()
+                || DB::table('viagens')->where('veiculo_id', $id)->whereIn('situacao', ['programada', 'em_andamento'])->exists();
+            if ($ocupado) {
+                throw ValidationException::withMessages(['unidade_destino_id' => 'Encerre reservas ativas e viagens em andamento ou programadas antes de transferir o veículo.']);
+            }
+            $this->procedimentos->call('sp_exigir_permissao', [$this->linkId(), 'frota', 'gerenciar', null, $origemId]);
+            $this->procedimentos->call('sp_exigir_permissao', [$this->linkId(), 'frota', 'gerenciar', null, $destinoId]);
+            $alterados = DB::table('veiculos')->where('id', $id)->where('versao', $dados['versao'])->update([
+                'unidade_id' => $destinoId,
+                'versao' => DB::raw('versao + 1'),
+            ]);
+            if ($alterados !== 1) {
+                $this->conflict();
+            }
+            $motivo = mb_substr('Unidade '.$origemId.' -> '.$destinoId.': '.trim(Value::string($dados['justificativa'])), 0, 1000);
+            $this->audit('veiculo_transferido', $id, $motivo);
+        }, 3);
+    }
+
+    /**
+     * @param  array<string, mixed>  $dados
+     */
+    public function storeDocument(int $id, array $dados, UploadedFile $arquivo): int
+    {
+        $arquivos = app(PrivateFileService::class);
+        $arquivoId = $arquivos->store($arquivo);
+        try {
+            return DB::transaction(function () use ($id, $dados, $arquivoId): int {
+                $veiculo = $this->vehicle($id);
+                $unidade = Value::integer($veiculo->unidade_id);
+                $this->authorize('editar', $unidade);
+                $substitui = isset($dados['substitui_documento_id']) && $dados['substitui_documento_id'] !== ''
+                    ? Value::integer($dados['substitui_documento_id'])
+                    : null;
+                if ($substitui !== null && ! DB::table('documentos_veiculo')->where('id', $substitui)->where('veiculo_id', $id)->exists()) {
+                    throw ValidationException::withMessages(['substitui_documento_id' => 'Selecione um documento pertencente a este veículo.']);
+                }
+                $this->procedimentos->call('sp_exigir_permissao', [$this->linkId(), 'frota', 'editar', null, $unidade]);
+                $docId = (int) DB::table('documentos_veiculo')->insertGetId([
+                    'veiculo_id' => $id,
+                    'arquivo_id' => $arquivoId,
+                    'tipo' => trim(Value::string($dados['tipo'])),
+                    'numero' => trim(Value::string($dados['numero'] ?? '')) ?: null,
+                    'exercicio' => isset($dados['exercicio']) && $dados['exercicio'] !== '' ? Value::integer($dados['exercicio']) : null,
+                    'emitido_em' => ($dados['emitido_em'] ?? null) ?: null,
+                    'vence_em' => ($dados['vence_em'] ?? null) ?: null,
+                    'substitui_documento_id' => $substitui,
+                ]);
+                $this->audit('documento_veiculo_registrado', $id, 'Documento '.$docId.' ('.trim(Value::string($dados['tipo'])).') registrado.');
+
+                return $docId;
+            }, 3);
+        } catch (Throwable $erro) {
+            $arquivos->discardUnlinked($arquivoId);
+            throw $erro;
+        }
+    }
+
+    public function downloadDocument(int $veiculoId, int $documentoId): stdClass
+    {
+        $veiculo = DB::table('veiculos')->where('id', $veiculoId)->first(['id', 'unidade_id']);
+        abort_unless($veiculo !== null, 404);
+        $this->authorize('consultar', Value::integer($veiculo->unidade_id));
+        $doc = DB::table('documentos_veiculo as dv')
+            ->join('arquivos as a', 'a.id', '=', 'dv.arquivo_id')
+            ->where('dv.id', $documentoId)
+            ->where('dv.veiculo_id', $veiculoId)
+            ->where('a.situacao', 'disponivel')
+            ->first(['a.chave_armazenamento', 'a.nome_original']);
+        abort_unless($doc !== null && str_starts_with(Value::string($doc->chave_armazenamento), 'anexos/'), 404);
+
+        return $doc;
     }
 
     /**

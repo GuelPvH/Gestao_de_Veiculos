@@ -68,10 +68,18 @@ class ReportPdfRenderer
         $opcoes->set('chroot', resource_path('views/reports'));
         $pdf = new Dompdf($opcoes);
         $pdf->setPaper('A4', $campos->count() > 4 ? 'landscape' : 'portrait');
+        $caminhoLogo = public_path('images/logo/horizontal-claro.svg');
+        $logoConteudo = is_file($caminhoLogo) ? file_get_contents($caminhoLogo) : false;
+        $logoDataUri = null;
+        if (is_string($logoConteudo) && $logoConteudo !== '') {
+            $svgLimpo = preg_replace('/<style\b[^>]*>.*?<\/style>/s', '', $logoConteudo) ?? $logoConteudo;
+            $svgLimpo = preg_replace('/\s+style="fill:var\(--[^"]+\)"/', '', $svgLimpo) ?? $svgLimpo;
+            $logoDataUri = 'data:image/svg+xml;base64,'.base64_encode($svgLimpo);
+        }
         $pdf->loadHtml(view('reports.pdf', [
             'id' => $id, 'titulo' => $tela['title'], 'secoes' => $secoes, 'total' => $registros->count(),
             'filtros' => $filtros, 'autor' => $autor, 'unidade' => $unidade, 'emitido' => $emitido,
-            'alcance' => $alcance, 'fuso' => config('fleet.timezone'),
+            'alcance' => $alcance, 'fuso' => config('fleet.timezone'), 'logoDataUri' => $logoDataUri,
         ])->render(), 'UTF-8');
         $pdf->render();
         $canvas = $pdf->getCanvas();

@@ -5,7 +5,7 @@ services:
             target: runtime-development
         image: gestao-de-veiculos:development
         environment:
-            DEBUGBAR_ENABLED: '${DEBUGBAR_ENABLED:-true}'
+            DEBUGBAR_ENABLED: '${DEBUGBAR_ENABLED:-false}'
             VITE_HOT_FILE: /var/www/html/dev-hot/hot
         depends_on:
             vite:
@@ -17,8 +17,11 @@ services:
             - ./config:/var/www/html/config:ro
             - ./routes:/var/www/html/routes:ro
             - ./resources:/var/www/html/resources:ro
+            - ./public/favicon.ico:/var/www/html/public/favicon.ico:ro
+            - ./public/favicon.svg:/var/www/html/public/favicon.svg:ro
             - ./public/icons:/var/www/html/public/icons:ro
             - ./public/images:/var/www/html/public/images:ro
+            - ./public/licenses:/var/www/html/public/licenses:ro
             - ./public/index.php:/var/www/html/public/index.php:ro
             - ./docker/php/development.ini:/usr/local/etc/php/conf.d/development.ini:ro
             - dev_hot:/var/www/html/dev-hot:ro

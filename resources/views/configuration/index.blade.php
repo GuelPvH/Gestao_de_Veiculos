@@ -5,12 +5,72 @@
             id="operation-form"
             method="post"
             action="{{ route('configuration.update') }}"
+            enctype="multipart/form-data"
             data-dirty-form
             data-review-form="operation-review"
             novalidate
         >
             @csrf
-            <x-forms.field nome="nome_sistema" rotulo="Nome do sistema" valor="Frota · PF" readonly />
+            <x-forms.field
+                nome="nome_sistema"
+                rotulo="Nome do sistema"
+                :valor="$configuracao->nome_sistema ?? 'Frota · PF'"
+                :obrigatorio="true"
+                maxlength="120"
+            />
+            <div class="row">
+                <div class="col-md-8">
+                    <x-forms.field
+                        nome="nome_orgao"
+                        rotulo="Nome do órgão"
+                        :valor="$configuracao->nome_orgao ?? ''"
+                        maxlength="150"
+                    />
+                </div>
+                <div class="col-md-4">
+                    <x-forms.field
+                        nome="sigla_orgao"
+                        rotulo="Sigla do órgão"
+                        :valor="$configuracao->sigla_orgao ?? ''"
+                        maxlength="30"
+                    />
+                </div>
+            </div>
+            @if (! empty($configuracao->logo_arquivo_id) && ($configuracao->logo_situacao ?? '') === 'disponivel')
+                <div class="mb-3">
+                    <p class="form-label mb-1">Logotipo atual</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <img
+                            src="{{ route('configuration.logo') }}"
+                            alt="Logotipo configurado"
+                            style="max-height: 48px; max-width: 220px; object-fit: contain"
+                        />
+                        <span
+                            class="small text-body-secondary"
+                            >{{ $configuracao->logo_nome ?? 'Logotipo personalizado' }}</span
+                        >
+                    </div>
+                    <div class="form-check mt-2">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="remover_logo"
+                            name="remover_logo"
+                            value="1"
+                        />
+                        <label class="form-check-label" for="remover_logo"
+                            >Remover logotipo personalizado (restaurar padrão)</label
+                        >
+                    </div>
+                </div>
+            @endif
+            <x-forms.field
+                nome="logo"
+                rotulo="Logotipo institucional (PNG ou JPG, até 2 MB)"
+                tipo="file"
+                accept="image/png,image/jpeg"
+                nota="Opcional. Substitui o logotipo exibido no menu lateral."
+            />
             <x-forms.field
                 nome="fuso_horario"
                 rotulo="Fuso horário"

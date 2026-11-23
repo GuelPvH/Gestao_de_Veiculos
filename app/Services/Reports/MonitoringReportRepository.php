@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Services\Authorization\AccessContext;
+use App\Support\SingleQueryPaginator;
 use App\Support\Value;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -97,6 +98,34 @@ class MonitoringReportRepository
     }
 
     /**
+     * @param  array<string, mixed>  $filtros
+     * @return Collection<int, stdClass>
+     */
+    public function observedPositions(array $filtros): Collection
+    {
+        $rastreador = DB::table('posicoes_rastreamento as p')
+            ->join('veiculos as v', 'v.id', '=', 'p.veiculo_id')
+            ->selectRaw("'rastreador' as fonte, p.id, p.veiculo_id, NULL as solicitante_id, v.unidade_id, p.capturado_em as ocorrido_em, p.latitude, p.longitude, p.velocidade_kmh, NULL as descricao");
+        $manual = DB::table('posicoes_manuais as p')
+            ->join('viagens as t', 't.id', '=', 'p.viagem_id')
+            ->join('solicitacao_revisoes as sr', 'sr.id', '=', 't.revisao_id')
+            ->join('solicitacoes as s', 's.id', '=', 'sr.solicitacao_id')
+            ->selectRaw("'manual' as fonte, p.id, t.veiculo_id, s.solicitante_id, s.unidade_id, p.ocorrido_em, p.latitude, p.longitude, NULL as velocidade_kmh, p.descricao");
+        $consulta = DB::query()->fromSub($rastreador->unionAll($manual), 'r');
+        $this->scope($consulta, 'consultar');
+        $this->scope($consulta, 'ver_localizacao');
+        $inicio = CarbonImmutable::parse(Value::date($filtros['de']), config('fleet.timezone'))->startOfDay()->utc()->format('Y-m-d H:i:s.u');
+        $fim = CarbonImmutable::parse(Value::date($filtros['ate']), config('fleet.timezone'))->addDay()->startOfDay()->utc()->format('Y-m-d H:i:s.u');
+
+        return $consulta->where('r.veiculo_id', Value::integer($filtros['veiculo_id']))
+            ->where('r.ocorrido_em', '>=', $inicio)
+            ->where('r.ocorrido_em', '<', $fim)
+            ->orderBy('r.ocorrido_em')->orderBy('r.id')
+            ->limit(500)
+            ->get(['r.fonte', 'r.ocorrido_em', 'r.latitude', 'r.longitude', 'r.velocidade_kmh', 'r.descricao']);
+    }
+
+    /**
      * @param  array<int, string>  $campos
      * @param  array<string, mixed>  $filtros
      * @return LengthAwarePaginator<int, stdClass>
@@ -111,7 +140,10 @@ class MonitoringReportRepository
             $consulta->addSelect(Value::string($campo[0]).' as '.$chave);
         }
 
-        return $consulta->orderByDesc('r.capturado_em')->orderBy('r.fonte')->orderByDesc('r.id')->paginate(10)->withQueryString();
+        return SingleQueryPaginator::paginate(
+            $consulta->orderByDesc('r.capturado_em')->orderBy('r.fonte')->orderByDesc('r.id'),
+            10,
+        );
     }
 
     /**

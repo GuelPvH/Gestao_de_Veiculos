@@ -48,7 +48,7 @@ class ReportController extends Controller
         $selecionados = isset($validado['campos']) ? Value::strings($validado['campos']) : $campos->map(fn (ReportColumn $campo): string => $campo->chave)->take(5)->values()->all();
         $paginacao = $selecionados && $etapa === 'previa' ? ($codigo === 'monitoring'
             ? $monitoramento->page($validado, $selecionados)
-            : $leituras->page($codigo, $validado, $selecionados)) : null;
+            : $leituras->page($codigo, $validado, $selecionados, $codigo === 'requests')) : null;
         $registros = $paginacao ? $leituras->rows($codigo, $paginacao->getCollection(), $selecionados) : collect();
         $colunas = $campos->filter(fn (ReportColumn $campo) => in_array($campo->chave, $selecionados, true))->pluck('rotulo', 'chave')->all();
         $podeExportar = $acesso->level(Value::string($tela['module']), 'exportar') > 0;
@@ -97,7 +97,7 @@ class ReportController extends Controller
         abort_unless($vinculo && $acesso->can('relatorios', 'consultar', Value::integer($vinculo->usuario_id), Value::integer($vinculo->unidade_id)), 403);
         $catalogo = [];
         foreach (FleetReadRepository::definitions() as $codigo => $tela) {
-            if ($acesso->level($tela['module']) > 0 && ! in_array($codigo, ['fuel', 'maintenance', 'trips', 'requests'], true)) {
+            if ($acesso->level($tela['module']) > 0 && ! in_array($codigo, ['fuel', 'maintenance'], true)) {
                 $catalogo[$codigo] = $tela;
             }
         }

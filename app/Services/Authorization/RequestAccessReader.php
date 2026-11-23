@@ -81,13 +81,29 @@ class RequestAccessReader
     {
         [$path, $method] = $this->endpoint($request);
         $screen = $request->route('tela');
-        $area = is_string($screen) && is_array(config('screens.'.$screen))
-            ? '/'.Value::string(config('screens.'.$screen.'.url'))
-            : $path;
+        $areas = [];
+        if (is_string($screen) && is_array(config('screens.'.$screen))) {
+            $areas[] = '/'.Value::string(config('screens.'.$screen.'.url'));
+            if (config('screens.'.$screen.'.module') === 'despesas') {
+                $areas[] = '/financeiro/despesas';
+            }
+        } else {
+            $areas[] = $path;
+            if (str_starts_with($path, '/financeiro/pneus') || $path === '/financeiro/resumo') {
+                $areas[] = '/financeiro/despesas';
+            }
+            if (str_starts_with($path, '/monitoramento/rastreadores') || str_starts_with($path, '/monitoramento/')) {
+                $areas[] = '/monitoramento';
+            }
+            if (str_starts_with($path, '/administracao/cadastros') && ! str_starts_with($path, '/administracao/cadastros/fornecedores')) {
+                $areas[] = '/administracao/configuracoes';
+            }
+        }
+        $areas = array_values(array_unique($areas));
 
-        return DB::table('rotas_sistema as rs')->where(function (Builder $query) use ($area, $path, $method): void {
-            $query->where(function (Builder $areaQuery) use ($area): void {
-                $areaQuery->where('rs.caminho', $area)->where('rs.metodo_http', 'GET');
+        return DB::table('rotas_sistema as rs')->where(function (Builder $query) use ($areas, $path, $method): void {
+            $query->where(function (Builder $areaQuery) use ($areas): void {
+                $areaQuery->whereIn('rs.caminho', $areas)->where('rs.metodo_http', 'GET');
             })->orWhere(function (Builder $endpoint) use ($path, $method): void {
                 $endpoint->where('rs.caminho', $path)->where('rs.metodo_http', $method);
             });

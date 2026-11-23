@@ -16,7 +16,12 @@
         ></button>
     </div>
     <div class="offcanvas-body sidebar-body">
-        <a href="{{ route('dashboard') }}" class="sidebar-brand" aria-label="Frota · PF — Painel"><x-ui.logo /></a>
+        <a
+            href="{{ route('dashboard') }}"
+            class="sidebar-brand"
+            aria-label="{{ $sistemaConfig->nome_sistema ?? 'Frota · PF' }} — Painel"
+            ><x-ui.logo variante="horizontal-sem-subtitulo" :interativo="false"
+        /></a>
         <nav aria-label="Navegação principal" class="nav flex-column gap-1">
             @foreach ($itens as $item)
                 <a

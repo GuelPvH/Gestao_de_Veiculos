@@ -6,19 +6,76 @@ use App\Services\Authorization\AccessContext;
 use App\Services\Read\FleetReadRepository;
 use App\Support\Money;
 use App\Support\Value;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use stdClass;
 
 class FinanceQueryService
 {
     public function __construct(private AccessContext $access, private FleetReadRepository $reads) {}
 
     /**
+     * @return array<string, string>
+     */
+    public function vehicleOptions(?int $unit = null): array
+    {
+        $link = $this->access->link();
+        if ($link === null) {
+            return [];
+        }
+        $level = max($this->access->level('frota', 'selecionar'), $this->access->level('frota', 'consultar'));
+        if ($level === 0) {
+            return [];
+        }
+        $query = DB::table('veiculos')->where('situacao_cadastro', 'ativo');
+        if ($level < 3) {
+            $allowedUnit = Value::integer($link->unidade_id);
+            if ($unit !== null && $unit !== $allowedUnit) {
+                return [];
+            }
+            $query->where('unidade_id', $allowedUnit);
+        } elseif ($unit !== null) {
+            $query->where('unidade_id', $unit);
+        }
+
+        return $query->orderBy('placa')->limit(300)->get(['placa', 'nome'])
+            ->mapWithKeys(fn (stdClass $vehicle): array => [
+                Value::string($vehicle->placa) => Value::string($vehicle->placa).' · '.Value::string($vehicle->nome),
+            ])->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function linkableMaintenanceExpenses(int $vehicleId): array
+    {
+        $query = DB::table('despesas as d')
+            ->join('categorias_despesa as c', 'c.id', '=', 'd.categoria_id')
+            ->where('d.veiculo_id', $vehicleId)
+            ->where('c.codigo', 'manutencao')
+            ->where('c.ativa', 1)
+            ->where('d.situacao', '<>', 'cancelada')
+            ->whereNotExists(function (Builder $linked): void {
+                $linked->selectRaw('1')->from('manutencoes as m')->whereColumn('m.despesa_id', 'd.id');
+            });
+        $query = $this->access->scope($query, 'despesas', 'consultar', 'd.criado_por', 'd.unidade_id');
+        $query = $this->access->scope($query, 'despesas', 'ver_valores', 'd.criado_por', 'd.unidade_id');
+
+        return $query->orderByDesc('d.id')->limit(100)->get(['d.id', 'd.protocolo', 'd.data_despesa', 'd.valor'])
+            ->mapWithKeys(fn (stdClass $expense): array => [
+                Value::integer($expense->id) => Value::string($expense->protocolo)
+                    .' · '.$this->reads->format($expense->data_despesa, 'date')
+                    .' · '.$this->reads->format($expense->valor, 'money'),
+            ])->all();
+    }
+
+    /**
      * @return array{itens: list<array{id: int, tipo: string, descricao: string, quantidade: string, valor_unitario: string, total: string}>, total_pecas: string, total_servicos: string, total: string, despesa: array{id: int, protocolo: string, situacao: string, valor: string, diferenca: string}|null}
      */
-    public function maintenanceCosts(int $id): array
+    public function maintenanceCosts(int $id, ?stdClass $record = null): array
     {
-        $record = $this->reads->record('maintenance', $id);
+        $record ??= $this->reads->record('maintenance', $id);
         abort_unless($this->access->can('despesas', 'ver_valores', Value::integer($record->__owner), Value::integer($record->__unit)), 403);
 
         $items = [];
@@ -64,7 +121,7 @@ class FinanceQueryService
             $query->where('unidade_id', $unit);
         }
         if ($plate !== null && trim($plate) !== '') {
-            $query->where('placa', $this->plate($plate));
+            $query->whereRaw("REPLACE(REPLACE(UPPER(placa), ' ', ''), '-', '') = ?", [$this->plate($plate)]);
         }
 
         $rows = [];
@@ -94,7 +151,9 @@ class FinanceQueryService
         if ($from !== null && $to !== null && $from > $to) {
             throw ValidationException::withMessages(['de' => 'O mês inicial não pode ser posterior ao final.']);
         }
-        $vehicle = DB::table('veiculos')->where('placa', $this->plate($plate))->first(['id', 'unidade_id']);
+        $vehicle = DB::table('veiculos')
+            ->whereRaw("REPLACE(REPLACE(UPPER(placa), ' ', ''), '-', '') = ?", [$this->plate($plate)])
+            ->first(['id', 'unidade_id']);
         if ($vehicle === null || ($unit !== null && Value::integer($vehicle->unidade_id) !== $unit)) {
             throw ValidationException::withMessages(['veiculo' => 'Veículo não encontrado.']);
         }

@@ -18,8 +18,46 @@
         <button class="btn btn-outline-secondary" type="submit">Filtrar</button>
     </div>
     <div class="d-flex flex-wrap gap-2 mb-3">
-        @if (!empty($filtros['q']) || !empty($filtros['situacao']))
+        @if (app(\App\Services\Authorization\AccessContext::class)->level('relatorios') > 0)
+            <a class="btn btn-outline-secondary" href="{{ route('reports.index', ['modulo' => 'requests']) }}"
+                >Exportar</a
+            >
+        @endif
+        @if (!empty($filtros['q']) || !empty($filtros['situacao']) || !empty($filtros['de']) || !empty($filtros['ate']) || (($filtros['ordem'] ?? 'recentes') !== 'recentes'))
             <a class="btn btn-link" href="{{ route('solicitacoes.index') }}">Limpar filtros</a>
         @endif
+        <button
+            type="button"
+            class="btn btn-link"
+            data-bs-toggle="collapse"
+            data-bs-target="#request-advanced-filters"
+            aria-expanded="{{ !empty($filtros['de']) || !empty($filtros['ate']) || (($filtros['ordem'] ?? 'recentes') !== 'recentes') ? 'true' : 'false' }}"
+            aria-controls="request-advanced-filters"
+        >
+            Mais filtros
+        </button>
+    </div>
+    <div
+        class="collapse {{ !empty($filtros['de']) || !empty($filtros['ate']) || (($filtros['ordem'] ?? 'recentes') !== 'recentes') ? 'show' : '' }}"
+        id="request-advanced-filters"
+    >
+        <div class="row">
+            <div class="col-md-4">
+                <x-forms.field nome="de" rotulo="A partir de" tipo="date" :valor="$filtros['de'] ?? ''" />
+            </div>
+            <div class="col-md-4">
+                <x-forms.field nome="ate" rotulo="Até" tipo="date" :valor="$filtros['ate'] ?? ''" />
+            </div>
+            <div class="col-md-4">
+                <x-forms.field
+                    nome="ordem"
+                    rotulo="Ordenação"
+                    tipo="select"
+                    :valor="$filtros['ordem'] ?? 'recentes'"
+                    :opcoes="['recentes' => 'Mais recentes', 'antigos' => 'Mais antigos']"
+                />
+            </div>
+            <div><button class="btn btn-primary mb-3" type="submit">Aplicar filtros</button></div>
+        </div>
     </div>
 </form>

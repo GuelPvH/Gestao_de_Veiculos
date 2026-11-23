@@ -11,6 +11,11 @@
             @include ('records.gestor-filters', ['codigo'=>'tickets'])
         @else
             <form method="GET" action="{{ route('tickets.index') }}" class="filter-grid">
+                @foreach (['de', 'ate'] as $campo)
+                    @if (! empty($filtros[$campo]))
+                        <input type="hidden" name="{{ $campo }}" value="{{ $filtros[$campo] }}" />
+                    @endif
+                @endforeach
                 <x-forms.field nome="q" rotulo="Buscar chamados" :valor="$filtros['q'] ?? ''" maxlength="150" />
                 <x-forms.field
                     nome="situacao"
@@ -19,9 +24,30 @@
                     :valor="$filtros['situacao'] ?? ''"
                     :opcoes="array_combine($tela['states'], array_map(fn ($valor) => config('statuses.'.$valor, ucfirst(str_replace('_', ' ', $valor))), $tela['states']))"
                 />
+                <x-forms.field
+                    nome="ordem"
+                    rotulo="Ordenação"
+                    tipo="select"
+                    :valor="$filtros['ordem'] ?? 'recentes'"
+                    :opcoes="['recentes' => 'Mais recentes', 'antigos' => 'Mais antigos']"
+                />
                 <div class="mb-3">
                     <button type="submit" class="btn btn-primary">Filtrar</button
                     ><a class="btn btn-link" href="{{ route('tickets.index') }}">Limpar</a>
+                </div>
+            </form>
+            <form method="GET" action="{{ route('tickets.index') }}" class="row g-3 mb-4">
+                @foreach (['q', 'situacao', 'ordem'] as $campo)
+                    <input type="hidden" name="{{ $campo }}" value="{{ $filtros[$campo] ?? '' }}" />
+                @endforeach
+                <div class="col-md-4">
+                    <x-forms.field nome="de" rotulo="A partir de" tipo="date" :valor="$filtros['de'] ?? ''" />
+                </div>
+                <div class="col-md-4">
+                    <x-forms.field nome="ate" rotulo="Até" tipo="date" :valor="$filtros['ate'] ?? ''" />
+                </div>
+                <div class="col-md-4 align-self-center">
+                    <button class="btn btn-outline-secondary" type="submit">Aplicar período</button>
                 </div>
             </form>
         @endif

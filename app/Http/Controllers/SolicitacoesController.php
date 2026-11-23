@@ -93,8 +93,14 @@ class SolicitacoesController extends Controller
             }
         } catch (QueryException|PDOException $erro) {
             report($erro);
+            $mensagem = 'A operação não pôde ser concluída. Atualize a página e confira a situação atual.';
+            $sqlState = $erro->errorInfo[0] ?? (string) $erro->getCode();
+            $detalhe = $erro->errorInfo[2] ?? null;
+            if ($sqlState === '45000' && is_string($detalhe) && trim($detalhe) !== '') {
+                $mensagem = trim($detalhe);
+            }
 
-            return back()->withErrors(['operacao' => 'A operação não pôde ser concluída. Atualize a página e confira a situação atual.'])->withInput();
+            return back()->withErrors(['operacao' => $mensagem])->withInput();
         }
 
         if ($acao === 'revision') {
@@ -107,6 +113,7 @@ class SolicitacoesController extends Controller
             'approve' => 'Solicitação aprovada e viagem programada.',
             'deny' => 'Solicitação negada.',
             'adjust' => 'Ajustes solicitados.',
+            'cancel' => 'Solicitação cancelada.',
             default => abort(404),
         });
     }
@@ -144,6 +151,11 @@ class SolicitacoesController extends Controller
     public function adjustSubmit(SolicitacaoActionRequest $requisicao, int $registro): RedirectResponse
     {
         return $this->perform($requisicao, $registro, 'adjust');
+    }
+
+    public function cancelSubmit(SolicitacaoActionRequest $requisicao, int $registro): RedirectResponse
+    {
+        return $this->perform($requisicao, $registro, 'cancel');
     }
 
     public function download(int $registro, int $anexo): StreamedResponse

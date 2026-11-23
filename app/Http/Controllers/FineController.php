@@ -6,6 +6,7 @@ use App\Http\Requests\FineActionRequest;
 use App\Services\Fines\FineWorkflow;
 use App\Support\Value;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -14,8 +15,9 @@ class FineController extends Controller
     public function store(FineActionRequest $requisicao, FineWorkflow $multas): RedirectResponse
     {
         $id = $multas->create($requisicao->validated());
+        $protocolo = DB::table('multas')->where('id', $id)->value('protocolo');
 
-        return redirect()->route('fines.index')->with('status', 'Multa registrada sob o protocolo '.$id.'. A responsabilidade ainda precisa ser apurada.');
+        return redirect()->route('fines.index')->with('status', 'Multa registrada sob o protocolo '.Value::string($protocolo ?: $id).'. A responsabilidade ainda precisa ser apurada.');
     }
 
     public function perform(FineActionRequest $requisicao, FineWorkflow $multas, int $registro, string $acao): RedirectResponse

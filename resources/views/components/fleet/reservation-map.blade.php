@@ -57,15 +57,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         L.circleMarker(destino, {radius: 9, color: '#fff', weight: 3, fillColor: '#173c71', fillOpacity: 1}).addTo(map).bindPopup(popup('Destino', destinoNome));
         map.fitBounds([origem, destino], {padding: [35, 35], maxZoom: 15});
         new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById('reservation-public-route'));
-        const resposta = await fetch(`https://router.project-osrm.org/route/v1/driving/${origem[1]},${origem[0]};${destino[1]},${destino[0]}?overview=full&geometries=geojson&radiuses=100;100`, {signal: AbortSignal.timeout(15000), credentials: 'omit'});
-        if (!resposta.ok) throw new Error('Rota indisponível');
-        const dados = await resposta.json();
-        if (dados.code !== 'Ok' || !dados.routes?.[0]) throw new Error('Percurso não encontrado');
-        // Recuse rotas que movam os locais cadastrados para vias distantes.
-        if (dados.waypoints?.length !== 2 || dados.waypoints.some(ponto => !Number.isFinite(ponto.distance) || ponto.distance > 100)) {
-            throw new Error('Percurso distante dos pontos cadastrados');
+        const chave = `frota-reservation-route-v1:${pontos.join(',')}`;
+        let percurso = null;
+        try {
+            percurso = JSON.parse(sessionStorage.getItem(chave) || 'null');
+        } catch (_) {}
+        if (!percurso?.geometry) {
+            const resposta = await fetch(`https://router.project-osrm.org/route/v1/driving/${origem[1]},${origem[0]};${destino[1]},${destino[0]}?overview=full&geometries=geojson&radiuses=100;100`, {signal: AbortSignal.timeout(15000), credentials: 'omit'});
+            if (!resposta.ok) throw new Error('Rota indisponível');
+            const dados = await resposta.json();
+            if (dados.code !== 'Ok' || !dados.routes?.[0]) throw new Error('Percurso não encontrado');
+            // Recuse rotas que movam os locais cadastrados para vias distantes.
+            if (dados.waypoints?.length !== 2 || dados.waypoints.some(ponto => !Number.isFinite(ponto.distance) || ponto.distance > 100)) {
+                throw new Error('Percurso distante dos pontos cadastrados');
+            }
+            percurso = {
+                geometry: dados.routes[0].geometry,
+                distance: dados.routes[0].distance,
+                duration: dados.routes[0].duration,
+            };
+            try {
+                sessionStorage.setItem(chave, JSON.stringify(percurso));
+            } catch (_) {}
         }
-        const percurso = dados.routes[0];
         const linha = L.geoJSON(percurso.geometry, {style: {color: '#327bd6', weight: 5, opacity: .9}}).addTo(map);
         map.fitBounds(linha.getBounds(), {padding: [35, 35]});
         const distancia = new Intl.NumberFormat('pt-BR', {maximumFractionDigits: 1}).format(percurso.distance / 1000);

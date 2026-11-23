@@ -11,7 +11,7 @@
                 <x-ui.feedback />
                 {{ $slot }}
             </main>
-            <footer class="app-footer">Frota · PF · Gestão de veículos</footer>
+            <footer class="app-footer">{{ $sistemaConfig->nome_sistema ?? 'Frota · PF' }} · Gestão de veículos</footer>
         </div>
     </div>
 </x-layouts.base>

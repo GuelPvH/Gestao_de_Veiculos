@@ -9,4 +9,5 @@ return [
     'recovery_queue_connection' => env('FLEET_RECOVERY_QUEUE_CONNECTION', 'database'),
     'session_reauthentication_minutes' => (int) env('FLEET_SESSION_REAUTHENTICATION_MINUTES', 30),
     'session_max_lifetime_minutes' => (int) env('FLEET_SESSION_MAX_LIFETIME_MINUTES', 720),
+    'session_activity_write_seconds' => (int) env('FLEET_SESSION_ACTIVITY_WRITE_SECONDS', 60),
 ];

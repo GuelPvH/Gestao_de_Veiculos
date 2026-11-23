@@ -32,6 +32,7 @@ class SolicitacaoDraftRequest extends FormRequest
             'saida_prevista' => ['required', 'date_format:Y-m-d\TH:i'],
             'retorno_previsto' => ['required', 'date_format:Y-m-d\TH:i', 'after:saida_prevista'],
             'trajeto_planejado' => ['nullable', 'string', 'max:3000'],
+            'paradas' => ['nullable', 'string', 'max:4000'],
             'quantidade_passageiros' => ['required', 'integer', 'min:1', 'max:100'],
             'passageiros' => ['nullable', 'string', 'max:16000'],
             'necessita_motorista' => ['required', Rule::in(['0', '1'])],
@@ -49,12 +50,17 @@ class SolicitacaoDraftRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
-            if ($validator->errors()->has('passageiros') || $validator->errors()->has('quantidade_passageiros')) {
-                return;
+            if (! $validator->errors()->has('passageiros') && ! $validator->errors()->has('quantidade_passageiros')) {
+                $nomes = collect(preg_split('/\r\n|\r|\n/', Value::string($this->input('passageiros', ''))) ?: [])->map(fn (string $nome) => trim($nome))->filter(fn (string $nome) => $nome !== '');
+                if ($nomes->count() > Value::integer($this->input('quantidade_passageiros')) || $nomes->contains(fn (string $nome) => mb_strlen($nome) > 150)) {
+                    $validator->errors()->add('passageiros', 'Informe até a quantidade declarada de passageiros, com um nome de até 150 caracteres por linha.');
+                }
             }
-            $nomes = collect(preg_split('/\r\n|\r|\n/', Value::string($this->input('passageiros', ''))) ?: [])->map(fn (string $nome) => trim($nome))->filter(fn (string $nome) => $nome !== '');
-            if ($nomes->count() > Value::integer($this->input('quantidade_passageiros')) || $nomes->contains(fn (string $nome) => mb_strlen($nome) > 150)) {
-                $validator->errors()->add('passageiros', 'Informe até a quantidade declarada de passageiros, com um nome de até 150 caracteres por linha.');
+            if (! $validator->errors()->has('paradas')) {
+                $paradas = collect(preg_split('/\r\n|\r|\n/', Value::string($this->input('paradas', ''))) ?: [])->map(fn (string $item) => trim($item))->filter(fn (string $item) => $item !== '');
+                if ($paradas->count() > 20 || $paradas->contains(fn (string $item) => mb_strlen($item) > 255)) {
+                    $validator->errors()->add('paradas', 'Informe até 20 paradas intermediárias, com no máximo 255 caracteres por linha.');
+                }
             }
         }];
     }

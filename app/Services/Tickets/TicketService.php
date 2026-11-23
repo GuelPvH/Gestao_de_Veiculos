@@ -39,9 +39,8 @@ class TicketService
     {
         abort_unless($this->hasIdentity(), 403);
         $chamado = $this->leituras->record('tickets', $id);
-        $versao = DB::table('chamados')->where('id', $id)->value('versao');
-        abort_unless($versao !== null, 404);
-        $chamado->versao = Value::integer($versao);
+        abort_unless(property_exists($chamado, 'versao') && $chamado->versao !== null, 404);
+        $chamado->versao = Value::integer($chamado->versao);
 
         return $chamado;
     }
@@ -138,9 +137,13 @@ class TicketService
             $this->acesso->load($this->acesso->link());
             abort_unless($this->acesso->can('chamados', 'responder', Value::integer($atual->solicitante_id), Value::integer($atual->unidade_id)), 403);
             DB::table('anexos')->insert(['arquivo_id' => $arquivoId, 'chamado_id' => $id]);
+            $vinculo = $this->acesso->requireLink();
             DB::table('auditoria')->insert([
                 'ator_usuario_id' => (int) Auth::id(),
-                'ator_vinculo_id' => Value::integer($this->acesso->requireLink()->vinculo_id),
+                'ator_vinculo_id' => Value::integer($vinculo->vinculo_id),
+                'ator_nome_snapshot' => Auth::user()?->nome,
+                'perfil_nome_snapshot' => Value::nullableString($vinculo->perfil_nome ?? null),
+                'perfil_codigo_snapshot' => Value::nullableString($vinculo->perfil_codigo ?? null),
                 'evento' => 'anexo_chamado',
                 'entidade' => 'chamados',
                 'entidade_id' => $id,
