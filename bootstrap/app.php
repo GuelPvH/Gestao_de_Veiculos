@@ -24,8 +24,17 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trimStrings(except: ['senha', 'senha_atual', 'nova_senha', 'nova_senha_confirmation', 'senha_temporaria', 'senha_temporaria_confirmation']);
         $proxies = array_values(array_filter(array_map('trim', explode(',', (string) env('FLEET_TRUSTED_PROXIES', '')))));
+        if ($proxies === [] && (filter_var(env('VERCEL', false), FILTER_VALIDATE_BOOL) || (string) env('VERCEL_ENV', '') !== '')) {
+            $proxies = ['*'];
+        }
         if ($proxies !== []) {
-            $middleware->trustProxies(at: $proxies, headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO);
+            $middleware->trustProxies(
+                at: in_array('*', $proxies, true) ? '*' : $proxies,
+                headers: Request::HEADER_X_FORWARDED_FOR
+                    | Request::HEADER_X_FORWARDED_HOST
+                    | Request::HEADER_X_FORWARDED_PORT
+                    | Request::HEADER_X_FORWARDED_PROTO,
+            );
         }
         $middleware->alias([
             'fleet.session' => ValidateFleetSession::class,

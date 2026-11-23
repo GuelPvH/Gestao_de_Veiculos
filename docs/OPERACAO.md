@@ -21,7 +21,7 @@ Por padrão, o serviço web publica a porta 8080 na interface local. Para permit
 
 ### Vercel
 
-Em **Settings → Environment Variables**, defina `PORT=8080` nos ambientes em que o contêiner será implantado (Production e/ou Preview) e faça um novo deploy. A Vercel encaminha para a porta `80` se `PORT` não estiver definida no projeto; usar `8080` mantém o Apache em uma porta não privilegiada. O Apache e a checagem de saúde (`/up`) usam a mesma variável.
+Em **Settings → Environment Variables**, defina `PORT=8080`, `APP_URL=https://<seu-dominio>`, `FLEET_TRUSTED_PROXIES=*` e `SESSION_SECURE_COOKIE=true` nos ambientes em que o contêiner será implantado (Production e/ou Preview) e faça um novo deploy. A Vercel encaminha para a porta `80` se `PORT` não estiver definida no projeto; usar `8080` mantém o Apache em uma porta não privilegiada. O Apache e a checagem de saúde (`/up`) usam a mesma variável, e os cabeçalhos `X-Forwarded-*` da Vercel garantem geração de assets e links em `https://`.
 
 ## Verificação após implantação
 

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -28,6 +29,10 @@ class AppServiceProvider extends ServiceProvider
     {
         if ($hotFile = config('fleet.vite_hot_file')) {
             Vite::useHotFile(Value::string($hotFile));
+        }
+
+        if (str_starts_with(Value::string(config('app.url')), 'https://')) {
+            URL::forceScheme('https');
         }
 
         Event::listen(QueueBusy::class, function (QueueBusy $event): void {
