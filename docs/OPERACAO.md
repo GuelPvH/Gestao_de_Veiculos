@@ -19,6 +19,10 @@ docker compose -f docker-compose.yml up -d
 
 Por padrão, o serviço web publica a porta 8080 na interface local. Para permitir acesso externo, configure o intermediário de acesso, a proteção TLS e a URL da instalação no .env.
 
+### Vercel
+
+Em **Settings → Environment Variables**, defina `PORT=8080` nos ambientes em que o contêiner será implantado (Production e/ou Preview) e faça um novo deploy. A Vercel encaminha para a porta `80` se `PORT` não estiver definida no projeto; usar `8080` mantém o Apache em uma porta não privilegiada. O Apache e a checagem de saúde (`/up`) usam a mesma variável.
+
 ## Verificação após implantação
 
 ```sh

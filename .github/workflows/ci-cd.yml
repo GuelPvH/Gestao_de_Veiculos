@@ -189,6 +189,19 @@ jobs:
           [[ "$user" == www-data ]]
           [[ "$ports" == *'"8080/tcp"'* ]]
 
+          # Bypass the schema check to test Apache without a database.
+          check_port() {
+            local port=$1
+            shift
+            docker run --rm --network none --entrypoint sh "$@" "$image" -ec '
+              apache2-foreground &
+              curl --fail --silent --show-error --retry 10 --retry-connrefused \
+                --retry-delay 1 --max-time 2 --output /dev/null "http://127.0.0.1:$1/favicon.ico"
+            ' sh "$port"
+          }
+          check_port 8080
+          check_port 8091 --env PORT=8091
+
   required:
     name: Required checks
     if: ${{ always() }}
