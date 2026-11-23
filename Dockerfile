@@ -2,6 +2,8 @@
 
 FROM php:8.5-apache-bookworm AS php-base
 
+ENV PORT=8080
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl libicu-dev libzip-dev libgmp-dev \
@@ -12,11 +14,12 @@ RUN apt-get update \
 RUN pecl install redis-6.3.0 && docker-php-ext-enable redis
 
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
-    && a2enmod rewrite headers \
+    && a2enmod rewrite headers deflate expires \
     && printf 'ServerName localhost\n' > /etc/apache2/conf-available/server-name.conf \
     && a2enconf server-name \
-    && sed -ri 's/^Listen 80$/Listen 8080/' /etc/apache2/ports.conf
+    && sed -ri 's/^Listen 80$/Listen ${PORT}/' /etc/apache2/ports.conf
 
+COPY docker/php/10-opcache.ini /usr/local/etc/php/conf.d/10-opcache.ini
 COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
 
 WORKDIR /var/www/html
@@ -86,7 +89,7 @@ USER www-data
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD curl --fail --silent http://127.0.0.1:8080/up || exit 1
+    CMD curl --fail --silent "http://127.0.0.1:${PORT}/up" || exit 1
 
 ENTRYPOINT ["/var/www/html/docker/app/entrypoint.sh"]
 CMD ["apache2-foreground"]

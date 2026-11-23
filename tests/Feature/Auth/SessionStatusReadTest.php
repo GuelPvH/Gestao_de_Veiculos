@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Events\TransactionBeginning;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Tests\Support\SecurityFixture;
 use Tests\TestCase;
 
@@ -84,5 +85,44 @@ class SessionStatusReadTest extends TestCase
         $this->assertTrue($renewed);
         $this->assertNull(DB::table('sessoes')->value('encerrada_em'));
         $this->assertDatabaseMissing('auditoria', ['evento' => 'sessao_expirada']);
+    }
+
+    public function test_page_navigation_validates_active_session_in_one_read_and_throttles_activity_writes(): void
+    {
+        Route::middleware(['web', 'auth', 'fleet.session'])
+            ->get('/fast-page-probe', fn () => response()->json(['ok' => true]));
+        $initialActivity = DB::table('sessoes')->value('ultima_atividade_em');
+        $queries = [];
+        $transactions = 0;
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = strtolower($query->sql);
+        });
+        $this->app['events']->listen(TransactionBeginning::class, function () use (&$transactions): void {
+            $transactions++;
+        });
+
+        Auth::forgetGuards();
+        $this->getJson('/fast-page-probe')->assertOk()->assertJsonPath('ok', true);
+
+        $this->assertSame(0, $transactions, 'Navegação ativa não deve abrir transação nem lock.');
+        $this->assertCount(1, array_filter($queries, fn ($sql) => str_contains($sql, 'from "usuarios"')));
+        $this->assertCount(0, array_filter($queries, fn ($sql) => str_starts_with($sql, 'update "sessoes"')));
+        $this->assertSame($initialActivity, DB::table('sessoes')->value('ultima_atividade_em'));
+
+        // Após o intervalo configurado, a atividade é gravada com um único UPDATE sem transação.
+        $this->travel(61)->seconds();
+        $queries = [];
+        $transactions = 0;
+        Auth::forgetGuards();
+        $this->getJson('/fast-page-probe')->assertOk();
+        $this->assertSame(0, $transactions);
+        $this->assertCount(1, array_filter($queries, fn ($sql) => str_starts_with($sql, 'update "sessoes"')));
+        $this->assertNotSame($initialActivity, DB::table('sessoes')->value('ultima_atividade_em'));
+
+        // Revogação continua sendo aplicada imediatamente na próxima requisição.
+        DB::table('vw_vinculos_ativos')->delete();
+        Auth::forgetGuards();
+        $this->getJson('/fast-page-probe')->assertStatus(401)->assertJsonPath('state', 'SESSION_ENDED');
+        $this->assertDatabaseHas('sessoes', ['id' => 1, 'motivo_encerramento' => 'revogacao']);
     }
 }

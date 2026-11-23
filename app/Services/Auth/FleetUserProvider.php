@@ -12,8 +12,15 @@ class FleetUserProvider extends EloquentUserProvider
     public function retrieveById($identifier)
     {
         $request = request();
-        if ($request->hasSession() && $request->routeIs('session.status')) {
-            return app(SessionStatusReader::class)->user($request, Value::integer($identifier));
+        if ($request->hasSession()) {
+            if ($request->routeIs('session.status')) {
+                return app(SessionStatusReader::class)->user($request, Value::integer($identifier));
+            }
+            if (! $request->routeIs('session.reauthenticate', 'profiles.index', 'profiles.select')
+                && in_array('fleet.session', $request->route()?->gatherMiddleware() ?? [], true)
+                && is_array($request->session()->get('fleet_session'))) {
+                return app(SessionStatusReader::class)->pageUser($request, Value::integer($identifier));
+            }
         }
 
         return User::query()->whereKey($identifier)->where('ativo', 1)->first();

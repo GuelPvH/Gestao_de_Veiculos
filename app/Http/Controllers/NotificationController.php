@@ -6,9 +6,9 @@ use App\Http\Requests\NotificationActionRequest;
 use App\Services\Authorization\AccessContext;
 use App\Services\Notifications\NotificationStateService;
 use App\Services\Read\FleetReadRepository;
+use App\Support\SingleQueryPaginator;
 use App\Support\Value;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -18,8 +18,14 @@ class NotificationController extends Controller
     {
         $usuario = $estados->recipientId();
         $podeEditar = $estados->canEdit();
-        /** @var LengthAwarePaginator<int, \stdClass> $paginacao */
-        $paginacao = DB::table('vw_notificacoes_usuario')->where('usuario_id', $usuario)->whereNull('oculta_em')->orderByDesc('id')->paginate(10, ['id', 'tipo', 'titulo', 'mensagem', 'versao', 'criado_em', 'lida_em', 'solicitacao_id', 'viagem_id', 'multa_id', 'despesa_id', 'chamado_id'])->withQueryString();
+        $paginacao = SingleQueryPaginator::paginate(
+            DB::table('vw_notificacoes_usuario')
+                ->where('usuario_id', $usuario)
+                ->whereNull('oculta_em')
+                ->orderByDesc('id')
+                ->select(['id', 'tipo', 'titulo', 'mensagem', 'versao', 'criado_em', 'lida_em', 'solicitacao_id', 'viagem_id', 'multa_id', 'despesa_id', 'chamado_id']),
+            10,
+        );
         $targets = ['requests' => 'solicitacao_id', 'trips' => 'viagem_id', 'fines' => 'multa_id', 'expenses' => 'despesa_id', 'tickets' => 'chamado_id'];
         $references = [];
         foreach ($targets as $codigo => $coluna) {

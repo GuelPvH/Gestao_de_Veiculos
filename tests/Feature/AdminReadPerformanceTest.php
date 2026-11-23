@@ -116,14 +116,19 @@ class AdminReadPerformanceTest extends TestCase
         }
     }
 
-    public function test_other_profiles_keep_standard_pagination(): void
+    public function test_other_profiles_and_screens_also_use_single_query_pagination(): void
     {
         $link = ReadFixture::profile(2);
         ReadFixture::grant('usuarios', 'consultar', 3);
         app(AccessContext::class)->load($link);
-        [$page, $queries] = $this->measured(fn () => app(FleetReadRepository::class)->page('users', []));
-        $this->assertCount(2, $queries);
-        $this->assertSame(3, $page->total());
+        foreach (['users', 'requests', 'vehicles', 'trips', 'tickets'] as $code) {
+            [$page, $queries] = $this->measured(fn () => app(FleetReadRepository::class)->page($code, []));
+            $this->assertCount(1, $queries, 'A tela '.$code.' deve paginar com uma única consulta.');
+            $this->assertGreaterThan(0, $page->total());
+            foreach ($page as $row) {
+                $this->assertFalse(property_exists($row, '__total'));
+            }
+        }
     }
 
     public function test_audit_search_finds_the_event_by_its_description(): void

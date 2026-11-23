@@ -2,11 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\RecordController;
+use App\Http\Controllers\TicketController;
 use App\Http\Controllers\VehicleController;
 use App\Services\Authorization\AccessContext;
 use App\Services\Read\FleetReadRepository;
 use App\Services\Read\OperationalReadRepository;
 use App\Services\Read\OperationCatalog;
+use App\Services\Requests\RequestReadRepository;
+use App\Services\Tickets\TicketService;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Tests\Support\ReadFixture;
@@ -73,7 +79,7 @@ class ReadLatencyBudgetTest extends TestCase
         foreach ([1, 2] as $profile) {
             ReadFixture::profile($profile);
             [$details, $queries] = $this->measured(fn () => app(OperationalReadRepository::class)->details('trips', 1));
-            $this->assertCount(3, $queries, 'Viagem: uma autorização, uma vistoria e uma leitura de ocorrências.');
+            $this->assertCount(2, $queries, 'Viagem: uma autorização e uma leitura agrupada de vistoria e ocorrências.');
             $this->assertSame(1, (int) $details['registro']->id);
             $this->assertSame('Vistoria da viagem 1', $details['vistoria']->sole()->descricao_item);
             $this->assertSame('Ocorrência da viagem 1', $details['ocorrencias']->sole()->descricao);
@@ -81,12 +87,12 @@ class ReadLatencyBudgetTest extends TestCase
         }
     }
 
-    public function test_maintenance_details_keep_open_tyres_and_financial_attachments_in_three_reads(): void
+    public function test_maintenance_details_keep_open_tyres_and_financial_attachments_in_two_reads(): void
     {
         ReadFixture::profile(3);
         $this->permissions('despesas', 2, ['ver_valores']);
         [$details, $queries] = $this->measured(fn () => app(OperationalReadRepository::class)->details('maintenance', 1));
-        $this->assertCount(3, $queries);
+        $this->assertCount(2, $queries);
         $this->assertSame('PNEU-1', $details['pneus']->sole()->codigo);
         $this->assertSame('documento-financeiro-restrito.pdf', $details['arquivos'][0]['nome']);
         $this->assertTrue($details['vistoria']->isEmpty());
@@ -164,7 +170,7 @@ class ReadLatencyBudgetTest extends TestCase
         $this->assertNotEmpty($create->getData()['categoriasDisponiveis']);
         $this->assertSame([], $create->getData()['reservasDisponiveis'] ?? []);
 
-        foreach (['edit' => 3, 'block' => 2, 'release' => 3] as $action => $budget) {
+        foreach (['edit' => 2, 'block' => 1, 'release' => 2] as $action => $budget) {
             [$form, $queries] = $this->measured(fn () => $controller->operation(1, $action));
             $data = $form->getData();
             $this->assertCount($budget, $queries, 'Orçamento da operação '.$action);
@@ -201,5 +207,35 @@ class ReadLatencyBudgetTest extends TestCase
         $this->assertArrayHasKey('edit', $actions);
         $this->assertArrayNotHasKey('block', $actions);
         $this->assertArrayNotHasKey('release', $actions, 'A manutenção vinculada não pode ser liberada como bloqueio manual.');
+    }
+
+    public function test_ticket_fine_and_request_details_batch_children_into_two_reads(): void
+    {
+        ReadFixture::profile(1);
+        [$ticketView, $ticketQueries] = $this->measured(fn () => app(TicketController::class)->show(
+            1,
+            app(TicketService::class),
+            app(FleetReadRepository::class),
+            app(AccessContext::class),
+        ));
+        $this->assertCount(2, $ticketQueries, 'Chamado: uma leitura autorizada com versão e uma leitura agrupada de mensagens, anexos e histórico.');
+        $this->assertSame(1, (int) $ticketView->getData()['chamado']->id);
+
+        ReadFixture::profile(3);
+        $fineRequest = Request::create('/financeiro/multas/1');
+        $fineRoute = (new Route('GET', '/financeiro/multas/{registro}', fn () => null))->defaults('tela', 'fines');
+        $fineRoute->bind($fineRequest);
+        $fineRequest->setRouteResolver(fn () => $fineRoute);
+        [$fineView, $fineQueries] = $this->measured(fn () => app(RecordController::class)->show($fineRequest, 1));
+        $this->assertCount(2, $fineQueries, 'Multa: uma leitura autorizada e uma leitura agrupada de eventos, anexos, comprovantes e conferências.');
+        $this->assertSame(1, (int) $fineView->getData()['registro']->id);
+
+        ReadFixture::profile(2);
+        DB::table('veiculos')->update(['capacidade' => 4]);
+        DB::table('motoristas')->insert(['usuario_id' => 2, 'numero_cnh' => 'QA2', 'categoria_cnh' => 'B', 'categorias_autorizadas' => 'B', 'validade_cnh' => '2027-12-31', 'ativo' => 1]);
+        [$requestDetails, $requestQueries] = $this->measured(fn () => app(RequestReadRepository::class)->details(2));
+        $this->assertCount(2, $requestQueries, 'Solicitação aprovável: uma leitura autorizada e uma leitura agrupada de histórico, anexos, veículos e motoristas.');
+        $this->assertArrayHasKey('veiculosDisponiveis', $requestDetails);
+        $this->assertArrayHasKey('motoristasDisponiveis', $requestDetails);
     }
 }
