@@ -1,9 +1,14 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
-@import '@fontsource/inter/400.css';
-@import '@fontsource/inter/500.css';
-@import '@fontsource/inter/600.css';
-@import '@fontsource/inter/700.css';
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/inter/latin-ext-400.css';
+@import '@fontsource/inter/latin-ext-500.css';
+@import '@fontsource/inter/latin-ext-600.css';
+@import '@fontsource/inter/latin-ext-700.css';
 @import './theme.css';
+@import './frota-motion.css';
 [data-bs-theme='dark'] img.fleet-icon {
     filter: invert(0.8);
 }
@@ -125,9 +130,10 @@ h2 {
 .sidebar-brand {
     display: flex;
     justify-content: center;
-    padding: 8px 0;
+    align-items: center;
+    padding: 10px 4px;
     border-radius: 8px;
-    background: #fff;
+    background: transparent;
     flex-shrink: 0;
 }
 .sidebar-footer {
@@ -163,46 +169,50 @@ h2 {
 }
 .fleet-logo {
     display: inline-flex;
-    background: #fff;
+    background: transparent;
     border-radius: 8px;
     max-width: 100%;
-    width: 200px;
-    height: 45px;
+    width: 216px;
+    height: auto;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
 }
+.fleet-logo--custom {
+    background: #fff;
+    padding: 6px 10px;
+}
 .logo-visible {
     position: relative;
-    overflow: hidden;
+    display: block;
     width: 100%;
     height: auto;
-    aspect-ratio: 200/44.994;
+    aspect-ratio: 744 / 176;
 }
-.logo-original {
-    position: absolute;
-    left: -7.31%;
-    top: -43.495%;
-    width: 115.1855%;
-    height: 170.5%;
-    display: flex;
+.fleet-logo--empilhada .logo-visible {
+    aspect-ratio: 432 / 368;
 }
-.logo-strip {
+.fleet-logo--icone {
+    width: 36px;
+}
+.fleet-logo--icone .logo-visible {
+    aspect-ratio: 1 / 1;
+}
+.logo-image {
+    width: 100%;
     height: 100%;
     object-fit: contain;
     display: block;
-    flex-shrink: 0;
-    width: 6.25%;
+    transition: transform 200ms ease-out;
 }
-.logo-strip-0,
-.logo-strip-15 {
-    width: 12.5%;
+.logo-image-dark {
+    display: none;
 }
-.logo-strip-1,
-.logo-strip-2,
-.logo-strip-3,
-.logo-strip-4 {
-    width: 3.125%;
+[data-bs-theme='dark'] .logo-image-light {
+    display: none;
+}
+[data-bs-theme='dark'] .logo-image-dark {
+    display: block;
 }
 .app-header {
     min-height: 77px;
@@ -480,11 +490,22 @@ h2 {
     flex-direction: column;
     gap: 24px;
 }
+[data-bs-theme='dark'] .auth-hero {
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    border-right: 1px solid var(--cor-borda);
+}
 .auth-hero .fleet-logo {
-    width: 360px;
+    width: min(100%, 420px);
     max-width: 100%;
-    height: 102px;
-    padding: 0 20px;
+    height: auto;
+    padding: 0;
+}
+.auth-hero .fleet-logo--custom {
+    padding: 12px 20px;
+}
+.auth-wrapper .fleet-logo {
+    width: min(100%, 340px);
 }
 .auth-hero-message {
     margin: auto 0;
@@ -498,6 +519,9 @@ h2 {
 }
 .auth-hero-message p {
     color: #e3ebf6;
+}
+[data-bs-theme='dark'] .auth-hero-message p {
+    color: var(--cor-suave);
 }
 .auth-right {
     padding: 64px;
@@ -750,10 +774,17 @@ h2 {
     .auth-hero {
         padding: 24px;
     }
+    [data-bs-theme='dark'] .auth-hero {
+        border-right: 0;
+        border-bottom: 1px solid var(--cor-borda);
+    }
     .auth-hero .fleet-logo {
-        height: 65px;
-        width: 240px;
-        padding: 0 12px;
+        height: auto;
+        width: min(100%, 280px);
+        padding: 0;
+    }
+    .auth-hero .fleet-logo--custom {
+        padding: 8px 12px;
     }
     .auth-hero-message {
         margin: 12px 0 0;
@@ -911,7 +942,7 @@ input[type='file']::file-selector-button {
     background: transparent;
     padding: 8px 0 20px;
 }
-.gestor-shell .fleet-logo {
+.gestor-shell .fleet-logo:not(.fleet-logo--custom) {
     background: transparent;
 }
 .gestor-shell .app-header {

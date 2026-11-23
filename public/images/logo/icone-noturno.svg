@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" class="marca-frota" color="rgb(0, 0, 0)" data-tema="escuro" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="titulo descricao">
+<title id="titulo">FROTA PÚBLICA RO — Somente ícone — Modo noturno</title>
+<desc id="descricao">Pin de localização integrado a um veículo. Versão sem subtítulo. Fundo transparente.</desc>
+<metadata>{"marca": "FROTA PÚBLICA RO", "subtitulo": "GESTÃO DE VEÍCULOS • RONDÔNIA", "direcao": "B — Frota localizada", "etapa": 4, "composicao": "Somente ícone", "tema": "Modo noturno", "fundo": "transparente", "tipografia": "Montserrat ExtraBold 800 / Medium 500, convertida em curvas", "licenca_fonte": "SIL Open Font License 1.1", "camadas": ["Símbolo"], "arquivo_final": true, "recortes_monocromaticos": "Paths compostos com transparência real"}</metadata>
+<style>
+:root {
+  --marca-azul-base: #0B3C8C;
+  --marca-azul-secundario: #1E88E5;
+  --marca-verde-base: #2E9E4F;
+  --marca-amarelo-base: #F9C80E;
+  --marca-branco: #FFFFFF;
+  --marca-preto: #000000;
+  --marca-fundo-noturno: #0F172A;
+  --marca-azul-noturno: oklch(0.55 0.17 260.3673);
+  --marca-verde-noturno: oklch(0.618537 0.158913 149.1069);
+}
+svg.marca-frota {
+  --marca-pin: var(--marca-azul-base);
+  --marca-texto: var(--marca-azul-base);
+  --marca-carro: var(--marca-branco);
+  --marca-vidro: var(--marca-azul-secundario);
+  --marca-farol: var(--marca-azul-base);
+  --marca-detalhe: var(--marca-verde-base);
+  --marca-rota: var(--marca-amarelo-base);
+  color: var(--marca-preto);
+}
+svg.marca-frota[data-tema="escuro"] {
+  --marca-pin: var(--marca-azul-noturno);
+  --marca-texto: var(--marca-branco);
+  --marca-vidro: var(--marca-azul-base);
+  --marca-farol: var(--marca-azul-base);
+  --marca-detalhe: var(--marca-verde-noturno);
+}
+svg.marca-frota[data-tema="mono-preta"] { color: var(--marca-preto); }
+svg.marca-frota[data-tema="mono-branca"] { color: var(--marca-branco); }
+
+@media (prefers-color-scheme: dark) {
+  svg.marca-frota[data-tema="auto"] {
+    --marca-pin: var(--marca-azul-noturno);
+    --marca-texto: var(--marca-branco);
+    --marca-vidro: var(--marca-azul-base);
+    --marca-farol: var(--marca-azul-base);
+    --marca-detalhe: var(--marca-verde-noturno);
+  }
+}
+</style>
+<g id="simbolo" inkscape:groupmode="layer" inkscape:label="01 — Símbolo: pin e veículo"><g id="pin-localizacao" data-name="Pin de localização"><path fill="rgb(48, 108, 211)" style="fill:var(--marca-pin)" d="M64 8C37.5 8 16 28.8 16 54.6C16 84.5 64 122 64 122S112 84.5 112 54.6C112 28.8 90.5 8 64 8Z" /></g>
+<g id="veiculo-frontal" data-name="Veículo frontal">
+  <path id="carroceria" fill="rgb(255, 255, 255)" style="fill:var(--marca-carro)" d="M35 51L40 36Q42 30 48 30H80Q86 30 88 36L93 51V71Q93 76 88 76H40Q35 76 35 71Z" />
+  <path id="para-brisa" fill="rgb(11, 60, 140)" style="fill:var(--marca-vidro)" d="M45 49L49 39H79L83 49Z" />
+  <g id="farois"><rect fill="rgb(11, 60, 140)" style="fill:var(--marca-farol)" x="43" y="57" width="10" height="5" rx="1.5" /><rect fill="rgb(11, 60, 140)" style="fill:var(--marca-farol)" x="75" y="57" width="10" height="5" rx="1.5" /></g>
+  <rect id="detalhe-verde" fill="rgb(38, 159, 76)" style="fill:var(--marca-detalhe)" x="56" y="67" width="16" height="4" rx="1" />
+</g>
+<g id="rota-central" data-name="Rota central"><rect fill="rgb(249, 200, 14)" style="fill:var(--marca-rota)" x="61" y="88" width="6" height="14" rx="2" /></g></g>
+</svg>

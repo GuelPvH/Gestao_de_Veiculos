@@ -1,0 +1,394 @@
+:root {
+    --marca-azul-base: #0b3c8c;
+    --marca-azul-secundario: #1e88e5;
+    --marca-verde-base: #2e9e4f;
+    --marca-amarelo-base: #f9c80e;
+    --marca-branco: #ffffff;
+    --marca-preto: #000000;
+    --marca-fundo-noturno: #0f172a;
+    --marca-azul-noturno: oklch(0.55 0.17 260.3673);
+    --marca-verde-noturno: oklch(0.618537 0.158913 149.1069);
+}
+
+svg.marca-frota {
+    --marca-pin: var(--marca-azul-base);
+    --marca-texto: var(--marca-azul-base);
+    --marca-carro: var(--marca-branco);
+    --marca-vidro: var(--marca-azul-secundario);
+    --marca-farol: var(--marca-azul-base);
+    --marca-detalhe: var(--marca-verde-base);
+    --marca-rota: var(--marca-amarelo-base);
+    --marca-traco-pin: var(--marca-pin);
+    --marca-traco-carro: var(--marca-carro);
+    --marca-traco-rota: var(--marca-rota);
+    color: var(--marca-preto);
+}
+
+.fleet-logo--superficie-azul svg.marca-frota {
+    --marca-pin: var(--marca-branco);
+    --marca-texto: var(--marca-branco);
+    --marca-carro: #142f53;
+    --marca-vidro: var(--marca-branco);
+    --marca-farol: var(--marca-branco);
+    --marca-detalhe: var(--marca-branco);
+    --marca-rota: #142f53;
+    --marca-traco-pin: var(--marca-branco);
+    --marca-traco-carro: rgba(255, 255, 255, 0.9);
+    --marca-traco-rota: rgba(255, 255, 255, 0.9);
+}
+
+[data-bs-theme='dark'] svg.marca-frota,
+[data-bs-theme='dark'] .fleet-logo--superficie-azul svg.marca-frota,
+svg.marca-frota[data-tema='escuro'] {
+    --marca-pin: var(--marca-azul-noturno);
+    --marca-texto: var(--marca-branco);
+    --marca-carro: var(--marca-branco);
+    --marca-vidro: var(--marca-azul-base);
+    --marca-farol: var(--marca-azul-base);
+    --marca-detalhe: var(--marca-verde-noturno);
+    --marca-rota: var(--marca-amarelo-base);
+    --marca-traco-pin: var(--marca-pin);
+    --marca-traco-carro: var(--marca-carro);
+    --marca-traco-rota: var(--marca-rota);
+}
+
+svg.frota-motion {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.logo-trigger {
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 8px;
+    text-align: left;
+}
+
+.logo-trigger:focus-visible {
+    outline: 3px solid var(--cor-foco);
+    outline-offset: 4px;
+}
+
+.frota-motion .mf-hover {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition:
+        transform 200ms ease-out,
+        filter 200ms ease-out;
+}
+.frota-motion .mf-pulse {
+    transform-origin: 64px 65px;
+}
+.frota-motion .mf-car {
+    transform-origin: 64px 54px;
+}
+.frota-motion .mf-lane {
+    transform-origin: 64px 95px;
+}
+.frota-motion .mf-lane-copy {
+    opacity: 0;
+}
+.frota-motion .mf-ripple {
+    fill: none;
+    stroke: var(--marca-pin);
+    stroke-width: 2;
+    opacity: 0;
+    transform-origin: 64px 72px;
+}
+.frota-motion .mf-trace {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    opacity: 0;
+}
+.frota-motion .mf-trace-pin {
+    stroke: var(--marca-traco-pin);
+}
+.frota-motion .mf-trace-car {
+    stroke: var(--marca-traco-carro);
+}
+.frota-motion .mf-trace-road {
+    stroke: var(--marca-traco-rota);
+}
+.frota-motion .mf-name,
+.frota-motion .mf-subtitle {
+    opacity: 1;
+}
+.frota-motion.is-hover .mf-hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 3px color-mix(in oklab, var(--marca-pin), transparent 65%));
+}
+.frota-motion.is-click .mf-car {
+    animation: mf-launch 800ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+.frota-motion.is-click .mf-pulse {
+    animation: mf-settle 800ms ease-out both;
+}
+.frota-motion.is-click .mf-ripple {
+    animation: mf-ripple 800ms ease-out both;
+}
+.frota-motion.is-click .mf-lane {
+    animation: mf-road 800ms linear both;
+}
+.frota-motion.is-click .mf-lane-copy {
+    animation-delay: -400ms;
+}
+.frota-motion.is-intro .mf-pin-fill,
+.frota-motion.is-intro .mf-car,
+.frota-motion.is-intro .mf-lanes {
+    animation: mf-fill 1200ms ease-out both;
+}
+.frota-motion.is-intro .mf-trace-pin {
+    animation: mf-draw-pin 1200ms ease-out both;
+}
+.frota-motion.is-intro .mf-trace-car {
+    animation: mf-draw-car 1200ms ease-out both;
+}
+.frota-motion.is-intro .mf-trace-road {
+    animation: mf-draw-road 1200ms ease-out both;
+}
+.frota-motion.is-intro .mf-name {
+    animation: mf-wordmark 1200ms ease-out both;
+}
+.frota-motion.is-intro .mf-subtitle {
+    animation: mf-subtitle 1200ms ease-out both;
+}
+.frota-motion.is-loading .mf-car {
+    animation: mf-cruise 1200ms ease-in-out infinite;
+}
+.frota-motion.is-loading .mf-lane {
+    animation: mf-road 1200ms linear infinite;
+}
+.frota-motion.is-loading .mf-lane-copy {
+    animation-delay: -600ms;
+}
+.frota-motion.is-paused * {
+    animation-play-state: paused !important;
+}
+.frota-motion:focus-visible {
+    outline: 3px solid var(--marca-texto);
+    outline-offset: 4px;
+}
+
+@keyframes mf-launch {
+    0%,
+    8% {
+        transform: translateY(0) scale(1);
+    }
+    32% {
+        transform: translateY(5px) scale(1.045);
+    }
+    56% {
+        transform: translateY(-1.5px) scale(0.99);
+    }
+    78%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+@keyframes mf-settle {
+    0%,
+    56% {
+        transform: scale(1);
+    }
+    72% {
+        transform: scale(1.02);
+    }
+    87% {
+        transform: scale(0.995);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+@keyframes mf-ripple {
+    0%,
+    54% {
+        opacity: 0;
+        transform: scale(0.83);
+    }
+    62% {
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.18);
+    }
+}
+@keyframes mf-road {
+    0% {
+        transform: translateY(-12px) scale(0.65);
+        opacity: 0;
+    }
+    10%,
+    80% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(15px) scale(1.15);
+        opacity: 0;
+    }
+}
+@keyframes mf-fill {
+    0%,
+    40% {
+        opacity: 0;
+    }
+    64%,
+    100% {
+        opacity: 1;
+    }
+}
+@keyframes mf-draw-pin {
+    0% {
+        opacity: 1;
+        stroke-dashoffset: 1;
+    }
+    48% {
+        opacity: 1;
+        stroke-dashoffset: 0;
+    }
+    70%,
+    100% {
+        opacity: 0;
+        stroke-dashoffset: 0;
+    }
+}
+@keyframes mf-draw-car {
+    0%,
+    30% {
+        opacity: 0;
+        stroke-dashoffset: 1;
+    }
+    36% {
+        opacity: 1;
+        stroke-dashoffset: 1;
+    }
+    62% {
+        opacity: 1;
+        stroke-dashoffset: 0;
+    }
+    78%,
+    100% {
+        opacity: 0;
+        stroke-dashoffset: 0;
+    }
+}
+@keyframes mf-draw-road {
+    0%,
+    42% {
+        opacity: 0;
+        stroke-dashoffset: 1;
+    }
+    46% {
+        opacity: 1;
+        stroke-dashoffset: 1;
+    }
+    70% {
+        opacity: 1;
+        stroke-dashoffset: 0;
+    }
+    84%,
+    100% {
+        opacity: 0;
+        stroke-dashoffset: 0;
+    }
+}
+@keyframes mf-wordmark {
+    0%,
+    56% {
+        opacity: 0;
+        transform: translateX(8px);
+    }
+    87%,
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+@keyframes mf-subtitle {
+    0%,
+    67% {
+        opacity: 0;
+        transform: translateX(6px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+@keyframes mf-cruise {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(1.5px);
+    }
+}
+
+.frota-motion.is-reduced * {
+    animation: none !important;
+    transition: none !important;
+}
+.frota-motion.is-reduced .mf-hover,
+.frota-motion.is-reduced .mf-car,
+.frota-motion.is-reduced .mf-pulse,
+.frota-motion.is-reduced .mf-name,
+.frota-motion.is-reduced .mf-subtitle,
+.frota-motion.is-reduced .mf-lane {
+    transform: none !important;
+    filter: none !important;
+}
+.frota-motion.is-reduced .mf-pin-fill,
+.frota-motion.is-reduced .mf-car,
+.frota-motion.is-reduced .mf-lanes,
+.frota-motion.is-reduced .mf-name,
+.frota-motion.is-reduced .mf-subtitle {
+    opacity: 1 !important;
+}
+.frota-motion.is-reduced .mf-trace,
+.frota-motion.is-reduced .mf-ripple,
+.frota-motion.is-reduced .mf-lane-copy {
+    opacity: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .frota-motion * {
+        animation: none !important;
+        transition: none !important;
+    }
+    .frota-motion .mf-hover,
+    .frota-motion .mf-car,
+    .frota-motion .mf-pulse,
+    .frota-motion .mf-name,
+    .frota-motion .mf-subtitle,
+    .frota-motion .mf-lane {
+        transform: none !important;
+        filter: none !important;
+    }
+    .frota-motion .mf-pin-fill,
+    .frota-motion .mf-car,
+    .frota-motion .mf-lanes,
+    .frota-motion .mf-name,
+    .frota-motion .mf-subtitle {
+        opacity: 1 !important;
+    }
+    .frota-motion .mf-trace,
+    .frota-motion .mf-ripple,
+    .frota-motion .mf-lane-copy {
+        opacity: 0 !important;
+    }
+}

@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
+    <link rel="icon" href="{{ asset('images/logo/favicon.svg') }}" type="image/svg+xml" />
+    <link rel="alternate icon" href="{{ asset('images/logo/favicon.ico') }}" />
     <title>{{ $title ?? config('app.name') }}</title>
     @vite (['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -14,7 +16,7 @@
                 class="d-inline-flex align-items-center gap-3 text-decoration-none text-dark fw-semibold"
                 href="{{ route('home') }}"
             >
-                <span class="brand-mark" aria-hidden="true">GV</span>
+                <x-ui.logo variante="icone" aria-hidden="true" />
                 <span>{{ config('app.name') }}</span>
             </a>
         </nav>

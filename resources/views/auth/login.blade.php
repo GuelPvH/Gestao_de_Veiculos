@@ -1,7 +1,7 @@
 <x-layouts.base titulo="Acesso">
     <main class="auth-page" id="main-content" tabindex="-1">
         <section class="auth-hero" aria-label="Gestão da frota">
-            <x-ui.logo />
+            <x-ui.logo variante="horizontal" superficie="azul" :entrada="true" />
             <div class="auth-hero-message">
                 <p class="small text-uppercase">Gestão de frota</p>
                 <h2>Cada viagem.<br />Tudo sob controle.</h2>
