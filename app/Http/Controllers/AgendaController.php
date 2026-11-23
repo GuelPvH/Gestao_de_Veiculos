@@ -21,10 +21,24 @@ class AgendaController extends Controller
         $consulta = DB::table('reservas as r')->join('veiculos as v', 'v.id', '=', 'r.veiculo_id')->where('r.situacao', 'ativa')->where('r.inicio', '<', $fim->utc())->where('r.fim', '>', $inicio->utc());
         $acesso->scope($consulta, 'frota', 'consultar', null, 'v.unidade_id');
         $reservas = $consulta->orderBy('r.inicio')->limit(300)->get(['r.id', 'r.inicio', 'r.fim', 'r.tipo', 'v.placa', 'v.nome']);
+        $intervalos = $reservas->map(fn ($reserva): array => [
+            'registro' => $reserva,
+            'inicio' => CarbonImmutable::parse(Value::date($reserva->inicio), 'UTC'),
+            'fim' => CarbonImmutable::parse(Value::date($reserva->fim), 'UTC'),
+        ]);
         $dias = [];
         for ($indice = 0; $indice < $inicio->daysInMonth; $indice++) {
             $dia = $inicio->addDays($indice);
-            $dias[] = ['data' => $dia, 'rotulo' => $dia->translatedFormat('D, d/m'), 'reservas' => $reservas->filter(fn ($reserva) => CarbonImmutable::parse(Value::date($reserva->inicio), 'UTC')->lt($dia->addDay()->utc()) && CarbonImmutable::parse(Value::date($reserva->fim), 'UTC')->gt($dia->utc()))];
+            $diaInicio = $dia->utc();
+            $diaFim = $dia->addDay()->utc();
+            $dias[] = [
+                'data' => $dia,
+                'rotulo' => $dia->translatedFormat('D, d/m'),
+                'reservas' => $intervalos
+                    ->filter(fn (array $item): bool => $item['inicio']->lt($diaFim) && $item['fim']->gt($diaInicio))
+                    ->map(fn (array $item) => $item['registro'])
+                    ->values(),
+            ];
         }
 
         return view('agenda.index', compact('inicio', 'dias', 'leituras'));
@@ -37,9 +51,17 @@ class AgendaController extends Controller
             ->leftJoin('solicitacao_revisoes as sr', 'sr.id', '=', 'r.revisao_id')
             ->leftJoin('vw_viagens_detalhadas as t', 't.reserva_id', '=', 'r.id')
             ->leftJoin('usuarios as u', 'u.id', '=', 't.solicitante_id')
+            ->leftJoin('manutencoes as m', 'm.reserva_id', '=', 'r.id')
             ->where('r.id', $reserva);
         $acesso->scope($consulta, 'frota', 'consultar', null, 'v.unidade_id');
-        $registro = $consulta->first(['r.id', 'r.inicio', 'r.fim', 'r.tipo', 'r.situacao as reserva_situacao', 'v.nome as veiculo', 'v.placa', 't.protocolo', 't.situacao', 'sr.origem', 'sr.destino', 'sr.origem_latitude', 'sr.origem_longitude', 'sr.destino_latitude', 'sr.destino_longitude', 'sr.trajeto_planejado', 'u.nome as solicitante']);
+        $registro = $consulta->first([
+            'r.id', 'r.veiculo_id', 'r.inicio', 'r.fim', 'r.tipo', 'r.descricao', 'r.situacao as reserva_situacao',
+            'v.nome as veiculo', 'v.placa',
+            't.id as viagem_id', 't.protocolo', 't.situacao', 't.motorista',
+            'sr.solicitacao_id', 'sr.origem', 'sr.destino', 'sr.origem_latitude', 'sr.origem_longitude', 'sr.destino_latitude', 'sr.destino_longitude', 'sr.trajeto_planejado',
+            'u.nome as solicitante',
+            'm.id as manutencao_id', 'm.protocolo as manutencao_protocolo',
+        ]);
         abort_if(! $registro, 404);
         $situacao = Value::string($registro->situacao ?? $registro->reserva_situacao);
         $protocolo = Value::nullableString($registro->protocolo);

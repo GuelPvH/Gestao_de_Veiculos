@@ -134,12 +134,14 @@
             }
             cars.forEach(position);
             let last = performance.now(),
+                lastFrame = last,
                 lastStatus = 0,
                 frame;
             function animate(now) {
-                const elapsed = Math.min((now - last) / 1000, 0.25);
-                last = now;
-                if (!document.hidden) {
+                if (!document.hidden && now - lastFrame >= 250) {
+                    const elapsed = Math.min((now - last) / 1000, 1);
+                    last = now;
+                    lastFrame = now;
                     cars.forEach((car) => {
                         car.distance += car.speed * elapsed;
                         position(car);
@@ -148,6 +150,9 @@
                         status.textContent = `Posições simuladas · Atualização: ${new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Porto_Velho' })}`;
                         lastStatus = now;
                     }
+                } else if (document.hidden) {
+                    last = now;
+                    lastFrame = now;
                 }
                 frame = requestAnimationFrame(animate);
             }

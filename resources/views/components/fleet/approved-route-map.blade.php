@@ -1,11 +1,14 @@
-@props (['trajetos', 'consultado' => false])
+@props (['trajetos', 'posicoes' => null, 'consultado' => false])
+@php
+    $posicoes = $posicoes ?? collect();
+@endphp
 <div
     id="approved-route-map"
     class="reservation-map-frame"
     role="region"
-    aria-label="Percursos planejados das solicitações aprovadas"
+    aria-label="Percursos planejados e posições observadas"
 ></div>
-<p class="small text-body-secondary mt-3" id="approved-route-status" role="status">{{ ! $consultado ? 'Selecione o veículo e o período e clique em Consultar.' : ($trajetos->isEmpty() ? 'Nenhuma viagem aprovada para esse veículo no período.' : 'Percursos das solicitações aprovadas.') }}</p>
+<p class="small text-body-secondary mt-3" id="approved-route-status" role="status">{{ ! $consultado ? 'Selecione o veículo e o período e clique em Consultar.' : ($trajetos->isEmpty() && $posicoes->isEmpty() ? 'Nenhuma viagem aprovada ou posição registrada para esse veículo no período.' : 'Percursos planejados e posições observadas no período.') }}</p>
 @vite ('resources/js/leaflet.js')
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
@@ -15,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19,referrerPolicy:'strict-origin-when-cross-origin',attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
         new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById('approved-route-map'));
         const routes = {{ Illuminate\Support\Js::from($trajetos->values()) }};
+        const observed = {{ Illuminate\Support\Js::from($posicoes->values()) }};
         const colors = ['#173c71','#247257','#b36515','#7855a3'];
         function decode(text) {
             const points = []; let i = 0, lat = 0, lng = 0;
@@ -80,8 +84,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 bounds.push(...points);calculated++;
             }
         }
+        const observedCoords = [];
+        observed.forEach((ponto) => {
+            if (ponto.latitude === null || ponto.longitude === null) return;
+            const latlng = [Number(ponto.latitude), Number(ponto.longitude)];
+            observedCoords.push(latlng);
+            bounds.push(latlng);
+            const popup = document.createElement('span');
+            popup.textContent = `Observado (${ponto.fonte})${ponto.descricao ? ' · ' + ponto.descricao : ''}`;
+            L.circleMarker(latlng, {radius: 5, color: '#fff', weight: 2, fillColor: ponto.fonte === 'manual' ? '#b36515' : '#0f766e', fillOpacity: 1}).addTo(map).bindPopup(popup);
+        });
+        if (observedCoords.length > 1) {
+            L.polyline(observedCoords, {color: '#0f766e', weight: 4}).addTo(map);
+        }
         if (bounds.length) map.fitBounds(bounds,{padding:[30,30],maxZoom:16});
-        if (routes.length) status.textContent = `${routes.length} viagens aprovadas · ${calculated} percursos calculados pelas ruas${missing ? ' · ' + missing + ' sem coordenadas completas' : ''}${pending.length > 20 ? ' · selecione um período menor para calcular todos' : ''}.`;
+        if (routes.length || observed.length) status.textContent = `${routes.length} viagens aprovadas · ${observed.length} pontos observados · ${calculated} percursos calculados pelas ruas${missing ? ' · ' + missing + ' sem coordenadas completas' : ''}${pending.length > 20 ? ' · selecione um período menor para calcular todos' : ''}.`;
 
     } catch (_) {status.textContent = 'Não foi possível carregar o mapa. Confira sua conexão e atualize a página.';}
 });

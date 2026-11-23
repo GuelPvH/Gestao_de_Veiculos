@@ -9,7 +9,7 @@
             :obrigatorio="true"
         />
     @else
-        <p class="text-body-secondary">A unidade responsável é mantida neste cadastro. A transferência exige um fluxo próprio para preservar o alcance do histórico.</p>
+        <p class="text-body-secondary">Para alterar a unidade responsável, utilize a ação <strong>Transferir unidade</strong> na página de detalhes do veículo.</p>
     @endif
     <div class="row">
         <div class="col-md-6">
@@ -175,5 +175,28 @@
         :obrigatorio="true"
         pattern="liberar"
         nota="Digite liberar para confirmar."
+    />
+@elseif ($acao === 'transfer')
+    <x-ui.alert tom="warning">
+        A transferência altera a unidade responsável pelo veículo e exige que não haja reservas ativas ou viagens
+        programadas/em andamento.
+    </x-ui.alert>
+    @if (empty($unidadesDisponiveis))
+        <x-ui.alert tom="info">Nenhuma outra unidade ativa disponível para transferência.</x-ui.alert>
+    @endif
+    <x-forms.field
+        nome="unidade_destino_id"
+        rotulo="Nova unidade responsável"
+        tipo="select"
+        :opcoes="$unidadesDisponiveis ?? []"
+        :obrigatorio="true"
+    />
+    <x-forms.field
+        nome="justificativa"
+        rotulo="Motivo da transferência"
+        tipo="textarea"
+        :obrigatorio="true"
+        minlength="5"
+        maxlength="1000"
     />
 @endif
