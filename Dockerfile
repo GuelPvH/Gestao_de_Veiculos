@@ -112,3 +112,6 @@ COPY --from=vendor-development --chown=www-data:www-data /var/www/html/vendor ./
 
 # O build sem --target continua produzindo a imagem de produção.
 FROM runtime-base AS runtime
+RUN php artisan package:discover --no-ansi \
+    && php artisan route:cache --no-ansi \
+    && php artisan view:cache --no-ansi
