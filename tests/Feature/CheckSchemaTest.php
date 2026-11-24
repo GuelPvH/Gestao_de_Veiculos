@@ -8,6 +8,12 @@ use Tests\TestCase;
 
 class CheckSchemaTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        DB::partialMock();
+    }
+
     public function test_runtime_rejects_a_database_without_request_creation_patch_108(): void
     {
         $versoes = Mockery::mock();
