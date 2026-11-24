@@ -1,5 +1,9 @@
 <?php
 
+$turnstileEnabled = env('TURNSTILE_ENABLED');
+$turnstileSiteKey = env('TURNSTILE_SITE_KEY');
+$turnstileSecretKey = env('TURNSTILE_SECRET_KEY');
+
 return [
 
     /*
@@ -33,6 +37,16 @@ return [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    'turnstile' => [
+        'site_key' => $turnstileSiteKey,
+        'secret_key' => $turnstileSecretKey,
+        'verify_url' => env('TURNSTILE_VERIFY_URL', 'https://challenges.cloudflare.com/turnstile/v0/siteverify'),
+        'timeout' => (int) env('TURNSTILE_TIMEOUT', 5),
+        'enabled' => $turnstileEnabled === null || $turnstileEnabled === ''
+            ? (is_string($turnstileSiteKey) && trim($turnstileSiteKey) !== '' && is_string($turnstileSecretKey) && trim($turnstileSecretKey) !== '')
+            : filter_var($turnstileEnabled, FILTER_VALIDATE_BOOL),
     ],
 
 ];

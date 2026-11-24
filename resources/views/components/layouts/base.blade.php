@@ -1,4 +1,4 @@
-@props (['titulo' => 'Frota · PF'])
+@props (['titulo' => 'Frota · PF', 'referrer' => 'no-referrer'])
 @php
     $nomeSistema = $sistemaConfig->nome_sistema ?? 'Frota · PF';
     $temaUsuario = match ($preferenciasUsuario->tema ?? 'dispositivo') {
@@ -17,7 +17,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <meta name="referrer" content="no-referrer" />
+    <meta name="referrer" content="{{ $referrer }}" />
     <link rel="icon" href="{{ asset('images/logo/favicon.svg') }}" type="image/svg+xml" />
     <link rel="alternate icon" href="{{ asset('images/logo/favicon.ico') }}" />
     <title>{{ $titulo }} · {{ $nomeSistema }}</title>
@@ -41,6 +41,7 @@
         })();
     </script>
     @vite (['resources/css/app.css', 'resources/js/app.js'])
+    {{ $head ?? '' }}
 </head>
 <body>
     <a href="#main-content" class="skip-link">Pular para o conteúdo</a>

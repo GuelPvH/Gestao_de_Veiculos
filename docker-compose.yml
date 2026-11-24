@@ -32,6 +32,9 @@ services:
             SESSION_ENCRYPT: 'true'
             MAIL_MAILER: '${MAIL_MAILER:-log}'
             LOG_CHANNEL: stderr
+            TURNSTILE_ENABLED: '${TURNSTILE_ENABLED:-}'
+            TURNSTILE_SITE_KEY: '${TURNSTILE_SITE_KEY:-}'
+            TURNSTILE_SECRET_KEY: '${TURNSTILE_SECRET_KEY:-}'
         restart: unless-stopped
         ports:
             - '127.0.0.1:${APP_PORT:-8080}:8080'
