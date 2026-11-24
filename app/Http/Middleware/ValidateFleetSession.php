@@ -9,6 +9,7 @@ use App\Services\Authorization\RequestAccessReader;
 use App\Support\RequestState;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
@@ -58,7 +59,17 @@ class ValidateFleetSession
 
             return $proximo($requisicao);
         }
-        app(RequestAccessReader::class)->load($requisicao, $vinculo, app(AccessContext::class));
+        if ($requisicao->routeIs('profiles.index', 'profiles.select')) {
+            /** @var Collection<int, \stdClass> $semPermissoes */
+            $semPermissoes = collect();
+            app(AccessContext::class)->load($vinculo, $semPermissoes);
+            $apresentacao = $requisicao->attributes->get('fleet.presentation');
+            if (is_array($apresentacao) && ($apresentacao['system'] ?? null) instanceof \stdClass && ($apresentacao['preferences'] ?? null) instanceof \stdClass) {
+                View::share(['sistemaConfig' => $apresentacao['system'], 'preferenciasUsuario' => $apresentacao['preferences']]);
+            }
+        } else {
+            app(RequestAccessReader::class)->load($requisicao, $vinculo, app(AccessContext::class));
+        }
         $configuracao = RequestState::record($requisicao, 'fleet.configuration');
         $fuso = $configuracao ? $configuracao->fuso_horario : DB::table('configuracao_sistema')->where('id', 1)->value('fuso_horario');
         config(['fleet.timezone' => in_array($fuso, timezone_identifiers_list(), true) ? $fuso : 'America/Porto_Velho']);

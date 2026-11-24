@@ -203,9 +203,9 @@ if (panel) {
         announce('ended');
     });
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') sync(true);
+        if (document.visibilityState === 'visible') sync(false);
     });
-    addEventListener('focus', () => sync(true));
+    addEventListener('focus', () => sync(false));
     setInterval(tick, 1000);
     setInterval(sync, 30000);
     try {

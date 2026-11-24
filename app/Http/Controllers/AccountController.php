@@ -15,15 +15,18 @@ use Illuminate\View\View;
 
 class AccountController extends Controller
 {
-    public function index(AccessContext $acesso, FleetReadRepository $leituras): View
+    public function index(Request $requisicao, AccessContext $acesso, FleetReadRepository $leituras): View
     {
-        $usuario = CurrentUser::get();
+        $usuario = CurrentUser::get($requisicao);
         $usuarioId = Value::integer($usuario->getAuthIdentifier());
         $unidadeId = Value::integer($acesso->requireLink()->unidade_id);
         abort_unless($acesso->can('conta', 'consultar', $usuarioId, $unidadeId), 403);
         $sessoes = DB::table('sessoes')->where('usuario_id', $usuarioId)->orderByDesc('id')->limit(20)->get(['id', 'criado_em', 'ultima_atividade_em', 'expira_em', 'encerrada_em', 'motivo_encerramento']);
-        $preferencias = DB::table('preferencias_usuario')->where('usuario_id', $usuarioId)->first(['tema', 'itens_por_pagina', 'notificacoes_internas'])
-            ?? (object) ['tema' => 'dispositivo', 'itens_por_pagina' => 10, 'notificacoes_internas' => 1];
+        $apresentacao = $requisicao->attributes->get('fleet.presentation');
+        $preferencias = is_array($apresentacao) && ($apresentacao['preferences'] ?? null) instanceof \stdClass
+            ? $apresentacao['preferences']
+            : (DB::table('preferencias_usuario')->where('usuario_id', $usuarioId)->first(['tema', 'itens_por_pagina', 'notificacoes_internas'])
+                ?? (object) ['tema' => 'dispositivo', 'itens_por_pagina' => 10, 'notificacoes_internas' => 1]);
         $podeEditar = $acesso->can('conta', 'editar', $usuarioId, $unidadeId);
 
         return view('account.index', compact('usuario', 'sessoes', 'leituras', 'preferencias', 'podeEditar'));

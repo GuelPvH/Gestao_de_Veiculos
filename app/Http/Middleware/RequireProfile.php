@@ -101,31 +101,37 @@ class RequireProfile
             usort($menu, fn (array $a, array $b): int => Value::integer(($metadadosPorRota[$a['route']] ?? null)->ordem ?? PHP_INT_MAX) <=> Value::integer(($metadadosPorRota[$b['route']] ?? null)->ordem ?? PHP_INT_MAX));
         }
 
-        $sistemaConfig = (object) ['nome_sistema' => 'Frota · PF', 'nome_orgao' => 'PF', 'sigla_orgao' => 'PF', 'logo_arquivo_id' => null];
-        $preferenciasUsuario = (object) ['tema' => 'dispositivo', 'itens_por_pagina' => 10, 'notificacoes_internas' => 1];
-        try {
-            $usuarioId = Value::integer($acesso->link()->usuario_id);
-            $apresentacao = DB::table('configuracao_sistema as c')
-                ->leftJoin('preferencias_usuario as p', 'p.usuario_id', '=', DB::raw($usuarioId))
-                ->where('c.id', 1)
-                ->first(['c.nome_sistema', 'c.nome_orgao', 'c.sigla_orgao', 'c.logo_arquivo_id', 'p.tema', 'p.itens_por_pagina', 'p.notificacoes_internas']);
-            if ($apresentacao !== null) {
-                $sistemaConfig = (object) [
-                    'nome_sistema' => trim(Value::string($apresentacao->nome_sistema ?? '')) ?: 'Frota · PF',
-                    'nome_orgao' => Value::nullableString($apresentacao->nome_orgao),
-                    'sigla_orgao' => Value::nullableString($apresentacao->sigla_orgao),
-                    'logo_arquivo_id' => $apresentacao->logo_arquivo_id !== null ? Value::integer($apresentacao->logo_arquivo_id) : null,
-                ];
-                if ($apresentacao->tema !== null) {
-                    $preferenciasUsuario = (object) [
-                        'tema' => Value::string($apresentacao->tema),
-                        'itens_por_pagina' => Value::integer($apresentacao->itens_por_pagina ?? 10) ?: 10,
-                        'notificacoes_internas' => Value::integer($apresentacao->notificacoes_internas ?? 1),
+        $apresentacaoCache = $requisicao->attributes->get('fleet.presentation');
+        if (is_array($apresentacaoCache) && ($apresentacaoCache['system'] ?? null) instanceof \stdClass && ($apresentacaoCache['preferences'] ?? null) instanceof \stdClass) {
+            $sistemaConfig = $apresentacaoCache['system'];
+            $preferenciasUsuario = $apresentacaoCache['preferences'];
+        } else {
+            $sistemaConfig = (object) ['nome_sistema' => 'Frota · PF', 'nome_orgao' => 'PF', 'sigla_orgao' => 'PF', 'logo_arquivo_id' => null];
+            $preferenciasUsuario = (object) ['tema' => 'dispositivo', 'itens_por_pagina' => 10, 'notificacoes_internas' => 1];
+            try {
+                $usuarioId = Value::integer($acesso->link()->usuario_id);
+                $apresentacao = DB::table('configuracao_sistema as c')
+                    ->leftJoin('preferencias_usuario as p', 'p.usuario_id', '=', DB::raw($usuarioId))
+                    ->where('c.id', 1)
+                    ->first(['c.nome_sistema', 'c.nome_orgao', 'c.sigla_orgao', 'c.logo_arquivo_id', 'p.tema', 'p.itens_por_pagina', 'p.notificacoes_internas']);
+                if ($apresentacao !== null) {
+                    $sistemaConfig = (object) [
+                        'nome_sistema' => trim(Value::string($apresentacao->nome_sistema ?? '')) ?: 'Frota · PF',
+                        'nome_orgao' => Value::nullableString($apresentacao->nome_orgao),
+                        'sigla_orgao' => Value::nullableString($apresentacao->sigla_orgao),
+                        'logo_arquivo_id' => $apresentacao->logo_arquivo_id !== null ? Value::integer($apresentacao->logo_arquivo_id) : null,
                     ];
+                    if ($apresentacao->tema !== null) {
+                        $preferenciasUsuario = (object) [
+                            'tema' => Value::string($apresentacao->tema),
+                            'itens_por_pagina' => Value::integer($apresentacao->itens_por_pagina ?? 10) ?: 10,
+                            'notificacoes_internas' => Value::integer($apresentacao->notificacoes_internas ?? 1),
+                        ];
+                    }
                 }
+            } catch (Throwable) {
+                // Fixtures mínimos sem todas as colunas de apresentação mantêm os padrões.
             }
-        } catch (Throwable) {
-            // Fixtures mínimos sem todas as colunas de apresentação mantêm os padrões.
         }
 
         View::share([

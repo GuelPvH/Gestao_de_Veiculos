@@ -131,14 +131,38 @@ class RecordController extends Controller
         $viagensMonitoramento = [];
         $podeRegistrarPosicao = false;
         if ($codigo === 'monitoring' && $this->acesso->can('rastreamento', 'ver_localizacao', null, Value::integer($dados->__unit))) {
-            $trajeto = DB::table('vw_trajetos_observados')->where('veiculo_id', $registro)->orderByDesc('ocorrido_em')->limit(200)->get(['ocorrido_em', 'fonte', 'latitude', 'longitude', 'velocidade_kmh', 'descricao']);
-            $instalacaoAtiva = DB::table('veiculo_rastreadores as vr')
-                ->join('rastreadores as rt', 'rt.id', '=', 'vr.rastreador_id')
-                ->where('vr.veiculo_id', $registro)->whereNull('vr.removido_em')
-                ->first(['vr.id as instalacao_id', 'vr.instalado_em', 'rt.id as rastreador_id', 'rt.provedor', 'rt.identificador_externo', 'rt.tipo', 'rt.modelo', 'rt.ativo']);
-            $viagensMonitoramento = DB::table('viagens')
-                ->where('veiculo_id', $registro)->whereIn('situacao', ['em_andamento', 'concluida'])
-                ->orderByDesc('id')->limit(30)->pluck('protocolo', 'id')->all();
+            $trajetoSub = DB::query()->fromSub(
+                DB::table('vw_trajetos_observados')->where('veiculo_id', $registro)->orderByDesc('ocorrido_em')->limit(200)
+                    ->selectRaw("'track' as kind, 0 as ord, ocorrido_em as a, fonte as b, latitude as c, longitude as d, velocidade_kmh as e, descricao as f, NULL as g"),
+                'trk',
+            );
+            $trackerSub = DB::query()->fromSub(
+                DB::table('veiculo_rastreadores as vr')
+                    ->join('rastreadores as rt', 'rt.id', '=', 'vr.rastreador_id')
+                    ->where('vr.veiculo_id', $registro)->whereNull('vr.removido_em')->limit(1)
+                    ->selectRaw("'tracker' as kind, vr.id as ord, vr.instalado_em as a, rt.id as b, rt.provedor as c, rt.identificador_externo as d, rt.tipo as e, rt.modelo as f, rt.ativo as g"),
+                'ins',
+            );
+            $tripsSub = DB::query()->fromSub(
+                DB::table('viagens')
+                    ->where('veiculo_id', $registro)->whereIn('situacao', ['em_andamento', 'concluida'])
+                    ->orderByDesc('id')->limit(30)
+                    ->selectRaw("'trip' as kind, id as ord, protocolo as a, NULL as b, NULL as c, NULL as d, NULL as e, NULL as f, NULL as g"),
+                'trp',
+            );
+            $linhas = $trajetoSub->unionAll($trackerSub)->unionAll($tripsSub)->get();
+            $trajeto = $linhas->where('kind', 'track')->sortByDesc('a')
+                ->map(fn (\stdClass $row): \stdClass => (object) [
+                    'ocorrido_em' => $row->a, 'fonte' => $row->b, 'latitude' => $row->c, 'longitude' => $row->d, 'velocidade_kmh' => $row->e, 'descricao' => $row->f,
+                ])->values();
+            $instalacaoRow = $linhas->firstWhere('kind', 'tracker');
+            $instalacaoAtiva = $instalacaoRow instanceof \stdClass ? (object) [
+                'instalacao_id' => $instalacaoRow->ord, 'instalado_em' => $instalacaoRow->a, 'rastreador_id' => $instalacaoRow->b,
+                'provedor' => $instalacaoRow->c, 'identificador_externo' => $instalacaoRow->d, 'tipo' => $instalacaoRow->e,
+                'modelo' => $instalacaoRow->f, 'ativo' => $instalacaoRow->g,
+            ] : null;
+            $viagensMonitoramento = $linhas->where('kind', 'trip')->sortByDesc(fn (\stdClass $row): int => Value::integer($row->ord))
+                ->mapWithKeys(fn (\stdClass $row): array => [Value::integer($row->ord) => Value::string($row->a)])->all();
             $podeRegistrarPosicao = $this->acesso->can('frota', 'gerenciar', null, Value::integer($dados->__unit))
                 || $this->acesso->can('viagens', 'registrar_ocorrencia', null, Value::integer($dados->__unit));
         }
@@ -156,8 +180,11 @@ class RecordController extends Controller
         }
 
         $motoristaUsuario = null;
+        $vinculos = collect();
         if ($codigo === 'users') {
-            $motoristaUsuario = DB::table('motoristas')->where('usuario_id', $registro)->first(['usuario_id', 'numero_cnh', 'categoria_cnh', 'categorias_autorizadas', 'validade_cnh', 'ativo']);
+            $detalhesUsuario = app(AdminReadRepository::class)->userDetails($registro);
+            $motoristaUsuario = $detalhesUsuario['driver'];
+            $vinculos = $detalhesUsuario['links'];
         }
 
         $custosManutencao = null;
@@ -179,7 +206,7 @@ class RecordController extends Controller
 
         $credencial = $codigo === 'users' ? $requisicao->session()->pull('fleet.temporary_credential.'.$registro) : null;
 
-        return view('records.show', ['codigoTemporario' => is_string($credencial) ? Crypt::decryptString($credencial) : null, 'codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->sole()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $detalhes['eventos'], 'leituras' => $this->leituras, 'vistoria' => $detalhes['vistoria'] ?? collect(), 'ocorrencias' => $detalhes['ocorrencias'] ?? collect(), 'pneus' => $detalhes['pneus'] ?? collect(), 'trajeto' => $trajeto, 'instalacaoAtiva' => $instalacaoAtiva, 'viagensMonitoramento' => $viagensMonitoramento, 'podeRegistrarPosicao' => $podeRegistrarPosicao, 'documentosVeiculo' => $documentosVeiculo, 'podeGerenciarDocumentos' => $podeGerenciarDocumentos, 'motoristaUsuario' => $motoristaUsuario, 'mensagens' => $mensagens, 'vinculos' => $codigo === 'users' ? app(AdminReadRepository::class)->links($registro) : collect(), 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'rotasPerfil' => $codigo === 'roles' ? app(AdminReadRepository::class)->routeOptions($registro) : [], 'requisitosRota' => $codigo === 'technical-routes' ? app(AdminReadRepository::class)->routeRequirements($registro) : collect(), 'arquivos' => $detalhes['arquivos'], 'comprovantes' => $comprovantes, 'conferencias' => $conferencias, 'podeBaixarComprovante' => $podeBaixarComprovante, 'custosManutencao' => $custosManutencao, 'versaoManutencao' => $versaoManutencao, 'podeGerenciarItens' => $podeGerenciarItens, 'podeVincularDespesa' => $podeVincularDespesa, 'despesasManutencao' => $despesasManutencao]);
+        return view('records.show', ['codigoTemporario' => is_string($credencial) ? Crypt::decryptString($credencial) : null, 'codigo' => $codigo, 'tela' => $this->leituras->definition($codigo), 'registro' => $dados, 'valores' => $this->leituras->rows($codigo, collect([$dados]))->sole()['valores'], 'operacoes' => $this->operacoes->allowed($codigo, $dados), 'eventos' => $detalhes['eventos'], 'leituras' => $this->leituras, 'vistoria' => $detalhes['vistoria'] ?? collect(), 'ocorrencias' => $detalhes['ocorrencias'] ?? collect(), 'pneus' => $detalhes['pneus'] ?? collect(), 'trajeto' => $trajeto, 'instalacaoAtiva' => $instalacaoAtiva, 'viagensMonitoramento' => $viagensMonitoramento, 'podeRegistrarPosicao' => $podeRegistrarPosicao, 'documentosVeiculo' => $documentosVeiculo, 'podeGerenciarDocumentos' => $podeGerenciarDocumentos, 'motoristaUsuario' => $motoristaUsuario, 'mensagens' => $mensagens, 'vinculos' => $vinculos, 'permissoes' => $codigo === 'roles' ? app(AdminReadRepository::class)->matrix($registro) : collect(), 'rotasPerfil' => $codigo === 'roles' ? app(AdminReadRepository::class)->routeOptions($registro) : [], 'requisitosRota' => $codigo === 'technical-routes' ? app(AdminReadRepository::class)->routeRequirements($registro) : collect(), 'arquivos' => $detalhes['arquivos'], 'comprovantes' => $comprovantes, 'conferencias' => $conferencias, 'podeBaixarComprovante' => $podeBaixarComprovante, 'custosManutencao' => $custosManutencao, 'versaoManutencao' => $versaoManutencao, 'podeGerenciarItens' => $podeGerenciarItens, 'podeVincularDespesa' => $podeVincularDespesa, 'despesasManutencao' => $despesasManutencao]);
     }
 
     public function create(Request $requisicao): View

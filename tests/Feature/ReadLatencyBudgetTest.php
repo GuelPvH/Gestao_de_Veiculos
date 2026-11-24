@@ -237,5 +237,24 @@ class ReadLatencyBudgetTest extends TestCase
         $this->assertCount(2, $requestQueries, 'Solicitação aprovável: uma leitura autorizada e uma leitura agrupada de histórico, anexos, veículos e motoristas.');
         $this->assertArrayHasKey('veiculosDisponiveis', $requestDetails);
         $this->assertArrayHasKey('motoristasDisponiveis', $requestDetails);
+
+        ReadFixture::profile(2);
+        $monitoringRequest = Request::create('/monitoramento/1');
+        $monitoringRoute = (new Route('GET', '/monitoramento/{registro}', fn () => null))->defaults('tela', 'monitoring');
+        $monitoringRoute->bind($monitoringRequest);
+        $monitoringRequest->setRouteResolver(fn () => $monitoringRoute);
+        [$monitoringView, $monitoringQueries] = $this->measured(fn () => app(RecordController::class)->show($monitoringRequest, 1));
+        $this->assertCount(2, $monitoringQueries, 'Monitoramento: uma leitura autorizada e uma leitura agrupada de trajeto, rastreador e viagens.');
+        $this->assertSame(1, (int) $monitoringView->getData()['registro']->id);
+
+        ReadFixture::profile(4);
+        $userRequest = Request::create('/administracao/usuarios/1');
+        $userRequest->setLaravelSession($this->app['session']->driver());
+        $userRoute = (new Route('GET', '/administracao/usuarios/{registro}', fn () => null))->defaults('tela', 'users');
+        $userRoute->bind($userRequest);
+        $userRequest->setRouteResolver(fn () => $userRoute);
+        [$userView, $userQueries] = $this->measured(fn () => app(RecordController::class)->show($userRequest, 1));
+        $this->assertCount(2, $userQueries, 'Usuário: uma leitura autorizada e uma leitura agrupada de motorista e vínculos.');
+        $this->assertSame(1, (int) $userView->getData()['registro']->id);
     }
 }

@@ -21,7 +21,10 @@ services:
             DB_DATABASE: '${DB_DATABASE:?Configure DB_DATABASE no arquivo privado}'
             DB_USERNAME: '${DB_USERNAME:?Configure DB_USERNAME no arquivo privado}'
             DB_PASSWORD: '${DB_PASSWORD:?Configure DB_PASSWORD no arquivo privado}'
-            CACHE_STORE: database
+            DB_PERSISTENT: '${DB_PERSISTENT:-true}'
+            DB_EMULATE_PREPARES: '${DB_EMULATE_PREPARES:-true}'
+            CACHE_STORE: '${CACHE_STORE:-database}'
+            CACHE_LIMITER_STORE: '${CACHE_LIMITER_STORE:-file}'
             SESSION_DRIVER: file
             QUEUE_CONNECTION: database
             FLEET_RECOVERY_QUEUE_CONNECTION: database

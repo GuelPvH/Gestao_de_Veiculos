@@ -363,7 +363,15 @@ class ProfilesCompletionTest extends TestCase
         $this->assertNotNull($config->logo_arquivo_id);
 
         $this->get(route('configuration.logo'))->assertOk();
-        $this->get(route('dashboard'))->assertOk()->assertSee('Frota PF · Rondônia')->assertSee(route('configuration.logo'), false);
+        $logoHeaders = $this->get(route('configuration.logo'))->headers->get('Cache-Control', '');
+        $this->assertStringContainsString('private', $logoHeaders);
+        $this->assertStringContainsString('max-age=3600', $logoHeaders);
+        $this->assertStringNotContainsString('no-store', $logoHeaders);
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Frota PF · Rondônia')
+            ->assertSee(route('configuration.logo'), false)
+            ->assertHeader('Cache-Control', 'max-age=0, no-store, private');
 
         $this->post(route('configuration.update'), [
             'nome_sistema' => 'Frota PF · Rondônia',
