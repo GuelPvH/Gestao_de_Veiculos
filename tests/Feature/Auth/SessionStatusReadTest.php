@@ -125,4 +125,69 @@ class SessionStatusReadTest extends TestCase
         $this->getJson('/fast-page-probe')->assertStatus(401)->assertJsonPath('state', 'SESSION_ENDED');
         $this->assertDatabaseHas('sessoes', ['id' => 1, 'motivo_encerramento' => 'revogacao']);
     }
+
+    public function test_profile_selection_uses_fast_path_without_transactions_or_permissions_read(): void
+    {
+        $this->withoutVite();
+        $initialActivity = DB::table('sessoes')->value('ultima_atividade_em');
+        $queries = [];
+        $transactions = 0;
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = strtolower($query->sql);
+        });
+        $this->app['events']->listen(TransactionBeginning::class, function () use (&$transactions): void {
+            $transactions++;
+        });
+
+        Auth::forgetGuards();
+        $this->get('/selecionar-perfil')->assertOk();
+
+        $this->assertSame(0, $transactions, 'A tela de seleção de perfil ativa não deve abrir transação nem lock.');
+        $this->assertCount(1, array_filter($queries, fn ($sql) => str_contains($sql, 'from "usuarios"')));
+        $this->assertCount(1, array_filter($queries, fn ($sql) => str_contains($sql, 'from "vw_vinculos_ativos"')));
+        $this->assertCount(0, array_filter($queries, fn ($sql) => str_contains($sql, 'vw_permissoes_efetivas')));
+        $this->assertCount(0, array_filter($queries, fn ($sql) => str_starts_with($sql, 'update "sessoes"')));
+        $this->assertSame($initialActivity, DB::table('sessoes')->value('ultima_atividade_em'));
+
+        // Após o intervalo configurado, a atividade é gravada sem transação nem locks.
+        $this->travel(61)->seconds();
+        $queries = [];
+        $transactions = 0;
+        Auth::forgetGuards();
+        $this->get('/selecionar-perfil')->assertOk();
+        $this->assertSame(0, $transactions);
+        $this->assertCount(1, array_filter($queries, fn ($sql) => str_starts_with($sql, 'update "sessoes"')));
+
+        // Revogação ainda fecha a sessão imediatamente sob transação.
+        DB::table('vw_vinculos_ativos')->delete();
+        Auth::forgetGuards();
+        $this->get('/selecionar-perfil')->assertRedirect('/entrar');
+        $this->assertDatabaseHas('sessoes', ['id' => 1, 'motivo_encerramento' => 'revogacao']);
+    }
+
+    public function test_require_profile_reuses_presentation_data_from_session_reader(): void
+    {
+        DB::statement('CREATE TABLE rotas_sistema (id INTEGER PRIMARY KEY, caminho TEXT, metodo_http TEXT, modulo_codigo TEXT, ativa INTEGER, visivel_menu INTEGER, implementada INTEGER, protegida INTEGER, ordem INTEGER)');
+        DB::statement('CREATE TABLE rota_permissoes (rota_id INTEGER, modulo_codigo TEXT, acao_codigo TEXT)');
+        DB::table('preferencias_usuario')->insert(['usuario_id' => 1, 'tema' => 'escuro', 'itens_por_pagina' => 20, 'notificacoes_internas' => 0]);
+        Route::middleware(['web', 'auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])
+            ->get('/fast-profile-probe', fn () => response()->json([
+                'sistema' => view()->shared('sistemaConfig')->nome_sistema,
+                'tema' => view()->shared('preferenciasUsuario')->tema,
+            ]));
+
+        $queries = [];
+        DB::listen(function ($query) use (&$queries): void {
+            $queries[] = strtolower($query->sql);
+        });
+
+        Auth::forgetGuards();
+        $this->getJson('/fast-profile-probe')
+            ->assertOk()
+            ->assertJsonPath('sistema', 'Frota · PF')
+            ->assertJsonPath('tema', 'escuro');
+
+        $this->assertCount(1, array_filter($queries, fn ($sql) => str_contains($sql, 'configuracao_sistema')));
+        $this->assertCount(1, array_filter($queries, fn ($sql) => str_contains($sql, 'preferencias_usuario')));
+    }
 }

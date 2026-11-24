@@ -41,7 +41,7 @@ class ConfigurationController extends Controller
 
         return Storage::disk('local')->response($chave, Value::nullableString($logo->nome_original), [
             'Content-Type' => Value::string($logo->tipo_mime),
-            'Cache-Control' => 'private, max-age=300',
+            'Cache-Control' => 'private, max-age=3600',
         ]);
     }
 

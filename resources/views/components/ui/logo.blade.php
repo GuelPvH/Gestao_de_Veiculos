@@ -38,7 +38,7 @@
     <span class="logo-visible">
         @if ($temLogoPersonalizado)
             <img
-                src="{{ route('configuration.logo') }}"
+                src="{{ route('configuration.logo', ['v' => $sistemaConfig->logo_arquivo_id]) }}"
                 alt="{{ $nomeSistema }}"
                 width="200"
                 height="45"

@@ -14,8 +14,10 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
+use RuntimeException;
 use Throwable;
 
 class AuthController extends Controller
@@ -70,8 +72,8 @@ class AuthController extends Controller
         $requisicao->session()->regenerate();
         try {
             $vinculos = $sessoes->links((int) $usuario->id);
-            $audit->record('login_sucesso', (int) $usuario->id, 'usuarios', (int) $usuario->id, $requisicao);
             if ($vinculos->isEmpty()) {
+                $audit->record('login_sucesso', (int) $usuario->id, 'usuarios', (int) $usuario->id, $requisicao);
                 if ($usuario->estado_identidade === 'ativa' && $usuario->deve_trocar_senha && Cpf::normalize($usuario->identificador) !== null) {
                     Auth::logout();
                     $requisicao->session()->invalidate();
@@ -83,10 +85,10 @@ class AuthController extends Controller
                 return redirect()->route('access.restricted');
             }
             $sessoes->start($requisicao, $usuario, $vinculos);
-            $atual = User::query()->find($usuario->id);
-            if (! $atual || ! hash_equals($usuario->getAuthPassword(), $atual->getAuthPassword())) {
+            $senhaAtual = DB::table('usuarios')->where('id', $usuario->id)->value('senha_hash');
+            if (! is_string($senhaAtual) || ! hash_equals($usuario->getAuthPassword(), $senhaAtual)) {
                 $sessoes->end($requisicao, (int) $usuario->id);
-                throw new \RuntimeException('Credencial alterada durante o acesso.');
+                throw new RuntimeException('Credencial alterada durante o acesso.');
             }
         } catch (Throwable $error) {
             if ($error instanceof QueryException || $error instanceof \PDOException) {

@@ -2,6 +2,9 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Cache;
+use Throwable;
+
 final class BrandLogo
 {
     /** @var array{logotipo: ?string, subtitulo: ?string}|null */
@@ -17,7 +20,23 @@ final class BrandLogo
         }
 
         $caminho = public_path('images/logo/horizontal-claro.svg');
-        $conteudo = is_file($caminho) ? file_get_contents($caminho) : false;
+        $mtime = is_file($caminho) ? filemtime($caminho) : false;
+        if ($mtime === false) {
+            return self::$paths = ['logotipo' => null, 'subtitulo' => null];
+        }
+
+        $chave = 'fleet:brand-logo:horizontal:'.$mtime;
+        try {
+            $cached = Cache::store('file')->get($chave);
+            if (is_array($cached) && array_key_exists('logotipo', $cached) && array_key_exists('subtitulo', $cached)) {
+                /** @var array{logotipo: ?string, subtitulo: ?string} $cached */
+                return self::$paths = $cached;
+            }
+        } catch (Throwable) {
+            // Segue para leitura direta se o cache em arquivo não estiver disponível.
+        }
+
+        $conteudo = file_get_contents($caminho);
         if (! is_string($conteudo) || $conteudo === '') {
             return self::$paths = ['logotipo' => null, 'subtitulo' => null];
         }
@@ -29,6 +48,12 @@ final class BrandLogo
             ? $matchSub[1]
             : null;
 
-        return self::$paths = ['logotipo' => $logotipo, 'subtitulo' => $subtitulo];
+        $paths = ['logotipo' => $logotipo, 'subtitulo' => $subtitulo];
+        try {
+            Cache::store('file')->put($chave, $paths, 86400);
+        } catch (Throwable) {
+        }
+
+        return self::$paths = $paths;
     }
 }

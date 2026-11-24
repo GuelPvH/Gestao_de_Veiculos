@@ -16,6 +16,11 @@ class FleetUserProvider extends EloquentUserProvider
             if ($request->routeIs('session.status')) {
                 return app(SessionStatusReader::class)->user($request, Value::integer($identifier));
             }
+            if ($request->routeIs('profiles.index', 'profiles.select')
+                && in_array('fleet.session', $request->route()?->gatherMiddleware() ?? [], true)
+                && is_array($request->session()->get('fleet_session'))) {
+                return app(SessionStatusReader::class)->profileUser($request, Value::integer($identifier));
+            }
             if (! $request->routeIs('session.reauthenticate', 'profiles.index', 'profiles.select')
                 && in_array('fleet.session', $request->route()?->gatherMiddleware() ?? [], true)
                 && is_array($request->session()->get('fleet_session'))) {

@@ -131,6 +131,54 @@ class AdminReadRepository
     }
 
     /**
+     * @return array{driver: ?stdClass, links: Collection<int, stdClass>}
+     */
+    public function userDetails(int $id): array
+    {
+        $driverQuery = DB::table('motoristas')
+            ->where('usuario_id', $id)
+            ->limit(1)
+            ->selectRaw("'driver' as kind, usuario_id as a, numero_cnh as b, categoria_cnh as c, categorias_autorizadas as d, validade_cnh as e, ativo as f, NULL as g, NULL as h");
+        $linksQuery = DB::table('usuario_perfis as v')
+            ->join('perfis as p', 'p.id', '=', 'v.perfil_id')
+            ->join('unidades as u', 'u.id', '=', 'v.unidade_id')
+            ->where('v.usuario_id', $id)
+            ->orderByDesc('v.id')
+            ->selectRaw("'link' as kind, v.id as a, v.unidade_id as b, p.nome as c, p.ativo as d, u.nome as e, v.vigente_desde as f, v.vigente_ate as g, v.ativo as h");
+        $rows = DB::query()->fromSub($driverQuery, 'drv')
+            ->unionAll(DB::query()->fromSub($linksQuery, 'lnk'))
+            ->get();
+
+        $driverRow = $rows->firstWhere('kind', 'driver');
+        $driver = $driverRow instanceof stdClass ? (object) [
+            'usuario_id' => $driverRow->a,
+            'numero_cnh' => $driverRow->b,
+            'categoria_cnh' => $driverRow->c,
+            'categorias_autorizadas' => $driverRow->d,
+            'validade_cnh' => $driverRow->e,
+            'ativo' => $driverRow->f,
+        ] : null;
+        /** @var Collection<int, stdClass> $links */
+        $links = $rows->where('kind', 'link')
+            ->sortByDesc(fn (stdClass $row): int => Value::integer($row->a))
+            ->map(function (stdClass $row): stdClass {
+                $item = new stdClass;
+                $item->id = $row->a;
+                $item->unidade_id = $row->b;
+                $item->perfil = $row->c;
+                $item->perfil_ativo = $row->d;
+                $item->unidade = $row->e;
+                $item->vigente_desde = $row->f;
+                $item->vigente_ate = $row->g;
+                $item->ativo = $row->h;
+
+                return $item;
+            })->values();
+
+        return ['driver' => $driver, 'links' => $links];
+    }
+
+    /**
      * @return array<array-key, mixed>
      */
     public function assignableRoles(): array

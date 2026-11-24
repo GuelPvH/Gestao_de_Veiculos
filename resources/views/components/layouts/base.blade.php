@@ -48,6 +48,19 @@
     @auth
         @if (request()->attributes->has("fleet.session"))
             <x-auth.session-modal />
+            <script type="speculationrules">
+                {
+                    "prefetch": [
+                        {
+                            "source": "document",
+                            "where": {
+                                "selector_matches": ".fleet-sidebar nav a[href]"
+                            },
+                            "eagerness": "moderate"
+                        }
+                    ]
+                }
+            </script>
         @endif
     @endauth
     <x-ui.modal id="discard-changes" titulo="Descartar alterações?">
