@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Auth\FleetSession;
 use App\Services\Auth\SecurityAudit;
+use App\Services\Auth\TurnstileVerifier;
 use App\Support\Cpf;
 use App\Support\CurrentUser;
 use App\Support\Value;
@@ -22,12 +23,15 @@ use Throwable;
 
 class AuthController extends Controller
 {
-    public function login(): View
+    public function login(TurnstileVerifier $turnstile): View
     {
-        return view('auth.login');
+        return view('auth.login', [
+            'turnstileAtivo' => $turnstile->isEnabled() && $turnstile->siteKey() !== '',
+            'turnstileSiteKey' => $turnstile->siteKey(),
+        ]);
     }
 
-    public function authenticate(Request $requisicao, FleetSession $sessoes, SecurityAudit $audit): RedirectResponse
+    public function authenticate(Request $requisicao, FleetSession $sessoes, SecurityAudit $audit, TurnstileVerifier $turnstile): RedirectResponse
     {
         $entrada = $requisicao->input('identificador');
         $cpf = is_string($entrada) ? Cpf::normalize($entrada) : null;
@@ -42,6 +46,15 @@ class AuthController extends Controller
         RateLimiter::hit($chaveIp, 60);
         /** @var array<string, mixed> $dados */
         $dados = $requisicao->validate(['identificador' => ['required', 'string', 'max:100'], 'senha' => ['required', 'string', 'max:256']]);
+        if ($turnstile->isEnabled()) {
+            $tokenTurnstile = $requisicao->input('cf-turnstile-response');
+            if (! is_string($tokenTurnstile) || trim($tokenTurnstile) === '') {
+                return back()->withErrors(['cf-turnstile-response' => 'Complete a verificação de segurança antes de acessar.'])->onlyInput('identificador');
+            }
+            if (! $turnstile->verify($tokenTurnstile, $requisicao->ip())) {
+                return back()->withErrors(['cf-turnstile-response' => 'Falha na verificação de segurança. Tente novamente.'])->onlyInput('identificador');
+            }
+        }
         try {
             $sucesso = Auth::attempt([
                 'identificador' => $cpf === null ? $identificador : Cpf::storedIdentifiers($cpf),

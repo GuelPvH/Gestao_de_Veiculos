@@ -1,4 +1,12 @@
-<x-layouts.base titulo="Acesso">
+<x-layouts.base
+    titulo="Acesso"
+    :referrer="($turnstileAtivo ?? false) ? 'strict-origin-when-cross-origin' : 'no-referrer'"
+>
+    @if (! empty($turnstileAtivo))
+        <x-slot:head>
+            <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+        </x-slot:head>
+    @endif
     <main class="auth-page" id="main-content" tabindex="-1">
         <section class="auth-hero" aria-label="Gestão da frota">
             <x-ui.logo variante="horizontal" superficie="azul" :entrada="true" />
@@ -23,6 +31,19 @@
                         maxlength="100"
                     />
                     <x-forms.password />
+                    @if (! empty($turnstileAtivo))
+                        <div class="mb-3">
+                            <div
+                                class="cf-turnstile"
+                                data-sitekey="{{ $turnstileSiteKey }}"
+                                data-language="pt-BR"
+                                data-theme="auto"
+                            ></div>
+                            @error ('cf-turnstile-response')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
                     <button type="submit" class="btn btn-primary w-100">Acessar</button><x-ui.loading />
                 </form>
                 <a href="{{ route('recovery.index') }}" class="mt-3">Esqueci minha senha</a>

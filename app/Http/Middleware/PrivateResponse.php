@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Auth\TurnstileVerifier;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,7 +19,10 @@ class PrivateResponse
             $resposta->headers->set('Cache-Control', 'private, no-store, max-age=0');
             $resposta->headers->set('Pragma', 'no-cache');
         }
-        $resposta->headers->set('Referrer-Policy', 'no-referrer');
+        $referrer = $requisicao->routeIs('access.index', 'login') && app(TurnstileVerifier::class)->isEnabled()
+            ? 'strict-origin-when-cross-origin'
+            : 'no-referrer';
+        $resposta->headers->set('Referrer-Policy', $referrer);
         $resposta->headers->set('X-Content-Type-Options', 'nosniff');
         $resposta->headers->set('X-Frame-Options', 'SAMEORIGIN');
 

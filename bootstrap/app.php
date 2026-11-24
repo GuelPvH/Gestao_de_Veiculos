@@ -46,7 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(fn () => route('dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->dontFlash(['senha', 'senha_atual', 'nova_senha', 'nova_senha_confirmation', 'senha_temporaria', 'senha_temporaria_confirmation', 'token', 'password', 'password_confirmation']);
+        $exceptions->dontFlash(['senha', 'senha_atual', 'nova_senha', 'nova_senha_confirmation', 'senha_temporaria', 'senha_temporaria_confirmation', 'token', 'password', 'password_confirmation', 'cf-turnstile-response']);
         $exceptions->map(function (PDOException $erro): Throwable {
             if (! in_array(request()->route('area'), ['users', 'roles', 'technical-routes'], true)
                 && ! request()->routeIs('configuration.update', 'configuration.export')) {
