@@ -109,6 +109,7 @@
         nome="valor_declarado"
         rotulo="Valor declarado"
         tipo="number"
+        :valor="$registro->valor ?? ''"
         :obrigatorio="true"
         min="0.01"
         step="0.01"
