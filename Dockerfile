@@ -100,8 +100,6 @@ RUN install -d -m 775 -o www-data -g www-data \
 USER www-data
 
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
-    CMD curl --fail --silent "http://127.0.0.1:${PORT}/up" || exit 1
 
 ENTRYPOINT ["/var/www/html/docker/app/entrypoint.sh"]
 CMD ["apache2-foreground"]
