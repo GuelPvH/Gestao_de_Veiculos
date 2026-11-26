@@ -84,4 +84,23 @@ class TicketWorkflowTest extends TestCase
         $this->assertSame($antes, DB::table('arquivos')->count());
         $this->assertSame([], Storage::disk('local')->allFiles('anexos'));
     }
+
+    public function test_servidor_can_filter_own_tickets_by_period_and_order_and_prefill_context(): void
+    {
+        $base = (array) DB::table('chamados')->where('id', 1)->first();
+        DB::table('chamados')->where('id', 1)->update(['protocolo' => 'CHAM-DIA-5', 'criado_em' => '2026-10-05 12:00:00']);
+        DB::table('chamados')->insert(array_replace($base, ['id' => 4, 'protocolo' => 'CHAM-DIA-6', 'criado_em' => '2026-10-06 14:00:00']));
+
+        $this->get(route('tickets.index', ['de' => '2026-10-06', 'ate' => '2026-10-06', 'ordem' => 'antigos']))
+            ->assertOk()
+            ->assertSee('CHAM-DIA-6')
+            ->assertDontSee('CHAM-DIA-5')
+            ->assertDontSee('QA-TICKETS-2')
+            ->assertSee('Ordenação')
+            ->assertSee('A partir de');
+
+        $this->get(route('tickets.create', ['pagina_contexto' => '/financeiro/multas']))
+            ->assertOk()
+            ->assertSee('value="/financeiro/multas"', false);
+    }
 }

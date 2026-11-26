@@ -85,7 +85,7 @@ class TicketController extends Controller
         ]);
     }
 
-    public function create(TicketService $chamados): View
+    public function create(Request $requisicao, TicketService $chamados): View
     {
         abort_unless($chamados->canCreate(), 403);
 
@@ -93,6 +93,7 @@ class TicketController extends Controller
             'acao' => 'create', 'chamado' => null, 'titulo' => 'Novo chamado',
             'categorias' => DB::table('categorias_chamado')->where('ativa', 1)->pluck('nome', 'id')->all(),
             'atendentes' => [],
+            'paginaContexto' => Value::string($requisicao->query('pagina_contexto', '')),
         ]);
     }
 
