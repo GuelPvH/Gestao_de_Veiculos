@@ -32,6 +32,7 @@
                 <x-forms.field
                     nome="pagina_contexto"
                     rotulo="Página relacionada (opcional)"
+                    :valor="$paginaContexto ?? ''"
                     maxlength="255"
                     nota="Informe apenas um caminho interno, como /solicitacoes."
                 />
