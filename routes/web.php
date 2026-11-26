@@ -83,8 +83,12 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::post('/administracao/rotas/novo', [AdminController::class, 'storeRoute'])->defaults('tela', 'technical-routes')->defaults('area', 'technical-routes')->defaults('operacao', 'store')->name('technical-routes.store');
     Route::post('/administracao/rotas/{registro}/edit', [AdminController::class, 'updateRoute'])->whereNumber('registro')->defaults('tela', 'technical-routes')->defaults('area', 'technical-routes')->defaults('operacao', 'update')->name('technical-routes.update');
     Route::get('/apresentacao', [ReviewController::class, 'index'])->name('review.index');
+    Route::get('/financeiro/multas', [FineController::class, 'index'])->defaults('tela', 'fines')->name('fines.index');
+    Route::get('/financeiro/multas/novo', [FineController::class, 'create'])->defaults('tela', 'fines')->name('fines.create');
     Route::post('/financeiro/multas/novo', [FineController::class, 'store'])->defaults('tela', 'fines')->name('fines.store');
     Route::get('/financeiro/multas/{registro}/comprovantes/{comprovante}', [FineController::class, 'download'])->whereNumber('registro')->whereNumber('comprovante')->defaults('tela', 'fines')->name('fines.download');
+    Route::get('/financeiro/multas/{registro}', [FineController::class, 'show'])->whereNumber('registro')->defaults('tela', 'fines')->name('fines.show');
+    Route::get('/financeiro/multas/{registro}/{acao}', [FineController::class, 'operation'])->whereNumber('registro')->where('acao', 'edit|assign|proof|verify|correct|settle|dispute|cancel')->defaults('tela', 'fines')->name('fines.operation');
     Route::post('/financeiro/multas/{registro}/{acao}', [FineController::class, 'perform'])->whereNumber('registro')->where('acao', 'edit|assign|proof|verify|correct|settle|dispute|cancel')->defaults('tela', 'fines')->name('fines.perform');
     foreach (['expenses' => 'financeiro/despesas', 'fuel' => 'financeiro/abastecimentos', 'maintenance' => 'financeiro/manutencoes'] as $screen => $path) {
         Route::post('/'.$path.'/novo', [FinanceController::class, 'store'])->defaults('tela', $screen)->name($screen.'.store');
@@ -109,7 +113,7 @@ Route::middleware(['auth', 'fleet.session', 'fleet.profile', 'fleet.enabled'])->
     Route::post('/financeiro/pneus/{registro}/descartar', [TyreController::class, 'discard'])->whereNumber('registro')->defaults('acao', 'discard')->name('tyres.discard');
 
     foreach (config('screens') as $codigo => $tela) {
-        if (in_array($codigo, ['tickets', 'vehicles', 'requests', 'trips', 'monitoring'], true)) {
+        if (in_array($codigo, ['fines', 'tickets', 'vehicles', 'requests', 'trips', 'monitoring'], true)) {
             continue;
         }
         Route::get('/'.$tela['url'], [RecordController::class, 'index'])->defaults('tela', $codigo)->name($codigo.'.index');

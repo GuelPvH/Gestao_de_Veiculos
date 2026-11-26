@@ -213,4 +213,40 @@ class FineWorkflowTest extends TestCase
         $this->post(route('fines.perform', ['registro' => 1, 'acao' => 'assign']), array_replace($dados, ['viagem_id' => 1]))
             ->assertRedirect(route('fines.show', 1));
     }
+
+    public function test_servidor_can_list_own_fines_dispute_and_open_prefilled_proof_form(): void
+    {
+        ReadFixture::profile(1);
+        DB::table('multas')->where('id', 1)->update(['situacao' => 'aguardando_comprovante', 'responsabilidade_atual_id' => 1]);
+        DB::table('vw_multas_detalhadas')->where('id', 1)->update(['situacao' => 'aguardando_comprovante', 'responsavel_id' => 1]);
+
+        $this->get(route('fines.index', ['situacao' => 'aguardando_comprovante', 'de' => '2026-10-05', 'ate' => '2026-10-05', 'ordem' => 'recentes']))
+            ->assertOk()
+            ->assertSee('QA-FINES-1')
+            ->assertDontSee('QA-FINES-2')
+            ->assertDontSee('QA-FINES-3');
+
+        $this->get(route('fines.create'))->assertForbidden();
+        $this->get(route('fines.show', 2))->assertNotFound();
+
+        $this->get(route('fines.operation', ['registro' => 1, 'acao' => 'proof']))
+            ->assertOk()
+            ->assertSee('Comprovante de pagamento')
+            ->assertSee('12345.67');
+
+        $this->get(route('fines.operation', ['registro' => 1, 'acao' => 'dispute']))
+            ->assertOk()
+            ->assertSee('Contestar multa');
+
+        $runner = Mockery::mock(ProcedureRunner::class);
+        $runner->shouldReceive('call')->once()->with('sp_alterar_situacao_multa', [
+            10, 1, 1, 'contestada', 'Condutor não estava em deslocamento no horário.',
+        ])->andReturn([]);
+        app()->instance(ProcedureRunner::class, $runner);
+
+        $this->post(route('fines.perform', ['registro' => 1, 'acao' => 'dispute']), [
+            'versao' => 1,
+            'justificativa' => 'Condutor não estava em deslocamento no horário.',
+        ])->assertRedirect(route('fines.show', 1))->assertSessionHas('status', 'Contestação registrada.');
+    }
 }
