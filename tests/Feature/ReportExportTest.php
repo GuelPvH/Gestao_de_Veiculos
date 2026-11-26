@@ -115,4 +115,62 @@ class ReportExportTest extends TestCase
         $acesso->load($acesso->link());
         $this->post(route('reports.export'), ['modulo' => 'tickets', 'campos' => ['protocolo']])->assertForbidden();
     }
+
+    public function test_servidor_can_preview_and_export_own_fines_with_status_filter(): void
+    {
+        Storage::fake('local');
+        ReadFixture::profile(1);
+
+        $this->get(route('reports.index', [
+            'modulo' => 'fines',
+            'etapa' => 'previa',
+            'campos' => ['protocolo', 'valor'],
+            'situacao' => 'aguardando_comprovante',
+        ]))->assertOk()
+            ->assertSee('QA-FINES-1')
+            ->assertDontSee('QA-FINES-2')
+            ->assertDontSee('QA-FINES-3');
+
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')->once()->withArgs(fn ($nome) => $nome === 'sp_preparar_exportacao')
+            ->andReturnUsing(function ($nome, $dados): array {
+                $this->assertSame(10, $dados[0]);
+                $this->assertSame('multas', $dados[1]);
+                $this->assertSame('pdf', $dados[2]);
+                $this->assertSame([1], json_decode($dados[7], true));
+                DB::table('exportacoes')->insert([
+                    'id' => 2, 'solicitado_por_vinculo_id' => 10, 'modulo_codigo' => 'multas',
+                    'formato' => 'pdf', 'situacao' => 'previa', 'filtros' => '{}', 'alcance_aplicado' => 'proprios',
+                    'total_registros' => 1,
+                ]);
+                foreach (json_decode($dados[6], true) as $indice => $campoId) {
+                    DB::table('exportacao_campos')->insert([
+                        'exportacao_id' => 2, 'campo_id' => $campoId, 'modulo_codigo' => 'multas', 'ordem' => $indice + 1,
+                    ]);
+                }
+                DB::table('exportacao_registros')->insert([
+                    'exportacao_id' => 2, 'ordem' => 1, 'multa_id' => 1,
+                    'snapshot' => json_encode(['protocolo' => 'QA-FINES-1', 'valor' => '12345.67']),
+                ]);
+
+                return [['exportacao_id' => 2]];
+            });
+        $procedimentos->shouldReceive('call')->once()->with('sp_enfileirar_exportacao', [10, 2])
+            ->andReturnUsing(function (): array {
+                DB::table('exportacoes')->where('id', 2)->update(['situacao' => 'fila']);
+
+                return [];
+            });
+        $procedimentos->shouldReceive('call')->once()->withArgs(fn ($nome) => $nome === 'sp_auditar')->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+
+        $this->post(route('reports.export'), [
+            'modulo' => 'fines',
+            'campos' => ['protocolo', 'valor'],
+            'situacao' => 'aguardando_comprovante',
+            'formato' => 'pdf',
+        ])->assertRedirect(route('reports.download', 2));
+
+        $this->get(route('reports.download', 2))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+    }
 }
