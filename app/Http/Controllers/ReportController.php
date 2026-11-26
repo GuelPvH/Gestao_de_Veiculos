@@ -38,7 +38,8 @@ class ReportController extends Controller
         $validado = $requisicao->validate([
             'campos' => 'nullable|array|min:1', 'campos.*' => ['string', Rule::in($campos->pluck('chave')->all())],
             'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de',
-            'q' => 'nullable|string|max:150',
+            'q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60',
+            'ordem' => ['nullable', Rule::in(['recentes', 'antigos'])],
             'formato' => ['nullable', Rule::in(['csv', 'pdf'])], 'page' => 'nullable|integer|min:1',
             'etapa' => ['nullable', Rule::in(['catalogo', 'preparar', 'previa'])],
         ]);
@@ -68,7 +69,8 @@ class ReportController extends Controller
         $validado = $requisicao->validate([
             'campos' => 'required|array|min:1|max:30', 'campos.*' => ['required', 'string', 'distinct', Rule::in($campos->pluck('chave')->all())],
             'de' => 'nullable|date_format:Y-m-d', 'ate' => 'nullable|date_format:Y-m-d|after_or_equal:de',
-            'q' => 'nullable|string|max:150',
+            'q' => 'nullable|string|max:150', 'situacao' => 'nullable|string|max:60',
+            'ordem' => ['nullable', Rule::in(['recentes', 'antigos'])],
             'formato' => ['nullable', Rule::in(['csv', 'pdf'])],
         ]);
         $id = $exportador->create($codigo, Value::strings($validado['campos']), $validado, $campos);
