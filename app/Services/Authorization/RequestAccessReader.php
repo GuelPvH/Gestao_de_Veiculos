@@ -11,7 +11,14 @@ use stdClass;
 
 class RequestAccessReader
 {
-    public const ROUTE_RECOVERY = ['technical-routes.index', 'technical-routes.show', 'technical-routes.operation', 'technical-routes.update'];
+    public const ROUTE_RECOVERY = [
+        'technical-routes.index',
+        'technical-routes.show',
+        'technical-routes.operation',
+        'technical-routes.update',
+        'technical-routes.permissions.store',
+        'technical-routes.permissions.destroy',
+    ];
 
     public function load(Request $request, ?stdClass $link, AccessContext $access): void
     {
@@ -89,14 +96,38 @@ class RequestAccessReader
             }
         } else {
             $areas[] = $path;
-            if (str_starts_with($path, '/financeiro/pneus') || $path === '/financeiro/resumo') {
+            $legados = [
+                '/despesas' => '/financeiro/despesas',
+                '/multas' => '/financeiro/multas',
+                '/usuarios' => '/administracao/usuarios',
+                '/perfis' => '/administracao/perfis',
+                '/rotas' => '/administracao/rotas',
+                '/auditoria' => '/administracao/auditoria',
+                '/configuracao' => '/administracao/configuracoes',
+            ];
+            if (isset($legados[$path])) {
+                $areas[] = $legados[$path];
+            }
+            if (str_starts_with($path, '/financeiro/pneus') || $path === '/financeiro/resumo' || $path === '/administracao/cadastros/fornecedores') {
                 $areas[] = '/financeiro/despesas';
             }
-            if (str_starts_with($path, '/monitoramento/rastreadores') || str_starts_with($path, '/monitoramento/')) {
+            if (str_starts_with($path, '/motoristas') || str_starts_with($path, '/agenda')) {
+                $areas[] = '/frota';
+            }
+            if (str_starts_with($path, '/monitoramento/') || $path === '/historico-trajetos') {
                 $areas[] = '/monitoramento';
             }
-            if (str_starts_with($path, '/administracao/cadastros') && ! str_starts_with($path, '/administracao/cadastros/fornecedores')) {
+            if (str_starts_with($path, '/administracao/cadastros') && $path !== '/administracao/cadastros/fornecedores') {
                 $areas[] = '/administracao/configuracoes';
+            }
+            if (str_starts_with($path, '/administracao/configuracoes/')) {
+                $areas[] = '/administracao/configuracoes';
+            }
+            if (str_starts_with($path, '/relatorios/')) {
+                $areas[] = '/relatorios';
+            }
+            if (str_starts_with($path, '/notificacoes/')) {
+                $areas[] = '/notificacoes';
             }
         }
         $areas = array_values(array_unique($areas));

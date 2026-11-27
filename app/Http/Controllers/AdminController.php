@@ -109,4 +109,18 @@ class AdminController extends Controller
 
         return redirect()->route('technical-routes.show', $registro)->with('status', 'Metadados da rota atualizados.');
     }
+
+    public function storeRoutePermission(AdminActionRequest $requisicao, AdminWorkflow $fluxo, int $registro): RedirectResponse
+    {
+        $fluxo->addRoutePermission($registro, $requisicao->validated());
+
+        return redirect()->route('technical-routes.show', $registro)->with('status', 'Requisito de permissão adicionado à rota.');
+    }
+
+    public function destroyRoutePermission(AdminActionRequest $requisicao, AdminWorkflow $fluxo, int $registro): RedirectResponse
+    {
+        $fluxo->removeRoutePermission($registro, $requisicao->validated());
+
+        return redirect()->route('technical-routes.show', $registro)->with('status', 'Requisito de permissão removido da rota.');
+    }
 }

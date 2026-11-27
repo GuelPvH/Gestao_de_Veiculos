@@ -8,9 +8,23 @@ use stdClass;
 
 final class SingleQueryPaginator
 {
-    /** @return LengthAwarePaginator<int, stdClass> */
-    public static function paginate(Builder $query, int $perPage = 10): LengthAwarePaginator
+    public static function preferredPerPage(int $default = 10): int
     {
+        if (! app()->bound('request')) {
+            return $default;
+        }
+        $value = request()->attributes->get('fleet.per_page');
+        if (is_int($value) && in_array($value, [10, 20, 50, 100], true)) {
+            return $value;
+        }
+
+        return $default;
+    }
+
+    /** @return LengthAwarePaginator<int, stdClass> */
+    public static function paginate(Builder $query, ?int $perPage = null): LengthAwarePaginator
+    {
+        $perPage ??= self::preferredPerPage(10);
         $page = LengthAwarePaginator::resolveCurrentPage();
         // The scalar count is independent of each result row. Keep filters and
         // authorization in both reads, but send them in one database request.

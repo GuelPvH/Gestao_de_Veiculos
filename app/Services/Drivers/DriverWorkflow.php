@@ -55,7 +55,7 @@ class DriverWorkflow
         }
         $consulta->orderBy('u.nome')->orderBy('m.usuario_id');
 
-        return SingleQueryPaginator::paginate($consulta, 10);
+        return SingleQueryPaginator::paginate($consulta, SingleQueryPaginator::preferredPerPage(10));
     }
 
     public function find(int $usuarioId): stdClass

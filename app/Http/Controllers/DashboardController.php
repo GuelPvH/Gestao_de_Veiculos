@@ -52,11 +52,12 @@ class DashboardController extends Controller
         }
         /** @var Collection<string, \stdClass> $rotasMenu */
         $rotasMenu = app(Request::class)->attributes->get('fleet.menu_routes', collect());
-        $despesasRota = $rotasMenu->get('/financeiro/despesas');
-        $despesasAtiva = $despesasRota === null || (bool) $despesasRota->ativa;
-        $rotaAtiva = function (string $caminho, bool $subareaDespesas = false) use ($rotasMenu, $despesasAtiva): bool {
-            if ($subareaDespesas && ! $despesasAtiva) {
-                return false;
+        $rotaAtiva = function (string $caminho, ?string $areaPai = null) use ($rotasMenu): bool {
+            if ($areaPai !== null) {
+                $pai = $rotasMenu->get($areaPai);
+                if ($pai !== null && ! (bool) $pai->ativa) {
+                    return false;
+                }
             }
             $rota = $rotasMenu->get($caminho);
 
@@ -65,17 +66,17 @@ class DashboardController extends Controller
         $atalhos = [];
         $atividade = null;
         foreach ($telas as $codigo => $tela) {
-            if ($rotaAtiva('/'.$tela['url'], $tela['module'] === 'despesas')) {
+            if ($rotaAtiva('/'.$tela['url'], $tela['module'] === 'despesas' ? '/financeiro/despesas' : null)) {
                 $atalhos[] = ['title' => $tela['title'], 'route' => ($tela['route'] ?? $codigo).'.index', 'icon' => $tela['icon']];
             }
             if ($codigo === 'maintenance' && $acesso->level('despesas') > 0) {
-                if (Route::has('tyres.index') && $rotaAtiva('/financeiro/pneus', true)) {
+                if (Route::has('tyres.index') && $rotaAtiva('/financeiro/pneus', '/financeiro/despesas')) {
                     $atalhos[] = ['title' => 'Pneus', 'route' => 'tyres.index', 'icon' => 'car-front'];
                 }
-                if (min($acesso->level('despesas', 'consultar'), $acesso->level('despesas', 'ver_valores')) >= 2 && Route::has('finance.summary') && $rotaAtiva('/financeiro/resumo', true)) {
+                if (min($acesso->level('despesas', 'consultar'), $acesso->level('despesas', 'ver_valores')) >= 2 && Route::has('finance.summary') && $rotaAtiva('/financeiro/resumo', '/financeiro/despesas')) {
                     $atalhos[] = ['title' => 'Resumo financeiro', 'route' => 'finance.summary', 'icon' => 'file-text'];
                 }
-                if (Route::has('catalogs.suppliers') && $rotaAtiva('/administracao/cadastros/fornecedores', true)) {
+                if (Route::has('catalogs.suppliers') && $rotaAtiva('/administracao/cadastros/fornecedores', '/financeiro/despesas')) {
                     $atalhos[] = ['title' => 'Fornecedores', 'route' => 'catalogs.suppliers', 'icon' => 'clipboard-list'];
                 }
             }
@@ -88,13 +89,13 @@ class DashboardController extends Controller
                 $atividade = ['tela' => $tela, 'codigo' => $codigo, 'registros' => $leituras->rows($codigo, $registros, $campos)];
             }
         }
-        if (($acesso->level('frota') > 0 || $acesso->level('usuarios') > 0) && Route::has('drivers.index') && $rotaAtiva('/motoristas')) {
+        if (($acesso->level('frota') > 0 || $acesso->level('usuarios') > 0) && Route::has('drivers.index') && $rotaAtiva('/motoristas', '/frota')) {
             $atalhos[] = ['title' => 'Motoristas', 'route' => 'drivers.index', 'icon' => 'car-front'];
         }
-        if (($acesso->level('rastreamento') > 0 || $acesso->can('configuracoes', 'gerenciar')) && Route::has('trackers.index') && $rotaAtiva('/monitoramento/rastreadores')) {
+        if (($acesso->level('rastreamento') > 0 || $acesso->can('configuracoes', 'gerenciar')) && Route::has('trackers.index') && $rotaAtiva('/monitoramento/rastreadores', '/monitoramento')) {
             $atalhos[] = ['title' => 'Rastreadores', 'route' => 'trackers.index', 'icon' => 'map-pinned'];
         }
-        if ($acesso->can('configuracoes') && Route::has('catalogs.index') && $rotaAtiva('/administracao/cadastros')) {
+        if ($acesso->can('configuracoes') && Route::has('catalogs.index') && $rotaAtiva('/administracao/cadastros', '/administracao/configuracoes')) {
             $atalhos[] = ['title' => 'Cadastros auxiliares', 'route' => 'catalogs.index', 'icon' => 'clipboard-list'];
         }
         $periodos = [];

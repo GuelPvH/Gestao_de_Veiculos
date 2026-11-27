@@ -141,7 +141,8 @@
                         rotulo="Justificativa"
                         tipo="textarea"
                         :obrigatorio="true"
-                        maxlength="3000"
+                        :minlength="in_array($codigo, ['users', 'roles', 'technical-routes'], true) ? 5 : 0"
+                        :maxlength="in_array($codigo, ['users', 'roles', 'technical-routes'], true) ? 1000 : 3000"
                     />
                 @endif
             @endif

@@ -328,12 +328,34 @@
                                                     style="width: 180px"
                                                     required
                                                 />
-                                                <input
-                                                    type="hidden"
+                                                <select
                                                     name="unidade_superior_id"
-                                                    value="{{ $item->unidade_superior_id }}"
+                                                    class="form-select form-select-sm"
+                                                    style="width: 150px"
+                                                    aria-label="Unidade superior"
+                                                >
+                                                    <option value="">Sem superior</option>
+                                                    @foreach ($unidadesOpcoes as $uid => $unome)
+                                                        @if ((int) $uid !== (int) $item->id)
+                                                            <option
+                                                                value="{{ $uid }}"
+                                                                @selected ((string) $item->unidade_superior_id === (string) $uid)
+                                                            >
+                                                                {{ $unome }}
+                                                            </option>
+                                                        @endif
+                                                    @endforeach
+                                                </select>
+                                                <input
+                                                    type="text"
+                                                    name="endereco"
+                                                    value="{{ $item->endereco }}"
+                                                    class="form-control form-control-sm"
+                                                    style="width: 170px"
+                                                    maxlength="255"
+                                                    placeholder="Endereço"
+                                                    aria-label="Endereço"
                                                 />
-                                                <input type="hidden" name="endereco" value="{{ $item->endereco }}" />
                                                 <input
                                                     type="text"
                                                     name="cidade"

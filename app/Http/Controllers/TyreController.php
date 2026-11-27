@@ -24,7 +24,7 @@ class TyreController extends Controller
                 })->leftJoin('veiculos as v', 'v.id', '=', 'i.veiculo_id'),
             'despesas', 'consultar', 'd.criado_por', 'd.unidade_id',
         )->select(['p.id', 'p.codigo', 'p.medida', 'p.situacao', 'v.placa'])->orderByDesc('p.id');
-        $records = SingleQueryPaginator::paginate($query, 15);
+        $records = SingleQueryPaginator::paginate($query, SingleQueryPaginator::preferredPerPage(15));
         $link = $access->requireLink();
         $canCreate = $access->can('despesas', 'criar', Value::integer($link->usuario_id), Value::integer($link->unidade_id));
 

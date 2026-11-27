@@ -73,8 +73,11 @@ class ConfigurationController extends Controller
         abort_unless($vinculo !== null, 403);
         $logoFile = $requisicao->file('logo');
         $logoId = $logoFile !== null ? $arquivos->store($logoFile) : null;
+        $alterado = false;
+        $logoAnteriorId = null;
+        $novoLogoAplicado = null;
         try {
-            DB::transaction(function () use ($dados, $vinculo, $procedimentos, $logoId): void {
+            DB::transaction(function () use ($dados, $vinculo, $procedimentos, $logoId, &$alterado, &$logoAnteriorId, &$novoLogoAplicado): void {
                 $atual = DB::table('configuracao_sistema')->where('id', 1)->lockForUpdate()->first([
                     'nome_sistema', 'nome_orgao', 'sigla_orgao', 'fuso_horario', 'sessao_inatividade_minutos', 'limite_sem_comunicacao_minutos', 'logo_arquivo_id',
                 ]);
@@ -88,9 +91,10 @@ class ConfigurationController extends Controller
                 $siglaOrgao = array_key_exists('sigla_orgao', $dados)
                     ? (trim(Value::string($dados['sigla_orgao'] ?? '')) ?: null)
                     : Value::nullableString($atual->sigla_orgao);
+                $logoAnteriorId = $atual->logo_arquivo_id !== null ? Value::integer($atual->logo_arquivo_id) : null;
                 $novoLogoId = $logoId !== null
                     ? $logoId
-                    : (! empty($dados['remover_logo']) ? null : ($atual->logo_arquivo_id !== null ? Value::integer($atual->logo_arquivo_id) : null));
+                    : (! empty($dados['remover_logo']) ? null : $logoAnteriorId);
                 $novos = [
                     'nome_sistema' => $nomeSistema,
                     'nome_orgao' => $nomeOrgao,
@@ -106,18 +110,38 @@ class ConfigurationController extends Controller
                     && $atual->fuso_horario === $novos['fuso_horario']
                     && Value::integer($atual->sessao_inatividade_minutos) === $novos['sessao_inatividade_minutos']
                     && Value::integer($atual->limite_sem_comunicacao_minutos) === $novos['limite_sem_comunicacao_minutos']
-                    && ($atual->logo_arquivo_id !== null ? Value::integer($atual->logo_arquivo_id) : null) === $novos['logo_arquivo_id']) {
+                    && $logoAnteriorId === $novos['logo_arquivo_id']) {
                     return;
                 }
                 $procedimentos->call('sp_exigir_permissao', [Value::integer($vinculo->vinculo_id), 'configuracoes', 'editar', null, null]);
                 DB::table('configuracao_sistema')->where('id', 1)->update($novos);
                 $procedimentos->call('sp_auditar', [Value::integer($vinculo->vinculo_id), 'configuracao_atualizada', 'configuracao_sistema', 1, 'Parâmetros operacionais atualizados.']);
+                $alterado = true;
+                $novoLogoAplicado = $novoLogoId;
             });
         } catch (Throwable $erro) {
             if ($logoId !== null) {
                 $arquivos->discardUnlinked($logoId);
             }
             throw $erro;
+        }
+        if ($alterado && $logoAnteriorId !== null && $logoAnteriorId !== $novoLogoAplicado) {
+            try {
+                $arquivos->discardUnlinked($logoAnteriorId);
+            } catch (Throwable $erro) {
+                report($erro);
+            }
+        }
+        if (! $alterado) {
+            if ($logoId !== null) {
+                try {
+                    $arquivos->discardUnlinked($logoId);
+                } catch (Throwable $erro) {
+                    report($erro);
+                }
+            }
+
+            return redirect()->route('configuration.index')->with('status', 'Nenhuma alteração detectada na configuração.');
         }
         config(['fleet.timezone' => $dados['fuso_horario']]);
 

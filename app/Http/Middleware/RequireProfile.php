@@ -79,15 +79,21 @@ class RequireProfile
             $metadadosPorRota[$nomeRota] = $rotas->get('/'.ltrim($uri, '/'));
         }
         $despesasRota = $rotas->get('/financeiro/despesas');
+        $frotaRota = $rotas->get('/frota');
         $monitoramentoRota = $rotas->get('/monitoramento');
         $configRota = $rotas->get('/administracao/configuracoes');
-        $menu = array_values(array_filter($menu, function (array $item) use ($metadadosPorRota, $despesasRota, $monitoramentoRota, $configRota): bool {
+        $menu = array_values(array_filter($menu, function (array $item) use ($metadadosPorRota, $despesasRota, $frotaRota, $monitoramentoRota, $configRota): bool {
             $rota = $metadadosPorRota[$item['route']] ?? null;
             if (in_array($item['route'], ['fuel.index', 'maintenance.index', 'tyres.index', 'finance.summary', 'catalogs.suppliers'], true)
                 && $despesasRota !== null && ! (bool) $despesasRota->ativa) {
                 return false;
             }
-            if ($item['route'] === 'trackers.index' && $monitoramentoRota !== null && ! (bool) $monitoramentoRota->ativa) {
+            if (in_array($item['route'], ['drivers.index', 'agenda.index'], true)
+                && $frotaRota !== null && ! (bool) $frotaRota->ativa) {
+                return false;
+            }
+            if (in_array($item['route'], ['trackers.index', 'history.index'], true)
+                && $monitoramentoRota !== null && ! (bool) $monitoramentoRota->ativa) {
                 return false;
             }
             if ($item['route'] === 'catalogs.index' && $configRota !== null && ! (bool) $configRota->ativa) {
@@ -133,6 +139,9 @@ class RequireProfile
                 // Fixtures mínimos sem todas as colunas de apresentação mantêm os padrões.
             }
         }
+
+        $itensPorPagina = Value::integer($preferenciasUsuario->itens_por_pagina ?? 10);
+        $requisicao->attributes->set('fleet.per_page', in_array($itensPorPagina, [10, 20, 50, 100], true) ? $itensPorPagina : 10);
 
         View::share([
             'itensMenu' => $menu,

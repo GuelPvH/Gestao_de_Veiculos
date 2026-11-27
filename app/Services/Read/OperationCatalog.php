@@ -103,7 +103,7 @@ class OperationCatalog
                     && $this->acesso->can('usuarios', 'editar', $dono, Value::integer($registro->__unit));
             } elseif ($codigo === 'users' && $acao === 'links') {
                 $valida = (bool) $situacao && $dono !== Value::integer($this->acesso->requireLink()->usuario_id);
-            } elseif ($codigo === 'roles' && in_array($acao, ['duplicate', 'grant'], true)) {
+            } elseif ($codigo === 'roles' && in_array($acao, ['duplicate', 'grant', 'revoke'], true)) {
                 $valida = $this->acesso->can('perfis', $contrato[1]);
             } elseif ($codigo === 'tickets') {
                 $valida = ! in_array($acao, ['respond', 'resolve', 'assign'], true) || $situacao !== 'resolvido';

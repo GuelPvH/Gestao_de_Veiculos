@@ -1,8 +1,23 @@
 @if ($acao === 'temporary')
+    @php ($possuiCpfValido = \App\Support\Cpf::normalize((string) ($registro->identificador ?? '')) !== null)
     <x-ui.alert tom="warning">
         Confirme a identidade do titular antes de emitir e entregar o código. A emissão encerra as sessões do usuário e
         substitui a senha anterior.</x-ui.alert
     >
+    @if (! $possuiCpfValido)
+        <x-ui.alert tom="info">
+            Este usuário ainda usa identificador legado sem CPF. Informe o CPF do titular abaixo para normalizar o
+            cadastro e emitir o código temporário.</x-ui.alert
+        >
+        <x-forms.field
+            nome="identificador"
+            rotulo="CPF do titular"
+            :valor="old('identificador')"
+            :obrigatorio="true"
+            inputmode="numeric"
+            maxlength="14"
+        />
+    @endif
     <x-forms.password nome="senha_atual" rotulo="Sua senha de administrador" />
 @elseif ($acao === 'revoke')
     <x-forms.field nome="vinculo_id" rotulo="Vínculo" tipo="select" :opcoes="$opcoesAdmin" :obrigatorio="true" />
@@ -93,6 +108,7 @@
                     tipo="datetime-local"
                     :valor="old('vigente_desde')"
                     nota="Opcional: se vazio, inicia imediatamente."
+                    data-date-start
                 />
             </div>
             <div class="col-md-6">
@@ -101,6 +117,7 @@
                     rotulo="Vigência até (opcional)"
                     tipo="datetime-local"
                     :valor="old('vigente_ate')"
+                    data-date-end
                 />
             </div>
         </div>

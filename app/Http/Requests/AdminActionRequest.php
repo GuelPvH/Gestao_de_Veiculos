@@ -6,6 +6,7 @@ use App\Services\Admin\TechnicalRouteCatalog;
 use App\Services\Authorization\AccessContext;
 use App\Support\Cpf;
 use App\Support\Value;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -13,13 +14,33 @@ class AdminActionRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-        if ($this->route('area') === 'users' && in_array($this->route('operacao'), ['store', 'update'], true)) {
-            $cpf = Cpf::normalize(Value::string($this->input('identificador')));
-            if ($cpf !== null) {
-                $this->merge(['identificador' => $cpf]);
+        $area = $this->route('area');
+        $operacao = $this->route('operacao');
+        if ($area === 'users' && in_array($operacao, ['store', 'update', 'temporary'], true)) {
+            $entrada = trim(Value::string($this->input('identificador')));
+            if ($entrada !== '') {
+                $cpf = Cpf::normalize($entrada);
+                if ($cpf !== null) {
+                    $this->merge(['identificador' => $cpf]);
+                }
             }
         }
-        if ($this->route('operacao') !== 'store' || $this->route('area') !== 'technical-routes' || ! $this->has('endpoint')) {
+        if ($area === 'users' && $operacao === 'store' && ! empty($this->input('perfil_id')) && trim(Value::string($this->input('vigente_desde'))) === '') {
+            $this->merge([
+                'vigente_desde' => CarbonImmutable::now(config('fleet.timezone'))->format('Y-m-d\TH:i'),
+            ]);
+        }
+        if ($area === 'technical-routes' && in_array($operacao, ['permission-store', 'permission-destroy'], true) && $this->has('combinacao')) {
+            $combinacao = trim(Value::string($this->input('combinacao')));
+            if (str_contains($combinacao, '.')) {
+                [$modulo, $acao] = explode('.', $combinacao, 2);
+                $this->merge([
+                    'modulo_codigo' => $modulo,
+                    'acao_codigo' => $acao,
+                ]);
+            }
+        }
+        if ($operacao !== 'store' || $area !== 'technical-routes' || ! $this->has('endpoint')) {
             return;
         }
         $rota = app(TechnicalRouteCatalog::class)->find(Value::string($this->input('endpoint')));
@@ -42,7 +63,7 @@ class AdminActionRequest extends FormRequest
             'roles.update' => ['perfis', 'editar'],
             'roles.grant', 'roles.revoke' => ['perfis', 'delegar'],
             'technical-routes.store' => ['rotas', 'criar'],
-            'technical-routes.update' => ['rotas', 'editar'],
+            'technical-routes.update', 'technical-routes.permission-store', 'technical-routes.permission-destroy' => ['rotas', 'editar'],
             default => null,
         };
 
@@ -85,6 +106,7 @@ class AdminActionRequest extends FormRequest
                 'ativo' => ['required', 'boolean'], 'justificativa' => ['required', 'string', 'min:5', 'max:1000'],
             ],
             'users.temporary' => [
+                'identificador' => ['nullable', 'string', 'max:100'],
                 'senha_atual' => ['required', 'string', 'max:256'],
                 'justificativa' => ['required', 'string', 'min:5', 'max:1000'],
             ],
@@ -136,6 +158,14 @@ class AdminActionRequest extends FormRequest
                 'ativa' => ['required', 'boolean'], 'visivel_menu' => ['required', 'boolean'],
                 'ordem' => ['required', 'integer', 'between:0,65535'],
                 'justificativa' => ['required', 'string', 'min:5', 'max:1000'],
+            ],
+            'technical-routes.permission-store' => [
+                'modulo_codigo' => ['required', 'string', Rule::exists('modulos', 'codigo')->where('ativo', 1)],
+                'acao_codigo' => ['required', 'string', Rule::exists('modulo_acoes', 'acao_codigo')->where('modulo_codigo', Value::string($this->input('modulo_codigo')))],
+            ],
+            'technical-routes.permission-destroy' => [
+                'modulo_codigo' => ['required', 'string', 'max:40'],
+                'acao_codigo' => ['required', 'string', 'max:40'],
             ],
             default => [],
         };

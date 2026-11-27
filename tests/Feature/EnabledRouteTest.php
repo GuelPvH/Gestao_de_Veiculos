@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\Admin\TechnicalRouteCatalog;
 use App\Services\Authorization\AccessContext;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\ReadFixture;
@@ -138,5 +139,60 @@ class EnabledRouteTest extends TestCase
 
         $this->get(route('vehicles.index'))->assertForbidden()->assertViewIs('errors.disabled');
         $this->assertSame(0, app(AccessContext::class)->level('frota'));
+    }
+
+    public function test_parent_area_disables_subareas_menu_shortcuts_and_legacy_redirects(): void
+    {
+        DB::table('rotas_sistema')->where('caminho', '/frota')->update(['ativa' => 0]);
+        $this->get(route('drivers.index'))->assertForbidden()->assertViewIs('errors.disabled');
+        $this->get(route('agenda.index'))->assertForbidden()->assertViewIs('errors.disabled');
+        $this->get(route('dashboard'))->assertOk()->assertDontSee(route('drivers.index'), false);
+        $menuFrotaOff = collect(view()->shared('itensMenu'))->pluck('route');
+        $this->assertNotContains('drivers.index', $menuFrotaOff);
+        $this->assertNotContains('agenda.index', $menuFrotaOff);
+        DB::table('rotas_sistema')->where('caminho', '/frota')->update(['ativa' => 1]);
+
+        DB::table('rotas_sistema')->where('caminho', '/monitoramento')->update(['ativa' => 0]);
+        $this->get(route('history.index'))->assertForbidden()->assertViewIs('errors.disabled');
+        $this->get(route('trackers.index'))->assertForbidden()->assertViewIs('errors.disabled');
+        $this->get(route('dashboard'))->assertOk()->assertDontSee(route('trackers.index'), false);
+        $menuMonOff = collect(view()->shared('itensMenu'))->pluck('route');
+        $this->assertNotContains('trackers.index', $menuMonOff);
+        $this->assertNotContains('history.index', $menuMonOff);
+        DB::table('rotas_sistema')->where('caminho', '/monitoramento')->update(['ativa' => 1]);
+
+        ReadFixture::profile(3);
+        DB::table('rotas_sistema')->where('caminho', '/financeiro/despesas')->update(['ativa' => 0]);
+        $this->get(route('catalogs.suppliers'))->assertForbidden()->assertViewIs('errors.disabled');
+        $this->get('/despesas')->assertForbidden()->assertViewIs('errors.disabled');
+        DB::table('rotas_sistema')->where('caminho', '/financeiro/despesas')->update(['ativa' => 1]);
+
+        DB::table('rotas_sistema')->where('caminho', '/relatorios')->update(['ativa' => 0]);
+        $this->post(route('reports.export'), [])->assertForbidden();
+        DB::table('rotas_sistema')->where('caminho', '/relatorios')->update(['ativa' => 1]);
+
+        DB::table('rotas_sistema')->where('caminho', '/notificacoes')->update(['ativa' => 0]);
+        $this->post(route('notifications.read', 1), ['versao' => 1])->assertForbidden();
+    }
+
+    public function test_sync_routes_command_covers_all_catalog_routes_without_blocking_authorized_profiles(): void
+    {
+        $this->artisan('fleet:sync-routes')->assertSuccessful();
+        $this->assertSame([], app(TechnicalRouteCatalog::class)->available());
+
+        foreach ([1, 2, 3, 4] as $profile) {
+            ReadFixture::profile($profile);
+            // Logo endpoint has no stored file in the fixture, so 404 proves authorization passed.
+            $this->get(route('configuration.logo'))->assertNotFound();
+        }
+
+        ReadFixture::profile(4);
+        $this->get(route('drivers.index'))->assertOk();
+        $this->get(route('trackers.index'))->assertOk();
+        $this->get(route('catalogs.index'))->assertOk();
+        $this->get(route('catalogs.section', ['tipo' => 'unidades']))->assertOk();
+
+        ReadFixture::profile(3);
+        $this->get(route('catalogs.suppliers'))->assertOk();
     }
 }

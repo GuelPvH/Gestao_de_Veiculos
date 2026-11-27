@@ -468,4 +468,162 @@ class AdminWorkflowTest extends TestCase
             'nome' => 'Perfil Proibido',
         ])->assertForbidden();
     }
+
+    public function test_admin_can_register_multi_auth_routes_and_protected_post_route_without_fk_error(): void
+    {
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')
+            ->withArgs(fn (string $nome): bool => in_array($nome, ['sp_exigir_permissao', 'sp_auditar'], true))
+            ->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+
+        $this->post(route('technical-routes.store'), [
+            'chave' => 'qa.catalogs.store',
+            'nome' => 'Cadastrar item auxiliar',
+            'endpoint' => 'POST /administracao/cadastros/{tipo}',
+            'ativa' => 1,
+            'visivel_menu' => 0,
+            'ordem' => 1100,
+        ])->assertRedirect()->assertSessionHas('status');
+
+        $this->post(route('technical-routes.store'), [
+            'chave' => 'qa.trackers.store',
+            'nome' => 'Cadastrar rastreador',
+            'endpoint' => 'POST /monitoramento/rastreadores',
+            'ativa' => 1,
+            'visivel_menu' => 0,
+            'ordem' => 1110,
+        ])->assertRedirect()->assertSessionHas('status');
+
+        $this->post(route('technical-routes.store'), [
+            'chave' => 'qa.routes.update',
+            'nome' => 'Atualizar rota técnica',
+            'endpoint' => 'POST /administracao/rotas/{registro}/edit',
+            'ativa' => 1,
+            'visivel_menu' => 0,
+            'ordem' => 1120,
+        ])->assertRedirect()->assertSessionHas('status');
+
+        $routesUpdateId = (int) DB::table('rotas_sistema')->where('chave', 'qa.routes.update')->value('id');
+        $this->assertGreaterThan(0, $routesUpdateId);
+
+        $this->post(route('technical-routes.update', $routesUpdateId), [
+            'nome' => 'Atualizar rota desativada',
+            'ativa' => 0,
+            'visivel_menu' => 0,
+            'ordem' => 1130,
+            'justificativa' => 'Tentativa de desativar rota protegida',
+        ])->assertSessionHasErrors('ativa');
+
+        $catalogId = (int) DB::table('rotas_sistema')->where('chave', 'qa.catalogs.store')->value('id');
+        $trackerId = (int) DB::table('rotas_sistema')->where('chave', 'qa.trackers.store')->value('id');
+        $this->assertSame(0, DB::table('rota_permissoes')->whereIn('rota_id', [$catalogId, $trackerId])->count());
+    }
+
+    public function test_admin_can_manage_route_permissions_and_prevent_self_lockout(): void
+    {
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')
+            ->withArgs(fn (string $nome): bool => in_array($nome, ['sp_exigir_permissao', 'sp_auditar'], true))
+            ->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+
+        $this->post(route('technical-routes.permissions.store', 4), [
+            'combinacao' => 'frota.editar',
+        ])->assertRedirect(route('technical-routes.show', 4))->assertSessionHas('status');
+
+        $this->assertDatabaseHas('rota_permissoes', [
+            'rota_id' => 4,
+            'modulo_codigo' => 'frota',
+            'acao_codigo' => 'editar',
+        ]);
+
+        $this->get(route('roles.operation', ['registro' => 1, 'acao' => 'grant', 'rota' => 4]))
+            ->assertOk()
+            ->assertSee('frota / editar');
+
+        $this->post(route('technical-routes.permissions.destroy', 4), [
+            'modulo_codigo' => 'frota',
+            'acao_codigo' => 'editar',
+        ])->assertRedirect(route('technical-routes.show', 4))->assertSessionHas('status');
+
+        $this->assertDatabaseMissing('rota_permissoes', [
+            'rota_id' => 4,
+            'modulo_codigo' => 'frota',
+            'acao_codigo' => 'editar',
+        ]);
+
+        $this->post(route('technical-routes.permissions.store', 10), [
+            'combinacao' => 'frota.consultar',
+        ])->assertSessionHasErrors('acao_codigo');
+    }
+
+    public function test_admin_can_create_user_with_end_date_and_issue_temp_code_for_legacy_user(): void
+    {
+        DB::table('usuarios')->where('id', 1)->update(['senha_hash' => password_hash('SenhaAdminTeste!123', PASSWORD_BCRYPT)]);
+        $procedimentos = Mockery::mock(ProcedureRunner::class);
+        $procedimentos->shouldReceive('call')
+            ->withArgs(fn (string $nome): bool => in_array($nome, ['sp_exigir_permissao', 'sp_auditar'], true))
+            ->andReturn([]);
+        app()->instance(ProcedureRunner::class, $procedimentos);
+
+        $this->post(route('users.store'), [
+            'unidade_id' => 1,
+            'identificador' => '529.982.247-25',
+            'nome' => 'Usuário Com Fim Definido',
+            'perfil_id' => 1,
+            'vigente_desde' => '',
+            'vigente_ate' => '2028-12-31T18:00',
+            'justificativa' => 'Cadastro com início imediato e término definido',
+        ])->assertRedirect()->assertSessionHas('status');
+
+        $criado = DB::table('usuarios')->where('identificador', '52998224725')->first();
+        $this->assertNotNull($criado);
+
+        $this->get(route('users.operation', ['registro' => 2, 'acao' => 'temporary']))
+            ->assertOk()
+            ->assertSee('CPF do titular');
+
+        $this->post(route('users.temporary', 2), [
+            'identificador' => '111.444.777-35',
+            'senha_atual' => 'SenhaAdminTeste!123',
+            'justificativa' => 'Normalização de conta legada para código temporário',
+        ])->assertRedirect(route('users.show', 2))->assertSessionHas('status');
+
+        $this->assertSame('11144477735', DB::table('usuarios')->where('id', 2)->value('identificador'));
+    }
+
+    public function test_roles_revoke_requires_orgao_scope_and_pagination_respects_preference(): void
+    {
+        DB::table('preferencias_usuario')->insert([
+            'usuario_id' => 1,
+            'tema' => 'dispositivo',
+            'itens_por_pagina' => 20,
+            'notificacoes_internas' => 1,
+        ]);
+        for ($i = 4; $i <= 18; $i++) {
+            DB::table('usuarios')->insert([
+                'id' => $i,
+                'unidade_id' => 1,
+                'identificador' => 'pag-'.$i,
+                'nome' => 'Paginado '.$i,
+                'senha_hash' => password_hash('Teste!123456', PASSWORD_BCRYPT, ['cost' => 4]),
+                'ativo' => 1,
+                'deve_trocar_senha' => 0,
+            ]);
+        }
+
+        $listagem = $this->get(route('users.index'))->assertOk();
+        $this->assertSame(20, $listagem->viewData('paginacao')->perPage());
+        $this->assertSame(18, $listagem->viewData('paginacao')->count());
+
+        DB::table('vw_permissoes_efetivas')->where('modulo_codigo', 'perfis')->where('acao_codigo', 'delegar')->update(['nivel_alcance' => 1]);
+        $acesso = app(AccessContext::class);
+        $acesso->load($acesso->link());
+        $this->get(route('roles.show', 1))->assertOk()->assertDontSee(route('roles.operation', ['registro' => 1, 'acao' => 'revoke']), false);
+        $this->post(route('roles.revoke', 1), [
+            'permissao_id' => 1,
+            'confirmar_revogacao' => '1',
+        ])->assertForbidden();
+    }
 }

@@ -18,7 +18,7 @@ class AdminReadRepository
     /** @return LengthAwarePaginator<int, stdClass> */
     public function paginate(Builder $consulta): LengthAwarePaginator
     {
-        return SingleQueryPaginator::paginate($consulta, 10);
+        return SingleQueryPaginator::paginate($consulta, SingleQueryPaginator::preferredPerPage(10));
     }
 
     public function hasAgencyGovernance(): bool
@@ -88,6 +88,20 @@ class AdminReadRepository
     {
         return DB::table('rota_permissoes')->where('rota_id', $rota)->orderBy('acao_codigo')
             ->get(['modulo_codigo', 'acao_codigo']);
+    }
+
+    /** @return array<string, string> */
+    public function moduleActionOptions(): array
+    {
+        return DB::table('modulo_acoes as ma')
+            ->join('modulos as m', 'm.codigo', '=', 'ma.modulo_codigo')
+            ->where('m.ativo', 1)
+            ->orderBy('m.ordem')
+            ->orderBy('ma.acao_codigo')
+            ->get(['ma.modulo_codigo', 'ma.acao_codigo'])
+            ->mapWithKeys(fn (stdClass $row): array => [
+                Value::string($row->modulo_codigo).'.'.Value::string($row->acao_codigo) => Value::string($row->modulo_codigo).' / '.Value::string($row->acao_codigo),
+            ])->all();
     }
 
     /** @return array<int, string> */

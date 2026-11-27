@@ -166,7 +166,7 @@ class FleetReadRepository
         $consulta = $this->select($codigo, $this->filtered($codigo, $filtros, $paraRelatorio), $campos ?? array_keys($tela['columns']));
         $consulta->orderBy($tela['id'] ?? 'r.id', $ordenacao === 'antigos' ? 'asc' : 'desc');
 
-        return SingleQueryPaginator::paginate($consulta, 10);
+        return SingleQueryPaginator::paginate($consulta, SingleQueryPaginator::preferredPerPage(10));
     }
 
     public function record(string $codigo, int $id): stdClass
@@ -295,6 +295,7 @@ class FleetReadRepository
             'datetime' => CarbonImmutable::parse(Value::date($valor), 'UTC')->setTimezone(config('fleet.timezone'))->format('d/m/Y H:i'),
             'date' => CarbonImmutable::parse(Value::date($valor))->format('d/m/Y'),
             'bool' => Value::integer($valor) === 1 ? 'Ativo' : 'Inativo',
+            'yesno' => Value::integer($valor) === 1 ? 'Sim' : 'Não',
             default => str_replace('_', ' ', Value::string($valor)),
         };
     }

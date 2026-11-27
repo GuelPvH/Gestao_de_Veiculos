@@ -78,7 +78,8 @@ class AdminWorkflow
             if (! $ator || ! $this->senhas->verify(Value::string($dados['senha_atual']), Value::string($ator->senha_hash))) {
                 throw ValidationException::withMessages(['senha_atual' => 'Sua senha atual está incorreta.']);
             }
-            $cpf = $this->requireCpf(Value::string($usuario->identificador));
+            $identificadorEntrada = trim(Value::string($dados['identificador'] ?? ''));
+            $cpf = $this->requireCpf($identificadorEntrada !== '' ? $identificadorEntrada : Value::string($usuario->identificador));
             $this->identidades->requireAvailableCpf($cpf, $id);
             $credencial = $this->identidades->temporaryCredential();
             DB::table('usuarios')->where('id', $id)->update($credencial['campos'] + [
@@ -366,7 +367,7 @@ class AdminWorkflow
             $perfil = DB::table('perfis')->where('id', $id)->lockForUpdate()->first(['criado_por']);
             abort_unless($perfil !== null, 404);
             $dono = $perfil->criado_por === null ? null : Value::integer($perfil->criado_por);
-            abort_unless($this->acesso->can('perfis', 'delegar', $dono), 403);
+            abort_unless($this->acesso->can('perfis', 'delegar'), 403);
             $permissao = DB::table('permissoes')->where('id', Value::integer($dados['permissao_id']))->first(['modulo_codigo', 'acao_codigo', 'alcance']);
             abort_unless($permissao !== null, 404);
             $nivel = match ($permissao->alcance) {
@@ -375,7 +376,7 @@ class AdminWorkflow
             $delegavelDireta = $this->acesso->delegationLevel(Value::string($permissao->modulo_codigo), Value::string($permissao->acao_codigo)) >= $nivel;
             $perfilAtivo = Value::integer($this->acesso->requireLink()->perfil_id);
             abort_unless($delegavelDireta || ($this->hasAgencyGovernance() && $id !== $perfilAtivo), 403);
-            $this->requirePermission('perfis', 'delegar', $dono);
+            $this->requirePermission('perfis', 'delegar');
             $excluidos = DB::table('perfil_permissoes')->where('perfil_id', $id)->where('permissao_id', Value::integer($dados['permissao_id']))->delete();
             if ($excluidos !== 1) {
                 throw ValidationException::withMessages(['permissao_id' => 'Esta concessão já foi alterada. Recarregue a página.']);
@@ -396,7 +397,7 @@ class AdminWorkflow
         }
 
         $protegida = in_array($rota['nome'], RequestAccessReader::ROUTE_RECOVERY, true);
-        $this->validateProtectedRoute($protegida, $dados);
+        $this->validateProtectedRoute($protegida, $dados, $rota['metodo'], $rota['caminho']);
 
         return DB::transaction(function () use ($dados, $protegida, $rota): int {
             $this->lockAdmin();
@@ -415,7 +416,7 @@ class AdminWorkflow
                 'ordem' => Value::integer($dados['ordem']),
                 'criado_por' => Value::integer($this->acesso->requireLink()->usuario_id),
             ]);
-            $this->storeRouteRequirement($id, $rota['modulo'], $rota['acao']);
+            $this->storeRouteRequirements($id, $rota['acoes']);
             $this->audit('rota_criada', 'rotas_sistema', $id, 'Metadados e requisitos da rota técnica cadastrados.');
 
             return $id;
@@ -437,7 +438,7 @@ class AdminWorkflow
             $registrada = $this->catalogoRotas->find(Value::string($rota->metodo_http).' '.Value::string($rota->caminho));
             $protegida = Value::integer($rota->protegida) === 1
                 || in_array($registrada['nome'] ?? '', RequestAccessReader::ROUTE_RECOVERY, true);
-            $this->validateProtectedRoute($protegida, $dados);
+            $this->validateProtectedRoute($protegida, $dados, Value::string($rota->metodo_http), Value::string($rota->caminho));
             $this->requirePermission('rotas', 'editar', $dono);
             DB::table('rotas_sistema')->where('id', $id)->update([
                 'nome' => trim(Value::string($dados['nome'])), 'descricao' => ($dados['descricao'] ?? null) ?: null,
@@ -445,19 +446,101 @@ class AdminWorkflow
                 'ordem' => Value::integer($dados['ordem']),
                 'protegida' => (int) $protegida,
             ]);
-            if ($registrada !== null && ! DB::table('rota_permissoes')->where('rota_id', $id)->exists()) {
-                $this->storeRouteRequirement($id, $registrada['modulo'], $registrada['acao']);
+            if ($registrada !== null && $registrada['acoes'] !== [] && ! DB::table('rota_permissoes')->where('rota_id', $id)->exists()) {
+                $this->storeRouteRequirements($id, $registrada['acoes']);
             }
             $this->audit('rota_editada', 'rotas_sistema', $id, Value::string($dados['justificativa']));
         });
     }
 
-    private function storeRouteRequirement(int $id, string $modulo, ?string $acao): void
+    /**
+     * @param  array<string, mixed>  $dados
+     */
+    public function addRoutePermission(int $id, array $dados): void
     {
-        if ($acao !== null) {
+        $this->visible('technical-routes', $id);
+        $modulo = Value::string($dados['modulo_codigo']);
+        $acao = Value::string($dados['acao_codigo']);
+        DB::transaction(function () use ($id, $modulo, $acao): void {
+            $this->lockAdmin();
+            $rota = DB::table('rotas_sistema')->where('id', $id)->lockForUpdate()->first(['id', 'criado_por', 'protegida', 'caminho', 'metodo_http']);
+            abort_unless($rota !== null, 404);
+            $dono = $rota->criado_por === null ? null : Value::integer($rota->criado_por);
+            abort_unless($this->acesso->can('rotas', 'editar', $dono), 403);
+            $this->requirePermission('rotas', 'editar', $dono);
+            if (! DB::table('modulo_acoes')->where('modulo_codigo', $modulo)->where('acao_codigo', $acao)->exists()) {
+                throw ValidationException::withMessages(['acao_codigo' => 'Selecione uma combinação válida de módulo e ação.']);
+            }
+            $registrada = $this->catalogoRotas->find(Value::string($rota->metodo_http).' '.Value::string($rota->caminho));
+            $protegida = Value::integer($rota->protegida) === 1
+                || in_array($registrada['nome'] ?? '', RequestAccessReader::ROUTE_RECOVERY, true);
+            if ($protegida && $this->acesso->level($modulo, $acao) === 0) {
+                throw ValidationException::withMessages(['acao_codigo' => 'Não é permitido adicionar a uma rota protegida uma permissão que seu perfil ativo não possui.']);
+            }
+            if (DB::table('rota_permissoes')->where('rota_id', $id)->where('modulo_codigo', $modulo)->where('acao_codigo', $acao)->exists()) {
+                throw ValidationException::withMessages(['acao_codigo' => 'Esta permissão já está vinculada à rota.']);
+            }
             DB::table('rota_permissoes')->insert([
-                'rota_id' => $id, 'modulo_codigo' => $modulo, 'acao_codigo' => $acao,
+                'rota_id' => $id,
+                'modulo_codigo' => $modulo,
+                'acao_codigo' => $acao,
             ]);
+            $this->audit('rota_permissao_adicionada', 'rotas_sistema', $id, $modulo.'.'.$acao);
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $dados
+     */
+    public function removeRoutePermission(int $id, array $dados): void
+    {
+        $this->visible('technical-routes', $id);
+        $modulo = Value::string($dados['modulo_codigo']);
+        $acao = Value::string($dados['acao_codigo']);
+        DB::transaction(function () use ($id, $modulo, $acao): void {
+            $this->lockAdmin();
+            $rota = DB::table('rotas_sistema')->where('id', $id)->lockForUpdate()->first(['id', 'criado_por']);
+            abort_unless($rota !== null, 404);
+            $dono = $rota->criado_por === null ? null : Value::integer($rota->criado_por);
+            abort_unless($this->acesso->can('rotas', 'editar', $dono), 403);
+            $this->requirePermission('rotas', 'editar', $dono);
+            $removidos = DB::table('rota_permissoes')
+                ->where('rota_id', $id)
+                ->where('modulo_codigo', $modulo)
+                ->where('acao_codigo', $acao)
+                ->delete();
+            if ($removidos !== 1) {
+                throw ValidationException::withMessages(['acao_codigo' => 'Requisito não encontrado para esta rota.']);
+            }
+            $this->audit('rota_permissao_removida', 'rotas_sistema', $id, $modulo.'.'.$acao);
+        });
+    }
+
+    /**
+     * @param  list<array{modulo: string, acao: string}>  $requisitos
+     */
+    private function storeRouteRequirements(int $id, array $requisitos): void
+    {
+        if ($requisitos === []) {
+            return;
+        }
+        $modulos = array_values(array_unique(array_column($requisitos, 'modulo')));
+        $validas = DB::table('modulo_acoes')
+            ->whereIn('modulo_codigo', $modulos)
+            ->get(['modulo_codigo', 'acao_codigo'])
+            ->mapWithKeys(fn (stdClass $row): array => [Value::string($row->modulo_codigo).'.'.Value::string($row->acao_codigo) => true]);
+        $linhas = [];
+        foreach ($requisitos as $req) {
+            if (isset($validas[$req['modulo'].'.'.$req['acao']])) {
+                $linhas[] = [
+                    'rota_id' => $id,
+                    'modulo_codigo' => $req['modulo'],
+                    'acao_codigo' => $req['acao'],
+                ];
+            }
+        }
+        if ($linhas !== []) {
+            DB::table('rota_permissoes')->insertOrIgnore($linhas);
         }
     }
 
@@ -467,9 +550,15 @@ class AdminWorkflow
     }
 
     /** @param array<string, mixed> $dados */
-    private function validateProtectedRoute(bool $protegida, array $dados): void
+    private function validateProtectedRoute(bool $protegida, array $dados, string $metodoHttp = 'GET', string $caminho = '/'): void
     {
-        if ($protegida && (Value::integer($dados['ativa']) !== 1 || Value::integer($dados['visivel_menu']) !== 1)) {
+        if (! $protegida) {
+            return;
+        }
+        if (Value::integer($dados['ativa']) !== 1) {
+            throw ValidationException::withMessages(['ativa' => 'Uma rota administrativa protegida deve permanecer ativa e visível.']);
+        }
+        if ($metodoHttp === 'GET' && ! str_contains($caminho, '{') && Value::integer($dados['visivel_menu']) !== 1) {
             throw ValidationException::withMessages(['ativa' => 'Uma rota administrativa protegida deve permanecer ativa e visível.']);
         }
     }

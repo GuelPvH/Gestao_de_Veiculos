@@ -83,7 +83,7 @@ return [
     'technical-routes' => [
         'title' => 'Rotas técnicas', 'module' => 'rotas', 'icon' => 'route', 'url' => 'administracao/rotas', 'table' => 'rotas_sistema', 'owner' => 'r.criado_por', 'unit' => null,
         'columns' => ['nome' => ['r.nome', 'Nome'], 'caminho' => ['r.caminho', 'Caminho'], 'metodo' => ['r.metodo_http', 'Método'], 'situacao' => ['r.ativa', 'Situação', 'bool']],
-        'details' => ['chave' => ['r.chave', 'Chave'], 'modulo' => ['r.modulo_codigo', 'Módulo'], 'descricao' => ['r.descricao', 'Descrição'], 'implementada' => ['r.implementada', 'Implementação', 'bool'], 'protegida' => ['r.protegida', 'Proteção', 'bool'], 'visivel_menu' => ['r.visivel_menu', 'Visível no menu', 'bool'], 'ordem' => ['r.ordem', 'Ordem de exibição']],
+        'details' => ['chave' => ['r.chave', 'Chave'], 'modulo' => ['r.modulo_codigo', 'Módulo'], 'descricao' => ['r.descricao', 'Descrição'], 'implementada' => ['r.implementada', 'Implementação', 'yesno'], 'protegida' => ['r.protegida', 'Proteção', 'yesno'], 'visivel_menu' => ['r.visivel_menu', 'Visível no menu', 'yesno'], 'ordem' => ['r.ordem', 'Ordem de exibição']],
         'reportColumns' => ['ativa' => ['r.ativa', 'Situação', 'bool']],
         'states' => ['0', '1'], 'stateLabels' => ['0' => 'Desativada', '1' => 'Ativa'], 'actions' => ['edit' => ['Editar metadados', 'editar']], 'create' => true,
     ],

@@ -56,6 +56,9 @@ return Application::configure(basePath: dirname(__DIR__))
             if (($erro->errorInfo[1] ?? null) === 1062) {
                 return ValidationException::withMessages(['operacao' => 'Já existe um registro com os mesmos dados. Recarregue a página e confira os valores.']);
             }
+            if (($erro->errorInfo[1] ?? null) === 1452) {
+                return ValidationException::withMessages(['operacao' => 'Referência inválida para os dados informados. Recarregue a página e tente novamente.']);
+            }
             if (($erro->errorInfo[0] ?? null) !== '45000') {
                 return $erro;
             }

@@ -532,4 +532,82 @@ class ProfilesCompletionTest extends TestCase
             ->assertSee('data-user-theme="dark"', false)
             ->assertSee('(69) 99988-7766');
     }
+
+    public function test_units_and_trackers_full_edition_and_configuration_no_change_and_logo_archive(): void
+    {
+        Storage::fake('local');
+        ReadFixture::profile(4);
+        $this->mockProcedures();
+
+        // Full unit update including superior unit and address
+        $this->post(route('catalogs.update', ['tipo' => 'unidades', 'registro' => 2]), [
+            'unidade_superior_id' => 1,
+            'codigo' => 'QA',
+            'nome' => 'Unidade de teste atualizada',
+            'endereco' => 'Av. Principal, 100',
+            'cidade' => 'Porto Velho',
+            'uf' => 'RO',
+            'ativa' => 1,
+        ])->assertRedirect(route('catalogs.section', ['tipo' => 'unidades']))->assertSessionHas('status');
+
+        $unidade = DB::table('unidades')->where('id', 2)->first();
+        $this->assertSame(1, (int) $unidade->unidade_superior_id);
+        $this->assertSame('Av. Principal, 100', $unidade->endereco);
+
+        // Full tracker update
+        $this->post(route('trackers.store'), [
+            'provedor' => 'SASCAR',
+            'identificador_externo' => 'IMEI-ADMIN-01',
+            'tipo' => 'gps',
+            'modelo' => 'Modelo A',
+            'ativo' => 1,
+        ])->assertRedirect(route('trackers.index'))->assertSessionHas('status');
+        $rastreadorId = (int) DB::table('rastreadores')->where('identificador_externo', 'IMEI-ADMIN-01')->value('id');
+        $this->post(route('trackers.update', $rastreadorId), [
+            'provedor' => 'AUTOTRAC',
+            'identificador_externo' => 'IMEI-ADMIN-01',
+            'tipo' => 'telematica',
+            'modelo' => 'Modelo B Pro',
+            'ativo' => 1,
+        ])->assertRedirect(route('trackers.index'))->assertSessionHas('status');
+        $rastreador = DB::table('rastreadores')->where('id', $rastreadorId)->first();
+        $this->assertSame('AUTOTRAC', $rastreador->provedor);
+        $this->assertSame('Modelo B Pro', $rastreador->modelo);
+
+        // Logo upload & replacement archives previous logo
+        $this->post(route('configuration.update'), [
+            'nome_sistema' => 'Frota PF · Teste',
+            'nome_orgao' => 'PF',
+            'sigla_orgao' => 'PF',
+            'fuso_horario' => 'America/Porto_Velho',
+            'sessao_inatividade_minutos' => 30,
+            'limite_sem_comunicacao_minutos' => 15,
+            'logo' => $this->fakePng('logo1.png'),
+        ])->assertRedirect(route('configuration.index'))->assertSessionHas('status');
+        $logo1Id = (int) DB::table('configuracao_sistema')->where('id', 1)->value('logo_arquivo_id');
+
+        $this->post(route('configuration.update'), [
+            'nome_sistema' => 'Frota PF · Teste',
+            'nome_orgao' => 'PF',
+            'sigla_orgao' => 'PF',
+            'fuso_horario' => 'America/Porto_Velho',
+            'sessao_inatividade_minutos' => 30,
+            'limite_sem_comunicacao_minutos' => 15,
+            'logo' => $this->fakePng('logo2.png'),
+        ])->assertRedirect(route('configuration.index'))->assertSessionHas('status');
+        $this->assertSame('arquivado', DB::table('arquivos')->where('id', $logo1Id)->value('situacao'));
+
+        // Submitting identical values does not call sp_auditar and returns no-change message
+        $noAudit = Mockery::mock(ProcedureRunner::class);
+        $noAudit->shouldNotReceive('call');
+        app()->instance(ProcedureRunner::class, $noAudit);
+        $this->post(route('configuration.update'), [
+            'nome_sistema' => 'Frota PF · Teste',
+            'nome_orgao' => 'PF',
+            'sigla_orgao' => 'PF',
+            'fuso_horario' => 'America/Porto_Velho',
+            'sessao_inatividade_minutos' => 30,
+            'limite_sem_comunicacao_minutos' => 15,
+        ])->assertRedirect(route('configuration.index'))->assertSessionHas('status', 'Nenhuma alteração detectada na configuração.');
+    }
 }

@@ -154,6 +154,81 @@
                                                     {{ $item->ativo ? 'Desativar' : 'Ativar' }}
                                                 </button>
                                             </form>
+                                            <details class="w-100">
+                                                <summary class="btn btn-outline-secondary btn-sm">Editar</summary>
+                                                <form
+                                                    method="post"
+                                                    action="{{ route('trackers.update', $item->id) }}"
+                                                    class="row g-2 mt-1 p-2 border rounded"
+                                                >
+                                                    @csrf
+                                                    <div class="col-md-4">
+                                                        <input
+                                                            type="text"
+                                                            name="provedor"
+                                                            value="{{ $item->provedor }}"
+                                                            class="form-control form-control-sm"
+                                                            maxlength="100"
+                                                            aria-label="Provedor"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <input
+                                                            type="text"
+                                                            name="identificador_externo"
+                                                            value="{{ $item->identificador_externo }}"
+                                                            class="form-control form-control-sm"
+                                                            maxlength="100"
+                                                            aria-label="Identificador externo"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <select
+                                                            name="tipo"
+                                                            class="form-select form-select-sm"
+                                                            aria-label="Tipo"
+                                                        >
+                                                            <option value="gps" @selected ($item->tipo === 'gps')>GPS</option>
+                                                            <option value="telematica" @selected ($item->tipo === 'telematica')>
+                                                                Telemática
+                                                            </option>
+                                                            <option value="outro" @selected ($item->tipo === 'outro')>
+                                                                Outro
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <input
+                                                            type="text"
+                                                            name="modelo"
+                                                            value="{{ $item->modelo ?? '' }}"
+                                                            class="form-control form-control-sm"
+                                                            maxlength="100"
+                                                            placeholder="Modelo"
+                                                            aria-label="Modelo"
+                                                        />
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <select
+                                                            name="ativo"
+                                                            class="form-select form-select-sm"
+                                                            aria-label="Situação"
+                                                        >
+                                                            <option value="1" @selected ((bool) $item->ativo)>Ativo</option>
+                                                            <option value="0" @selected (! (bool) $item->ativo)>
+                                                                Inativo
+                                                            </option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                            Salvar
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </details>
                                         </div>
                                     </td>
                                 @endif

@@ -24,7 +24,7 @@ class NotificationController extends Controller
                 ->whereNull('oculta_em')
                 ->orderByDesc('id')
                 ->select(['id', 'tipo', 'titulo', 'mensagem', 'versao', 'criado_em', 'lida_em', 'solicitacao_id', 'viagem_id', 'multa_id', 'despesa_id', 'chamado_id']),
-            10,
+            SingleQueryPaginator::preferredPerPage(10),
         );
         $targets = ['requests' => 'solicitacao_id', 'trips' => 'viagem_id', 'fines' => 'multa_id', 'expenses' => 'despesa_id', 'tickets' => 'chamado_id'];
         $references = [];
