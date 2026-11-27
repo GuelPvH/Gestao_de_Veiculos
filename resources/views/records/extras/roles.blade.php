@@ -8,8 +8,6 @@
                 @endforeach
             </ul>
         </div>
-        <p class="form-text mt-2 mb-0">
-            O alcance de cada concessão e o vínculo ativo definem quais registros o usuário pode acessar.
-        </p>
+        <p class="form-text mt-2 mb-0">O alcance de cada concessão e o vínculo ativo definem quais registros o usuário pode acessar.</p>
     </x-ui.panel>
 @endif

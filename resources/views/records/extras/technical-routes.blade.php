@@ -5,10 +5,7 @@
                 <li class="d-flex flex-wrap align-items-center justify-content-between gap-2 py-1 border-bottom">
                     <span>{{ $regra->modulo_codigo }} / {{ $regra->acao_codigo }}</span>
                     @if ($podeEditarRequisitosRota ?? false)
-                        <form
-                            method="post"
-                            action="{{ route('technical-routes.permissions.destroy', $registro->id) }}"
-                        >
+                        <form method="post" action="{{ route('technical-routes.permissions.destroy', $registro->id) }}">
                             @csrf
                             <input type="hidden" name="modulo_codigo" value="{{ $regra->modulo_codigo }}" />
                             <input type="hidden" name="acao_codigo" value="{{ $regra->acao_codigo }}" />
@@ -18,9 +15,7 @@
                 </li>
             @endforeach
         </ul>
-        <p class="mb-3">
-            Para conceder o acesso, abra o perfil, selecione Conceder permissão e escolha esta rota e o alcance desejado.
-        </p>
+        <p class="mb-3">Para conceder o acesso, abra o perfil, selecione Conceder permissão e escolha esta rota e o alcance desejado.</p>
     @else
         <p class="mb-3">As permissões são verificadas por ação no módulo desta rota.</p>
     @endif

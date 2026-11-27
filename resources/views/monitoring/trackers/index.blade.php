@@ -190,8 +190,13 @@
                                                             class="form-select form-select-sm"
                                                             aria-label="Tipo"
                                                         >
-                                                            <option value="gps" @selected ($item->tipo === 'gps')>GPS</option>
-                                                            <option value="telematica" @selected ($item->tipo === 'telematica')>
+                                                            <option value="gps" @selected ($item->tipo === 'gps')>
+                                                                GPS
+                                                            </option>
+                                                            <option
+                                                                value="telematica"
+                                                                @selected ($item->tipo === 'telematica')
+                                                            >
                                                                 Telemática
                                                             </option>
                                                             <option value="outro" @selected ($item->tipo === 'outro')>
@@ -216,7 +221,9 @@
                                                             class="form-select form-select-sm"
                                                             aria-label="Situação"
                                                         >
-                                                            <option value="1" @selected ((bool) $item->ativo)>Ativo</option>
+                                                            <option value="1" @selected ((bool) $item->ativo)>
+                                                                Ativo
+                                                            </option>
                                                             <option value="0" @selected (! (bool) $item->ativo)>
                                                                 Inativo
                                                             </option>
